@@ -1,7 +1,7 @@
 {
     "name": "zrny/mksql",
     "description": "Creating and AutoUpdating tables in MySQL",
-    "version": "0.0.2",
+    "version": "0.1.0",
     "type": "library",
     "keywords": [
         "sql",
