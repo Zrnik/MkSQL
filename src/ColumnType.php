@@ -5,34 +5,52 @@
  * Date: 20.07.2020 9:48
  */
 
-
 namespace Zrnik\MkSQL;
-
 
 class ColumnType
 {
 
-    CONST TINYTEXT = 100010;
-    CONST TEXT = 100011;
-    CONST MEDIUMTEXT = 100012;
-    CONST LONGTEXT = 100013;
+    //region CONST
+    const TINYTEXT = 100010;
+    const TEXT = 100011;
+    const MEDIUMTEXT = 100012;
+    const LONGTEXT = 100013;
 
-    CONST TINYBLOB = 200010;
-    CONST BLOB = 200011;
-    CONST MEDIUMBLOB = 200012;
-    CONST LONGBLOB = 200013;
-
-    CONST CHAR = 100;
-
+    const TINYBLOB = 200010;
+    const BLOB = 200011;
+    const MEDIUMBLOB = 200012;
+    const LONGBLOB = 200013;
 
 
-    private $Params = [];
+    const DECIMAL = 210010;
+    const DOUBLE = 210011;
+    const FLOAT = 210012;
+
+    const INT = 220010;
+    const MEDIUMINT = 220011;
+    const SMALLINT = 220012;
+    const TINYINT = 220013;
+
+    const CHAR = 1;
+    const VARCHAR = 2;
+    const BINARY = 3;
+    const VARBINARY = 4;
+
+    const ENUM = 1000;
+    const SET = 1001;
+
+    const BIT = 2000;
+    const BOOL = 2001;
+    //endregion
+
     private $Type = -1;
 
     public function __construct(int $type)
     {
         $this->Type = $type;
     }
+
+    private $Params = [];
 
     public function addParam($par)
     {
@@ -47,15 +65,6 @@ class ColumnType
             self::TINYBLOB,self::BLOB,self::MEDIUMBLOB,self::LONGBLOB,
         ];
         return !in_array($this->Type,$Disallowed);
-    }
-
-
-
-    private function parameterized($type)
-    {
-        if(count($this->Params) === 0)
-            return $type;
-        return $type."(".implode(",",$this->Params).")";
     }
 
     public function getString()
@@ -83,8 +92,38 @@ class ColumnType
             case self::LONGBLOB:
                 return "longblob";
 
+            //Sem si vygeneroval
+
+            case self::DECIMAL:
+                return $this->parameterized(strtolower("DECIMAL"));
+            case self::DOUBLE:
+                return $this->parameterized(strtolower("DOUBLE"));
+            case self::FLOAT:
+                return $this->parameterized(strtolower("FLOAT"));
+            case self::INT:
+                return $this->parameterized(strtolower("INT"));
+            case self::MEDIUMINT:
+                return $this->parameterized(strtolower("MEDIUMINT"));
+            case self::SMALLINT:
+                return $this->parameterized(strtolower("SMALLINT"));
+            case self::TINYINT:
+                return $this->parameterized(strtolower("TINYINT"));
             case self::CHAR:
-                return $this->parameterized("char");
+                return $this->parameterized(strtolower("CHAR"));
+            case self::VARCHAR:
+                return $this->parameterized(strtolower("VARCHAR"));
+            case self::BINARY:
+                return $this->parameterized(strtolower("BINARY"));
+            case self::VARBINARY:
+                return $this->parameterized(strtolower("VARBINARY"));
+            case self::ENUM:
+                return $this->parameterized(strtolower("ENUM"));
+            case self::SET:
+                return $this->parameterized(strtolower("SET"));
+            case self::BIT:
+                return $this->parameterized(strtolower("BIT"));
+            case self::BOOL:
+                return $this->parameterized(strtolower("BOOL"));
 
             default:
                 break;
@@ -93,7 +132,11 @@ class ColumnType
         return false;
     }
 
+    private function parameterized($type)
+    {
+        if (count($this->Params) === 0)
+            return $type;
 
-
-
+        return $type . "(" . implode(",", $this->Params) . ")";
+    }
 }
