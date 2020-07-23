@@ -176,6 +176,7 @@ class SqlUpdater
 
 
     private static $allowed_characters = [
+        "0","1","2","3","4","5","6","7","8","9" ,
         "q","w","e","r","t","z","u","i","o","p","a","s","d","f",
         "g","h","j","k","l","y","x","c","v","b","n","m","Q","W",
         "E","R","T","Z","U","I","O","P","A","S","D","F","G","H",
