@@ -30,6 +30,7 @@ class ColumnType
     const MEDIUMINT = 220011;
     const SMALLINT = 220012;
     const TINYINT = 220013;
+    const BIGINT = 220014;
 
     const CHAR = 1;
     const VARCHAR = 2;
@@ -100,14 +101,16 @@ class ColumnType
                 return $this->parameterized(strtolower("DOUBLE"));
             case self::FLOAT:
                 return $this->parameterized(strtolower("FLOAT"));
+            case self::BIGINT:
+                return 'bigint(20)';
             case self::INT:
-                return $this->parameterized(strtolower("INT"));
+                return 'int(11)';
             case self::MEDIUMINT:
-                return $this->parameterized(strtolower("MEDIUMINT"));
+                return "mediumint(9)";
             case self::SMALLINT:
-                return $this->parameterized(strtolower("SMALLINT"));
+                return "smallint(6)";
             case self::TINYINT:
-                return $this->parameterized(strtolower("TINYINT"));
+                return "tinyint(4)";
             case self::CHAR:
                 return $this->parameterized(strtolower("CHAR"));
             case self::VARCHAR:
