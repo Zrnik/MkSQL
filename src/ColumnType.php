@@ -46,10 +46,12 @@ class ColumnType
 
     private $Type = -1;
 
-    public function __construct(int $type)
+    public function __construct(int $type, array $params = [])
     {
         $this->Type = $type;
+        $this->Params[] = $params;
     }
+
 
     private $Params = [];
 
