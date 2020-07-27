@@ -49,7 +49,7 @@ class ColumnType
     public function __construct(int $type, array $params = [])
     {
         $this->Type = $type;
-        $this->Params[] = $params;
+        $this->Params = $params;
     }
 
 
@@ -57,7 +57,7 @@ class ColumnType
 
     public function addParam($par)
     {
-        $this->Params = $par;
+        $this->Params[] = $par;
         return $this;
     }
 
