@@ -57,7 +57,7 @@ class ColumnType
 
     public function addParam($par)
     {
-        $this->Params[] = $par;
+        $this->Params = $par;
         return $this;
     }
 
