@@ -19,6 +19,59 @@ This package has [nette/database ^3.0.6](https://github.com/nette/database) as a
 
 # Usage
 
+### Initialization:
+
+This package internally uses `nette/database` and
+it requires connection details like PDO. MkSQL is best 
+served cold, with lime and by Dependency Injection.
+
+
+###### Manual Initialization:
+
+```php
+new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
+```
+
+###### Manual Initialization:
+
+
+###### Nette Framework:
+
+This example is usage with [Nette Framework](https://nette.org/), but I think its similar with other frameworks.
+
+Register service in configuration file: (database credentials expected in `parameters` section)
+```neon
+services:
+    - Zrny\MkSQL\Updater(%database.dsn%,%database.user%,%database.password%)      
+``` 
+
+Then you for example use it in model factory...
+
+```php  
+<?php
+
+namespace \Model\Article;
+
+class ArticleRepositoryFactory
+{    
+    private $db;
+    private $mksql;
+
+    public function __construct(Connection $db, Updater $mksql)
+    {
+        $this->db = $db;
+        $this->mksql = $mksql;
+    }
+
+    public function create(int $id)
+    {
+        return new ArticleRepository($id, $db, $mksql)
+    }
+}
+```
+
+### Code:
+
 If you think that class `\Zrny\MkSQL\Column` is missing `->setPrimary()` method (to create primary key),
 then notice that every table created with MkSQL have primary key `id` 
 that is `int` & `AUTO INCREMENT` by default and this behavior cannot be changed. 
@@ -65,7 +118,7 @@ This code will result in this:
 
 ![image](code_result.png)
 
-#### Speed Examples:
+### Speed Examples:
 
 *Both speeds are from my machine.*
 
