@@ -84,10 +84,11 @@ class Updater
                     $this->db->query($Command["sql"]);
                 }
                 $this->db->commit();
-            }catch(PDOException $ex)
+            }
+            catch(\Exception $ex)
             {
                 $this->db->rollBack();
-                throw new $ex;
+                throw new DriverException($ex->getMessage());
             }
         }
 

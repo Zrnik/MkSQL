@@ -8,7 +8,6 @@
 
 namespace Zrny\MkSQL;
 
-
 use Nette\Database\Row;
 use Zrny\MkSQL\Enum\DriverType;
 
