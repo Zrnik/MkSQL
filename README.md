@@ -29,13 +29,10 @@ served cold, with lime and by Dependency Injection.
 ###### Manual Initialization:
 
 ```php
-new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
+$updater = new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
 ```
 
-###### Manual Initialization:
-
-
-###### Nette Framework:
+###### Initialization with Nette Framework:
 
 This example is usage with [Nette Framework](https://nette.org/), but I think its similar with other frameworks.
 
@@ -70,13 +67,14 @@ class ArticleRepositoryFactory
 }
 ```
 
-### Code:
+###### Code:
 
-If you think that class `\Zrny\MkSQL\Column` is missing `->setPrimary()` method (to create primary key),
+If you think that class `\Zrny\MkSQL\Column` is missing `->setPrimary()` method to create primary keys,
 then notice that every table created with MkSQL have primary key `id` 
-that is `int` & `AUTO INCREMENT` by default and this behavior cannot be changed. 
+that is `int` & `AUTO INCREMENT` by default and this behavior cannot 
+be changed, trying to define column `id` will result in error.
 
-Trying to define column `id` wil result in error.
+Example with accounts ant their corresponding auth tokens: 
 
 ```php   
  $updater->table("accounts")
@@ -118,8 +116,8 @@ This code will result in this:
 
 ![image](code_result.png)
 
-### Speed Examples:
-
+###### Speed Examples:
+ 
 *Both speeds are from my machine.*
 
 Example installation speed when the database is empty:
