@@ -1,0 +1,38 @@
+{
+    "name": "zrny/mksql",
+    "description": "MySQL table AutoCreate utility",
+    "version": "0.2.0",
+    "type": "library",
+    "keywords": [
+        "sql",
+        "table",
+        "create"
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/Zrny/MkSQL",
+    "authors": [
+        {
+            "name": "Štěpán Zrník",
+            "email": "stepan.zrnik@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1.0",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "nette/database": "^3.0.6",
+        "zrny/enum": "0.0.1"
+    },
+
+    "require-dev": {
+        "tracy/tracy": "2.7.5",
+        "nette/tester": "2.3.2"
+    },
+
+    "autoload": {
+        "psr-4": {
+          "Zrny\\MkSQL\\": "src/",
+          "Zrny\\MkSQL\\Enum\\": "src/Enum/"
+        }
+    }
+}
