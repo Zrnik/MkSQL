@@ -80,8 +80,6 @@ class Updater
             {
                 $this->db->beginTransaction();
                 foreach($Commands as $Command){
-                    //echo $Command["sql"].PHP_EOL;
-                    //echo $Command["reason"].PHP_EOL;
                     //TODO: Log this somewhere?
                     $this->db->query($Command["sql"]);
                 }
@@ -90,12 +88,6 @@ class Updater
             {
                 $this->db->rollBack();
                 throw new $ex;
-
-                //echo '------------------------------------'.PHP_EOL;
-                //echo '-- ROLLBACK'.PHP_EOL;
-                //echo '------------------------------------'.PHP_EOL;
-                //echo '-- '.$ex->getMessage().PHP_EOL;
-                //echo '------------------------------------'.PHP_EOL;
             }
         }
 
