@@ -58,14 +58,14 @@ Trying to define column `id` wil result in error.
 
     ->endTable();
    
-    $updater->install();
+    $updater->install(); 
 ```
 
 This code will result in this:
 
 ![image](code_result.png)
 
-####Speed Examples:
+#### Speed Examples:
 
 *Both speeds are from my machine.*
 
