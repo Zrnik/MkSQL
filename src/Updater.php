@@ -19,40 +19,50 @@ use Zrny\MkSQL\Enum\DriverType;
  */
 class Updater
 {
-
     /**
      * @var Table[]
      */
     private $tables;
 
     /**
-     * @var int
-     */
-    private $driverType;
-
-    /**
      * @var Connection
      */
-    private $db;
+    private $database;
+
+    /**
+     * @var array
+     */
+    private $credentials;
 
     /**
      * Updater constructor.
-     * @param string $dsn
+     * @param string|null $dsn
      * @param string|null $user
      * @param string|null $password
-     * @param array|null $option
+     * @param array|null $options
      * @throws DriverException
      */
-    public function __construct(string $dsn, ?string $user = null, ?string $password = null, ?array $option = null)
+    public function __construct(?string $dsn = null, ?string $user = null, ?string $password = null, ?array $options = null)
     {
-        $driverString = explode(":", $dsn)[0];
-        try {
-            $this->driverType = DriverType::getValue($driverString, false);
-        } catch (InvalidArgumentException $ex) {
-            throw new DriverException("Unsupported driver '".$driverString."' passed to 'Zrny\\MkSQL\\Updater' class! Supported drivers: ".implode(",",DriverType::getNames(false)));
-        }
+        $this->credentials = [$dsn,$user,$password, $options];
+    }
 
-        $this->db = new Connection($dsn, $user, $password, $option);
+
+    private function getConnection()
+    {
+        if($this->database === null)
+            $this->database = new Connection(
+                $this->credentials[0],
+                $this->credentials[1],
+                $this->credentials[2],
+                $this->credentials[3]
+            );
+        return $this->database;
+    }
+
+    public function setConnection(Connection $db)
+    {
+        $this->database = $db;
     }
 
     /**
@@ -69,29 +79,46 @@ class Updater
 
     public function install()
     {
+        $db = $this->getConnection();
+
+        if($this->getDriverType() === null)
+            throw new DriverException("Invalid driver '".$db->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME)."'
+                for package 'Zrny\\MkSQL' class 'Updater'. Allowed drivers: ".implode(", ",DriverType::getNames(false)));
+
         $Commands = [];
         foreach($this->tables as $table)
         {
-            $Commands = array_merge($Commands, $table->install($this->db, $this->driverType));
+            $Commands = array_merge($Commands, $table->install($db, $this->getDriverType()));
         }
 
         if(count($Commands) > 0) {
             try
             {
-                $this->db->beginTransaction();
+                $db->beginTransaction();
                 foreach($Commands as $Command){
                     //TODO: Log this somewhere?
-                    $this->db->query($Command["sql"]);
+                    $db->query($Command["sql"]);
                 }
-                $this->db->commit();
+                $db->commit();
             }
             catch(\Exception $ex)
             {
-                $this->db->rollBack();
+                $db->rollBack();
                 throw new DriverException($ex->getMessage());
             }
         }
+    }
 
+    private function getDriverType()
+    {
+        try
+        {
+            return DriverType::getValue($this->getConnection()->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME), false);
+        }
+        catch (InvalidArgumentException $ex)
+        {
+            return null;
+        }
     }
 
 
