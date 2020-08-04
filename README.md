@@ -41,9 +41,7 @@ $updater = new \Zrny\MkSQL\Updater();
 $updater->setConnection($connection);
 ```
 
-###### Initialization with Nette Framework:
-
-This is initialization with [Nette Framework](https://nette.org/).
+###### Initialization with [Nette Framework](https://nette.org/):
 
 Register service in configuration file:
 ```neon
