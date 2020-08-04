@@ -52,7 +52,8 @@ services:
 Then you update your factories:
 
 You need to provide connection in your factory this way. 
-Or, you can create Updater factory and provide database connection there.
+Or, you can create Updater factory and provide database connection 
+there.
 
 ```php  
 class ArticleRepositoryFactory
@@ -109,12 +110,11 @@ class ArticleRepository
 
 ###### Code:
 
-If you think that class `\Zrny\MkSQL\Column` is missing `->setPrimary()` method to create primary keys,
-then notice that every table created with MkSQL have primary key `id` 
-that is `int` & `AUTO INCREMENT` by default and this behavior cannot 
-be changed, trying to define column `id` will result in error.
-
-Example with accounts ant their corresponding auth tokens: 
+Keep in mind that every table automatically gets `PRIMARY` column `id` 
+as `int` and `AUTO INCREMENT`, trying to define column `id` will 
+result in error.
+ 
+This package does not support **Composite Primary Key**s
 
 ```php   
  $updater->table("accounts")
@@ -150,6 +150,11 @@ Example with accounts ant their corresponding auth tokens:
     ->endTable();
    
     $updater->install(); 
+
+    /*
+     * or '->endTable()->install();'
+     */
+
 ```
 
 This code will result in this:

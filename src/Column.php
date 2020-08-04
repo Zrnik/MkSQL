@@ -220,7 +220,6 @@ class Column
 
     //endregion
 
-
     public function install(\Nette\Database\Connection $db, int $driverType, array $full_desc, array $full_indexes, array $full_keys) : array
     {
         $Commands = [];
