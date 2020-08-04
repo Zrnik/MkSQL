@@ -54,6 +54,14 @@ class Table
         return $this->tableName;
     }
 
+    /**
+     * @return Column[]
+     */
+    public function getColumns() : array
+    {
+        return $this->columns;
+    }
+
 
     /**
      * Creates a table column
@@ -95,6 +103,10 @@ class Table
      */
     public function install(Connection $db, int $driverType) : array
     {
+        if(!isset(Updater::$_InstallCall[$this->getName()]))
+            Updater::$_InstallCall[$this->getName()] = 0;
+        Updater::$_InstallCall[$this->getName()]++;
+
         $Commands = [];
         $description = $this->describeOrCreateTable($db, $driverType);
         $indexes = $this->describeIndexes($db,$driverType);
@@ -149,5 +161,7 @@ class Table
         }
         return $Result;
     }
+
+
 
 }

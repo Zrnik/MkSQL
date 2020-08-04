@@ -20,7 +20,9 @@
         "php": ">=7.1.0",
         "ext-pdo": "*",
         "nette/database": "^3.0.6",
+        "nette/utils": "^3.1.2",
         "zrny/enum": "0.0.1"
+
     },
 
     "require-dev": {

@@ -49,6 +49,14 @@ services:
     - Zrny\MkSQL\Updater  
 ```
 
+Tracy Panel was added, you can register it like this:
+```neon
+tracy:
+    bar:
+        - Zrny\MkSQL\Nette\TracyPanel
+
+```
+
 Then you update your factories:
 
 You need to provide connection in your factory this way. 

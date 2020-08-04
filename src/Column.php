@@ -9,6 +9,7 @@
 namespace Zrny\MkSQL;
 
 use Nette\Database\Row;
+use React\Promise\Util;
 use Zrny\MkSQL\Enum\DriverType;
 
 class Column
@@ -251,18 +252,22 @@ class Column
                 if($this->getComment() !== null)
                     $CreateSQL .= "COMMENT '".$this->getComment()."' ";
 
-                $Commands[] = [
+                $CreateColumnCommand = [
                     "reason" => "Creating column ".$this->getName().", because it doesnt exists!",
                     "sql" => trim($CreateSQL).';'
                 ];
+                $Commands[] =  $CreateColumnCommand;
+                Updater::logUpdate($this->parent->getName(), $this->getName(),$CreateColumnCommand);
 
                 //unique
                 if($this->getUnique())
                 {
-                    $Commands[] = [
+                    $MakeUniqueCommand = [
                         "reason" => "Column ".$this->getName()." created, but unique key required!",
                         "sql" => 'CREATE UNIQUE INDEX '.$this->parent->getName().'_'.$this->getName().'_mksql_uindex on '.$this->parent->getName().' ('.$this->getName().');'
                     ];
+                    $Commands[] = $MakeUniqueCommand;
+                    Updater::logUpdate($this->parent->getName(), $this->getName(),$MakeUniqueCommand);
                 }
 
                 //foreign key
@@ -274,11 +279,13 @@ class Column
                         $targetTable = $foreignKeyParts[0];
                         $targetColumn = $foreignKeyParts[1];
 
-                        $Commands[] = [
+                         $ForeignKeyCreateCommand = [
                             "reason" => "Column ".$this->getName()." created, but foreign key '".$ForeignKey."' required!",
                             "sql" => 'ALTER TABLE '.$this->parent->getName().' ADD CONSTRAINT '.$this->parent->getName().'_'.$targetTable.'_'.$this->getName().'_'.$targetColumn.'_mksql_fk
                          FOREIGN KEY ('.$this->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');'
                         ];
+                        $Commands[] = $ForeignKeyCreateCommand;
+                        Updater::logUpdate($this->parent->getName(), $this->getName(),$ForeignKeyCreateCommand);
                     }
                 }
             }
@@ -295,7 +302,7 @@ class Column
                 $BaseAlterQuery = 'ALTER TABLE '.$this->parent->getName().' MODIFY '.$this->getName().' '.$this->getType();
 
                 //Type
-                if($description["Type"] !== $this->getType())
+                if(!Utils::typeEquals($description["Type"],$this->getType()))
                 {
                     $useAlterQueryReasons[] = 'Type Different ['.$description["Type"].'] != ['.$this->getType().']';
                 }
@@ -320,20 +327,22 @@ class Column
 
                 //Comment:
                 //if($this->getComment() === null)
-                $Comment = $description["Comment"] === "" ? null : $description["Comment"];
-                if($Comment !== null)
-                    $BaseAlterQuery .= " COMMENT '".$Comment."'";
+                $Comment = trim($description["Comment"]) === "" ? null : $description["Comment"];
+                if($this->getComment() !== null && $this->getComment() !== "")
+                    $BaseAlterQuery .= " COMMENT '".$this->getComment()."'";
 
                 if($Comment != $this->getComment())
-                    $useAlterQueryReasons[] = "Comment update required";
+                    $useAlterQueryReasons[] = "Comment update required ('".$Comment."' != '".$this->getComment()."')";
 
                 $BaseAlterQuery .= ';';
                 if(count($useAlterQueryReasons) > 0)
                 {
-                    $Commands[] = [
+                    $AlterTableCommand = [
                         "reason" => implode(", ",$useAlterQueryReasons),
                         "sql" => $BaseAlterQuery
                     ];
+                    $Commands[] = $AlterTableCommand;
+                    Updater::logUpdate($this->parent->getName(), $this->getName(), $AlterTableCommand);
                 }
                 //endregion
 
@@ -355,20 +364,28 @@ class Column
                     if($shouldBeUnique)
                     {
                         //Add UniqueIndex
-                        $Commands[] = [
+                        $AddUniqueIndexCommand = [
                             "reason" => "Column ".$this->getName()." needs unique index, but it doesn't have it!",
                             "sql" => 'CREATE UNIQUE INDEX '.$this->parent->getName().'_'.$this->getName().'_mksql_uindex on '.$this->parent->getName().' ('.$this->getName().');'
                         ];
+                        $Commands[] = $AddUniqueIndexCommand;
+                        Updater::logUpdate($this->parent->getName(), $this->getName(), $AddUniqueIndexCommand);
                     }
                     else
                     {
                         //Remove all unique indexes
                         foreach($indexes as $index)
+                        {
                             if($index["Non_unique"] === 0)
-                                $Commands[] = [
+                            {
+                                $RemoveUniqueIndexCommand = [
                                     "reason" => "Removing unique index: ".$index["Key_name"],
                                     "sql" => 'DROP INDEX '.$index["Key_name"].' ON '.$this->parent->getName().';'
                                 ];
+                                $Commands[] = $RemoveUniqueIndexCommand;
+                                Updater::logUpdate($this->parent->getName(), $this->getName(), $RemoveUniqueIndexCommand);
+                            }
+                        }
                     }
                 }
                 //endregion
@@ -399,22 +416,26 @@ class Column
 
                 foreach($keysToRemove as $keyToRemove)
                 {
-                    $Commands[] = [
+                    $RemoveKeyCommand = [
                         "reason" => "Key '".$keyToRemove."' is unwanted",
                         "sql" => "ALTER TABLE cards DROP FOREIGN KEY ".$keyToRemove
                     ];
+                    $Commands[] = $RemoveKeyCommand;
+                    Updater::logUpdate($this->parent->getName(), $this->getName(), $RemoveKeyCommand);
                 }
 
                 foreach($keysToCreate as $keyToCreate)
                 {
                     list($targetTable, $targetColumn) = explode(".",$keyToCreate);
 
-                    $Commands[] = [
+                    $AddKeyCommand = [
                         "reason" => "Foreign key '".$keyToCreate."' not found, creating...",
                         "sql" => 'ALTER TABLE '.$this->parent->getName().' ADD CONSTRAINT
                                  '.$this->parent->getName().'_'.$targetTable.'_'.$this->getName().'_'.$targetColumn.'_mksql_fk
                                  FOREIGN KEY ('.$this->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');'
                     ];
+                    $Commands[] = $AddKeyCommand;
+                    Updater::logUpdate($this->parent->getName(), $this->getName(), $AddKeyCommand);
                 }
                 //endregion
             }
