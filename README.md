@@ -26,46 +26,91 @@ it requires connection details like PDO. MkSQL is best
 served cold, with lime and by Dependency Injection.
 
 
-###### Manual Initialization:
+###### Manual Initialization with Credentials:
 
 ```php
 $updater = new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
 ```
 
+
+###### Manual Initialization from `Nette\Database\Connection` object:
+
+```php
+$connection= new \Nette\Database\Connection('mysql:host=localhost;dbname=mksql','root','');
+
+...
+
+$updater = new \Zrny\MkSQL\Updater();
+$updater->setConnection($connection);
+```
+
 ###### Initialization with Nette Framework:
 
-This example is usage with [Nette Framework](https://nette.org/), but I think its similar with other frameworks.
+This is initialization with [Nette Framework](https://nette.org/).
 
-Register service in configuration file: (database credentials expected in `parameters` section)
+Register service in configuration file:
 ```neon
 services:
-    - Zrny\MkSQL\Updater(%database.dsn%,%database.user%,%database.password%)      
-``` 
+    - Zrny\MkSQL\Updater  
+```
 
-Then you for example use it in model factory...
+Then you update your factories:
+
+You need to provide connection in your factory this way. 
+Or, you can create Updater factory and provide database connection there.
 
 ```php  
-<?php
-
-namespace \Model\Article;
-
 class ArticleRepositoryFactory
-{    
+{
     private $db;
     private $mksql;
 
-    public function __construct(Connection $db, Updater $mksql)
+    public function __construct(\Nette\Database\Connection $db, \Zrny\MkSQL\Updater $mksql)
     {
+        $mksql->setConnection($db);
         $this->db = $db;
         $this->mksql = $mksql;
     }
 
-    public function create(int $id)
+    public function create()
     {
-        return new ArticleRepository($id, $db, $mksql)
+        return new ArticleRepository($this->db,  $this->mksql);
     }
 }
 ```
+
+And **make sure** you run it **only once** in the repository:
+
+```php 
+class ArticleRepository
+{
+    private $db;
+
+    public function __construct(\Nette\Database\Connection $db, \Zrny\MkSQL\Updater $updater)
+    {
+        $this->db = $db;
+        $this->initializeDatabase($updater);
+   
+    }
+
+    //Run only once!
+    private static $ArticleTablesChecked = false;
+    public function initializeDatabase(\Zrny\MkSQL\Updater $updater)
+    {
+        if(static::$ArticleTablesChecked === false)
+        {              
+            $updater->table("article")
+                ->column("content","longtext")
+                    // ...
+                ->endColumn()
+            ->endTable()->install();
+            static::$ArticleTablesChecked = true;
+        }
+    }
+    
+    // ...
+}
+``` 
 
 ###### Code:
 
