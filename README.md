@@ -14,9 +14,6 @@ Currently only suported drivers are:
 Planned drivers to implement:
 - sqlite 
 
-This package has [nette/database ^3.0.6](https://github.com/nette/database) as a dependency and requires `PHP >=7.1` with `ext-pdo` installed!
-
-
 # Usage
 
 ### Initialization:
