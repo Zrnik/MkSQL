@@ -88,13 +88,19 @@ class Updater
         static::logStructure($this->tables);
 
 
-        $commandsGeneratingStartTime = microtime(true);
         $Commands = [];
         foreach($this->tables as $table)
         {
+            $commandsGeneratingStartTime = microtime(true);
+
+            if(!isset(static::$_InstallSpeed[$table->getName()]))
+                static::$_InstallSpeed[$table->getName()] = 0;
+
             $Commands = array_merge($Commands, $table->install($db, $this->getDriverType()));
+            $speed = microtime(true) - $commandsGeneratingStartTime;
+            static::$_SecondsSpentGeneratingCommands += $speed;
+            static::$_InstallSpeed[$table->getName()] += $speed;
         }
-        self::$_SecondsSpentGeneratingCommands += microtime(true) - $commandsGeneratingStartTime;
 
 
         if(count($Commands) > 0) {
@@ -106,7 +112,7 @@ class Updater
                     $db->query($Command["sql"]);
                 }
                 $db->commit();
-                self::$_SecondsSpentExecutingQueries += microtime(true) - $commandsExecutingQueriesTime;
+                static::$_SecondsSpentExecutingQueries += microtime(true) - $commandsExecutingQueriesTime;
 
                 // It works! Now save structure to cache to possibly display it in TracyBar
             }
@@ -116,9 +122,9 @@ class Updater
                 throw new DriverException($ex->getMessage());
             }
         }
-        self::$_SecondsSpentInstalling = self::$_SecondsSpentInstalling + microtime(true) - $installStartTime;
+        static::$_SecondsSpentInstalling = static::$_SecondsSpentInstalling + microtime(true) - $installStartTime;
         bdump(microtime(true) - $installStartTime);
-        bdump(self::$_SecondsSpentInstalling * 1000);
+        bdump(static::$_SecondsSpentInstalling * 1000);
 
     }
 
@@ -137,6 +143,7 @@ class Updater
     //region TracyLogs
 
     public static $_InstallCall = [];
+    public static $_InstallSpeed = [];
     public static $_SecondsSpentInstalling = 0;
     public static $_SecondsSpentGeneratingCommands = 0;
     public static $_SecondsSpentExecutingQueries = 0;

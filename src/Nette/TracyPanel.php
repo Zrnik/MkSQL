@@ -9,6 +9,7 @@
 namespace Zrny\MkSQL\Nette;
 
 use Nette\Database\Helpers;
+use React\Promise\Util;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 use Zrny\MkSQL\Column;
@@ -114,11 +115,12 @@ class TracyPanel implements IBarPanel
             $structureHtml .= '<th>Table: '.$TableName.'</th>';
             $structureHtml .= '<th>'.count($Columns).' columns</th>';
             $structureHtml .= '<th>called '.$timesCalled.'x</th>';
+            $structureHtml .= '<th>'.Utils::convertToMs(Updater::$_InstallSpeed[$TableName]).' ms</th>';
             $structureHtml .= '<th><a href="#tracy-table-container-'.$TableName.'" class="tracy-toggle tracy-collapsed">show</a></th>';
 
 
             $structureHtml .= '</tr><tr>';
-            $structureHtml .= '<td colspan="4"><table id="tracy-table-container-'.$TableName.'" class="tracy-collapsed">';
+            $structureHtml .= '<td colspan="5"><table id="tracy-table-container-'.$TableName.'" class="tracy-collapsed">';
 
 
             /**
