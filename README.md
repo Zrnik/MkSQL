@@ -50,6 +50,8 @@ services:
 ```
 
 Tracy Panel was added, you can register it like this:
+(Example panel can be seen at the bottom of this readme.)
+
 ```neon
 tracy:
     bar:
@@ -169,14 +171,8 @@ This code will result in this:
 
 ![image](code_result.png)
 
-###### Speed Examples:
+###### Tracy Bar Example
  
-*Both speeds are from my machine.*
+![image](tracy_bar_up2date.jpg)
 
-Example installation speed when the database is empty:
-
-    8368.80589ms
-        
-Example speed when the database is created and configured:
-
-    6.91795ms 
+![image](tracy_bar_example.jpg)
