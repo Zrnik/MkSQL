@@ -103,7 +103,6 @@ class Updater
             static::$_InstallSpeed[$table->getName()] += $speed;
         }
 
-
         if(count($Commands) > 0) {
             try
             {
@@ -117,10 +116,10 @@ class Updater
 
                 // It works! Now save structure to cache to possibly display it in TracyBar
             }
-            catch(\Exception $ex)
+            catch(PDOException $pdoex)
             {
                 $db->rollBack();
-                throw new DriverException($ex->getMessage());
+                throw new DriverException($pdoex->getMessage()."\n\n ".$pdoex->queryString);
             }
         }
         static::$_SecondsSpentInstalling = static::$_SecondsSpentInstalling + microtime(true) - $installStartTime;

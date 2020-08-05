@@ -32,12 +32,12 @@ class Utils
         if($name === null)
             return null;
 
-        $name = trim($name);
-
         $Allowed = array_merge(self::$_defaultAllowedCharacters,$AdditionalAllowed);
 
-        if(trim(str_replace($Allowed,"",$name)) !== "")
+        if(str_replace($Allowed,"",$name) !== "")
             throw new InvalidArgumentException("Argument '".$name."' contains invalid characters!");
+
+        bdump(trim(str_replace($Allowed,"",$name)));
 
         return $name;
     }

@@ -85,6 +85,8 @@ class Column
      */
     public function setUnique(bool $Unique = true): Column
     {
+        //Unique must be NotNull
+        $this->setNotNull();
         $this->unique = $Unique;
         return $this;
     }
