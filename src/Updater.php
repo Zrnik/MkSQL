@@ -81,6 +81,9 @@ class Updater
         $installStartTime = microtime(true);
         $db = $this->getConnection();
 
+        //Speed Up info_schema fetch
+        //$db->query("set global innodb_stats_on_metadata=0");
+
         if($this->getDriverType() === null)
             throw new DriverException("Invalid driver '".$db->getPdo()->getAttribute(\PDO::ATTR_DRIVER_NAME)."'
                 for package 'Zrny\\MkSQL' class 'Updater'. Allowed drivers: ".implode(", ",DriverType::getNames(false)));
@@ -91,14 +94,12 @@ class Updater
         $Commands = [];
         foreach($this->tables as $table)
         {
-            $commandsGeneratingStartTime = microtime(true);
-
+            $tableSpeedStart = microtime(true);
             if(!isset(static::$_InstallSpeed[$table->getName()]))
                 static::$_InstallSpeed[$table->getName()] = 0;
 
             $Commands = array_merge($Commands, $table->install($db, $this->getDriverType()));
-            $speed = microtime(true) - $commandsGeneratingStartTime;
-            static::$_SecondsSpentGeneratingCommands += $speed;
+            $speed = microtime(true) - $tableSpeedStart;
             static::$_InstallSpeed[$table->getName()] += $speed;
         }
 
@@ -145,7 +146,16 @@ class Updater
     public static $_InstallCall = [];
     public static $_InstallSpeed = [];
     public static $_SecondsSpentInstalling = 0;
+    public static $_SecondsSpentDescribingTableData = [
+        "table" => 0,
+        "indexes" => 0,
+        "keys" => 0
+    ];
     public static $_SecondsSpentGeneratingCommands = 0;
+
+
+
+
     public static $_SecondsSpentExecutingQueries = 0;
 
     public static $_StructureLog = [];

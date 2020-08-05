@@ -196,7 +196,7 @@ class Column
     /**
      * @var string|null
      */
-    private $comment = 'AutoCreated with MkSQL';
+    private $comment = 'mksql handled';
 
     /**
      * Set or unset (with null) comment string for column
@@ -224,6 +224,7 @@ class Column
     public function install(\Nette\Database\Connection $db, int $driverType, array $full_desc, array $full_indexes, array $full_keys) : array
     {
         $Commands = [];
+
 
         $description = $this->findMyDescription($full_desc,$driverType);
         $indexes = $this->findMyIndexes($full_indexes,$driverType);
@@ -418,7 +419,7 @@ class Column
                 {
                     $RemoveKeyCommand = [
                         "reason" => "Key '".$keyToRemove."' is unwanted",
-                        "sql" => "ALTER TABLE cards DROP FOREIGN KEY ".$keyToRemove
+                        "sql" => "ALTER TABLE ".$this->parent->getName()." DROP FOREIGN KEY ".$keyToRemove
                     ];
                     $Commands[] = $RemoveKeyCommand;
                     Updater::logUpdate($this->parent->getName(), $this->getName(), $RemoveKeyCommand);

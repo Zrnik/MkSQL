@@ -87,10 +87,25 @@ class TracyPanel implements IBarPanel
 
         $PanelHtml .= '<tr><th colspan="2"></th></tr>';
 
+        $PanelHtml .= '<tr><th>Table Describing</th><td style="text-align: right;">';
 
+        $PanelHtml .= '<table>';
+
+
+        $PanelHtml .= '<tr><td>Table</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["table"]).' ms</pre></td></tr>';
+        $PanelHtml .= '<tr><td>Indexes</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["indexes"]).' ms</pre></td></tr>';
+        $PanelHtml .= '<tr><td>Keys</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["keys"]).' ms</pre></td></tr>';
+
+
+
+
+        $PanelHtml .= '</table>';
+
+        //<pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTables).' ms</pre>
+
+        $PanelHtml .= '</td></tr>';
         $PanelHtml .= '<tr><th>SQL Generating</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentGeneratingCommands).' ms</pre></td></tr>';
         $PanelHtml .= '<tr><th>Query Executing</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentExecutingQueries).' ms</pre></td></tr>';
-
 
         $PanelHtml .= '<tr><th colspan="2"></th></tr>';
 
