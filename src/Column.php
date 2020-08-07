@@ -10,7 +10,6 @@ namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
 use LogicException;
-use Nette\Database\Connection;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 

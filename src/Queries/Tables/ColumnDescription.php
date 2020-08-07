@@ -44,6 +44,4 @@ class ColumnDescription
      * @var string
      */
     public $type;
-
-
 }

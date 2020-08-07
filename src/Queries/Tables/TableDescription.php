@@ -13,12 +13,10 @@ use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 
 class TableDescription
 {
-
     /**
      * @var IQueryMaker
      */
     public $queryMakerClass = '';
-
 
     /**
      * @var bool
@@ -34,7 +32,6 @@ class TableDescription
      */
     public $table;
 
-
     /**
      * @param string $getName
      * @return ColumnDescription|null
@@ -49,6 +46,4 @@ class TableDescription
 
         return null;
     }
-
-
 }

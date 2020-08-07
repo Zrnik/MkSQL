@@ -5,12 +5,9 @@
  * Date: 31.07.2020 9:37
  */
 
-
 namespace Zrny\MkSQL;
 
-
 use LogicException;
-use Nette\Database\Connection;
 use Zrny\MkSQL\Nette\Metrics;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -82,7 +79,6 @@ class Table
         if ($this->columns[$colName]->getType() !== $colType)
             throw new LogicException("Cannot redeclare column '" . $colName . "' with type '" . $this->columns[$colName]->getType() . "' as '" . $colType . "'!");
 
-
         return $this->columns[$colName];
     }
 
@@ -96,114 +92,21 @@ class Table
     }
 
     /**
-     * @param Connection $db
      * @param TableDescription $desc
      * @return Query[]
      */
-    public function install(Connection $db, TableDescription $desc): array
+    public function install(TableDescription $desc): array
     {
         $Commands = [];
 
-        if(!$desc->tableExists)
+        if (!$desc->tableExists)
             $Commands[] = $desc->queryMakerClass::createTableQuery($this);
 
-        foreach($this->columns as $column)
-        {
-            $Commands = array_merge($Commands, $column->install($db, $desc, $desc->column($column->getName())));
-            Metrics::logStructure($this,$column);
-
+        foreach ($this->columns as $column) {
+            $Commands = array_merge($Commands, $column->install($desc, $desc->column($column->getName())));
+            Metrics::logStructure($this, $column);
         }
 
         return $Commands;
-
-
-        //Konecna zavorka je az dal
-
-
-/*
-        $Commands = [];
-
-
-        //$tableDescribingSpeedStart = microtime(true);
-
-
-        $tableDescribing1SpeedStart = microtime(true);
-        $description = $this->describeOrCreateTable($db, $driverType);
-        Updater::$_SecondsSpentDescribingTableData["table"] += microtime(true) - $tableDescribing1SpeedStart;
-
-
-        $tableDescribing2SpeedStart = microtime(true);
-        $indexes = $this->describeIndexes($db, $driverType);
-        Updater::$_SecondsSpentDescribingTableData["indexes"] += microtime(true) - $tableDescribing2SpeedStart;
-
-        $tableDescribing3SpeedStart = microtime(true);
-        $keys = $this->describeKeys($db, $driverType);
-        Updater::$_SecondsSpentDescribingTableData["keys"] += microtime(true) - $tableDescribing3SpeedStart;
-
-        //$tableDescribingSpeed = microtime(true) - $tableDescribingSpeedStart;
-        //Updater::$_SecondsSpentDescribingTables += $tableDescribingSpeed;
-
-        $tableSqlGeneratingStart = microtime(true);
-        foreach ($this->columns as $column) {
-            $Commands = array_merge($Commands, $column->install($db, $driverType, $description, $indexes, $keys));
-        }
-
-        $tableSqlGenerating = microtime(true) - $tableSqlGeneratingStart;
-        Updater::$_SecondsSpentGeneratingCommands += $tableSqlGenerating;
-        return $Commands;*/
     }
-
-
-    /*private function  describeOrCreateTable(Connection $db, int $driverType): array
-    {
-        $Result = [];
-        try {
-            if ($driverType === DriverType::MySQL) {
-                $Result = $db->fetchAll("SHOW FULL COLUMNS FROM " . $this->tableName . ";");
-            }
-        } catch (PDOException $ex) {
-            if ($driverType === DriverType::MySQL) {
-                $db->query("CREATE TABLE " . $this->tableName . " (id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'mksql handled') COMMENT 'Handled by MkSQL';");
-                $Result = $db->fetchAll("SHOW FULL COLUMNS FROM " . $this->tableName . ";");
-            }
-        }
-        return $Result;
-    }
-
-    private function describeIndexes(Connection $db, int $driverType): array
-    {
-        $Result = [];
-        if ($driverType === DriverType::MySQL) {
-            $Result = $db->fetchAll("SHOW INDEXES FROM " . $this->tableName . ";");
-
-        }
-        return $Result;
-    }
-
-    private function describeKeys(Connection $db, int $driverType)
-    {
-        $Result = [];
-        if ($driverType === DriverType::MySQL)
-        {
-            //This is faster than querying 'information_schema.KEY_COLUMN_USAGE'
-            foreach(explode("\n",$db->fetch("SHOW CREATE TABLE ".$this->getName().";")["Create Table"]) as $Line)
-            {
-                if(strpos(trim($Line), "CONSTRAINT") === 0) //Starts with 'CONSTRAINT'
-                {
-                    $Data = explode("`",$Line);
-
-                    $Result[] = [
-                        "TABLE_NAME" => $this->getName(),
-                        "COLUMN_NAME" => $Data[3],
-                        "REFERENCED_TABLE_NAME" => $Data[5],
-                        "REFERENCED_COLUMN_NAME" => $Data[7],
-                        "CONSTRAINT_NAME" =>  $Data[1]
-                    ];
-                }
-            }
-        }
-        return $Result;
-    }*/
-
-
 }

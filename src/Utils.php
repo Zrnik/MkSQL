@@ -31,6 +31,12 @@ class Utils
         if($name === null)
             return null;
 
+        if(Strings::contains($name, "--"))
+            throw new InvalidArgumentException("Comment found in SQL query!");
+
+        if(Strings::contains($name, "/*") || Strings::contains($name, "*/"))
+            throw new InvalidArgumentException("Comment found in SQL query!");
+
         $Allowed = array_merge(self::$_defaultAllowedCharacters,$AdditionalAllowed);
 
         if(str_replace($Allowed,"",$name) !== "")

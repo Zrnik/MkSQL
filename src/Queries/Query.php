@@ -14,7 +14,6 @@ use Zrny\MkSQL\Table;
 
 class Query
 {
-
     /**
      * @var string
      */
@@ -41,7 +40,6 @@ class Query
      */
     public $rolledBack;
 
-
     /**
      * Query constructor.
      * @param Table $table
@@ -64,8 +62,6 @@ class Query
 
     public function setRolledBack(bool $rolledBack)
     {
-        bdump($this->reason);
-        bdump($this->sql);
         $this->rolledBack = $rolledBack;
     }
 }

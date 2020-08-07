@@ -14,6 +14,10 @@ use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Utils;
 
+/**
+ * This needs a cleanup...
+ * @package Zrny\MkSQL\Nette
+ */
 class TracyPanel implements IBarPanel
 {
     /**
@@ -23,7 +27,6 @@ class TracyPanel implements IBarPanel
     {
         $SelectedImg = (count(Metrics::getQueries()) === 0) ? self::$_ImageData_Success : self::$_ImageData_Warning;
         $imgDimension = 16;
-
 
         $TabHtml = '';
 
@@ -69,7 +72,6 @@ class TracyPanel implements IBarPanel
         $PanelHtml .= '<tr><th>Total</th><td style="text-align: right;"><pre><b>'.Utils::convertToMs(Metrics::$_measurementTotal).' ms</b></pre></td></tr>';
 
         $PanelHtml .= '</table>';
-
 
 
         $structureHtml = '';

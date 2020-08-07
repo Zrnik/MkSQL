@@ -5,7 +5,6 @@
  * Date: 31.07.2020 7:54
  */
 
-
 namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
@@ -160,9 +159,4 @@ class Updater
         Metrics::measureTotal(true);
 
     }
-
-
-
-
-
 }

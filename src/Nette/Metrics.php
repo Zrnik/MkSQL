@@ -132,8 +132,4 @@ class Metrics
     {
         return static::$_Structure;
     }
-
-
-
-
 }
