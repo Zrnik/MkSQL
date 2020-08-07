@@ -1,5 +1,11 @@
 # MkSQL 
 
+ - **Version 0.3.0 notice** - Rewriten SQL generating part, speed improved by >50%. 
+ All table properties are parsed from `SHOW CREATE TABLE tablename` as `INFORMATION_SCHEMA` 
+ are very slow, and it calls only one query to describe whole table instead of three.
+  (`SHOW FULL COLUMNS FROM tablename` & `SHOW INDEXES FROM tablename` can be 
+   parsed from `SHOW CREATE TABLE` too)
+
 **<span style="color:red;">Warning: </span> this package has no tests!**
 
 This package is AutoUpdater for your MySQL database tables. You define tables 
@@ -12,7 +18,7 @@ Currently only suported drivers are:
 - mysql
 
 Planned drivers to implement:
-- sqlite 
+- sqlite  
 
 # Usage
 
@@ -21,6 +27,8 @@ Planned drivers to implement:
 This package internally uses `nette/database` and
 it requires connection details like PDO. MkSQL is best 
 served cold, with lime and by Dependency Injection.
+
+
 
 
 ###### Manual Initialization with Credentials:

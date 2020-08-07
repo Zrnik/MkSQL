@@ -8,9 +8,11 @@
 
 namespace Zrny\MkSQL;
 
-use Nette\Database\Row;
-use React\Promise\Util;
-use Zrny\MkSQL\Enum\DriverType;
+use InvalidArgumentException;
+use LogicException;
+use Nette\Database\Connection;
+use Zrny\MkSQL\Queries\Tables\ColumnDescription;
+use Zrny\MkSQL\Queries\Tables\TableDescription;
 
 class Column
 {
@@ -165,20 +167,20 @@ class Column
      * @param string $foreignKey
      * @return Column
      */
-    public function addForeignKey(string $foreignKey) : Column
+    public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmName($foreignKey, ["."]);
-        $setForeignException = new \LogicException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
-        $exploded = explode(".",$foreignKey);
+        $setForeignException = new LogicException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
+        $exploded = explode(".", $foreignKey);
 
-        if(count($exploded) != 2)
+        if (count($exploded) != 2)
             throw $setForeignException;
 
-        if(strlen($exploded[0]) <= 0 || strlen($exploded[1]) <= 0)
+        if (strlen($exploded[0]) <= 0 || strlen($exploded[1]) <= 0)
             throw $setForeignException;
 
-        if(in_array($foreignKey,$this->foreignKeys))
-            throw new \InvalidArgumentException("Foreign key '".$foreignKey."' already exist on column '".$this->getName()."'!");
+        if (in_array($foreignKey, $this->foreignKeys))
+            throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
 
         $this->foreignKeys[] = $foreignKey;
 
@@ -188,7 +190,7 @@ class Column
     /**
      * @return string[]
      */
-    public function getForeignKeys() : array
+    public function getForeignKeys(): array
     {
         return $this->foreignKeys;
     }
@@ -223,281 +225,84 @@ class Column
 
     //endregion
 
-    public function install(\Nette\Database\Connection $db, int $driverType, array $full_desc, array $full_indexes, array $full_keys) : array
+    public function install(TableDescription $tdesc, ?ColumnDescription $desc): array
     {
         $Commands = [];
 
-
-        $description = $this->findMyDescription($full_desc,$driverType);
-        $indexes = $this->findMyIndexes($full_indexes,$driverType);
-        $keys = $this->findMyKeys($full_keys,$driverType);
-
-        $columnExists = $description !== null;
-
-        //region Create Column
-        if(!$columnExists)
+        if($desc === null || !$desc->columnExists)
         {
-            //Create Column
-            if($driverType === DriverType::MySQL)
-            {
-                $CreateSQL = 'ALTER TABLE '.$this->parent->getName().' ';
-                $CreateSQL .= 'ADD '.$this->getName().' '.$this->getType().' ';
+            $Commands[] = $tdesc->queryMakerClass::createTableColumnQuery($tdesc->table, $this);
 
-                //Default Value
+            foreach($this->getForeignKeys() as $foreignKey)
+                $Commands[] = $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey);
 
-                if($this->getDefault() !== null)
-                    $CreateSQL .= 'DEFAULT \''.$this->getDefault().'\' ';
-
-                //Null/NotNull
-                $CreateSQL .= ( $this->getNotNull() ? "NOT " : '').'NULL ';
-
-                //Comment
-                if($this->getComment() !== null)
-                    $CreateSQL .= "COMMENT '".$this->getComment()."' ";
-
-                $CreateColumnCommand = [
-                    "reason" => "Creating column ".$this->getName().", because it doesnt exists!",
-                    "sql" => trim($CreateSQL).';'
-                ];
-                $Commands[] =  $CreateColumnCommand;
-                Updater::logUpdate($this->parent->getName(), $this->getName(),$CreateColumnCommand);
-
-                //unique
-                if($this->getUnique())
-                {
-                    $MakeUniqueCommand = [
-                        "reason" => "Column ".$this->getName()." created, but unique key required!",
-                        "sql" => 'CREATE UNIQUE INDEX '.$this->parent->getName().'_'.$this->getName().'_mksql_uindex on '.$this->parent->getName().' ('.$this->getName().');'
-                    ];
-                    $Commands[] = $MakeUniqueCommand;
-                    Updater::logUpdate($this->parent->getName(), $this->getName(),$MakeUniqueCommand);
-                }
-
-                //foreign key
-                if(count($this->getForeignKeys())>0)
-                {
-                    foreach($this->getForeignKeys() as $ForeignKey)
-                    {
-                        $foreignKeyParts = explode(".",$ForeignKey);
-                        $targetTable = $foreignKeyParts[0];
-                        $targetColumn = $foreignKeyParts[1];
-
-                         $ForeignKeyCreateCommand = [
-                            "reason" => "Column ".$this->getName()." created, but foreign key '".$ForeignKey."' required!",
-                            "sql" => 'ALTER TABLE '.$this->parent->getName().' ADD CONSTRAINT '.$this->parent->getName().'_'.$targetTable.'_'.$this->getName().'_'.$targetColumn.'_mksql_fk
-                         FOREIGN KEY ('.$this->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');'
-                        ];
-                        $Commands[] = $ForeignKeyCreateCommand;
-                        Updater::logUpdate($this->parent->getName(), $this->getName(),$ForeignKeyCreateCommand);
-                    }
-                }
-            }
+            if($this->getUnique())
+                $Commands[] = $tdesc->queryMakerClass::createUniqueIndexQuery($tdesc->table, $this);
         }
-        //endregion
-        //region Update Column
         else
         {
-            if($driverType === DriverType::MySQL)
+            $Reasons = [];
+
+            if(!Utils::typeEquals($desc->type, $this->getType()))
+                $Reasons[] = "type different [".$desc->type." != ".$this->getType()."]";
+
+            if($desc->notNull !== $this->getNotNull())
+                $Reasons[] = "not_null [is: ".($desc->notNull?"yes":"no")." need:".($this->getNotNull()?"yes":"no")."]";
+
+            if($desc->comment != $this->getComment())
+                $Reasons[] = "comment [".$desc->comment." != ".$this->getComment()."]";
+
+            if($desc->default != $this->getDefault())
+                $Reasons[] = "default [".$desc->default." != ".$this->getDefault()."]";
+
+            if(count($Reasons) > 0)
             {
+                $Query = $tdesc->queryMakerClass::alterTableColumnQuery($desc->table, $desc->column);
+                $Query->reason = "Reasons: ".implode(", ",$Reasons);
+                $Commands[] = $Query;
+            }
 
-                //region Alter Table
-                $useAlterQueryReasons = [];
-                $BaseAlterQuery = 'ALTER TABLE '.$this->parent->getName().' MODIFY '.$this->getName().' '.$this->getType();
-
-                //Type
-                if(!Utils::typeEquals($description["Type"],$this->getType()))
+            //Foreign Keys to Delete:
+            if(count($desc->foreignKeys) > 0)
+            {
+                foreach($desc->foreignKeys as $existingForeignKey => $foreignKeyName)
                 {
-                    $useAlterQueryReasons[] = 'Type Different ['.$description["Type"].'] != ['.$this->getType().']';
-                }
-
-                //Default
-                if($description["Default"] === null && $this->getDefault() !== null)
-                {
-                    $useAlterQueryReasons[] = 'Default Missing';
-                    $BaseAlterQuery .= " DEFAULT '".$this->getDefault()."'";
-                }
-                elseif ($description["Default"] !== null && $this->getDefault() === null)
-                {
-                    $useAlterQueryReasons[] = 'Default Not Wanted';
-                }
-
-                //Null/NotNull
-                if($this->getNotNull() !== ( $description["Null"] === "NO" ))
-                {
-                    $useAlterQueryReasons[] = 'NotNull Different';
-                }
-                $BaseAlterQuery .= ($this->getNotNull() ?' NOT ':' ').'NULL';
-
-                //Comment:
-                //if($this->getComment() === null)
-                $Comment = trim($description["Comment"]) === "" ? null : $description["Comment"];
-                if($this->getComment() !== null && $this->getComment() !== "")
-                    $BaseAlterQuery .= " COMMENT '".$this->getComment()."'";
-
-                if($Comment != $this->getComment())
-                    $useAlterQueryReasons[] = "Comment update required ('".$Comment."' != '".$this->getComment()."')";
-
-                $BaseAlterQuery .= ';';
-                if(count($useAlterQueryReasons) > 0)
-                {
-                    $AlterTableCommand = [
-                        "reason" => implode(", ",$useAlterQueryReasons),
-                        "sql" => $BaseAlterQuery
-                    ];
-                    $Commands[] = $AlterTableCommand;
-                    Updater::logUpdate($this->parent->getName(), $this->getName(), $AlterTableCommand);
-                }
-                //endregion
-
-                //region Unique Index
-                $isColumnUnique = false; //$indexes["Non_unique"] === 0;
-                $shouldBeUnique = $this->getUnique();
-
-                foreach($indexes as $index)
-                {
-                    if($index["Non_unique"] === 0)
+                    if(!in_array($existingForeignKey,$this->getForeignKeys())
+                    )
                     {
-                        $isColumnUnique = true;
-                        break;
+                        $Commands[] = $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName);
+
                     }
                 }
+            }
 
-                if($isColumnUnique !== $shouldBeUnique)
+            //Foreign Keys to Add:
+            foreach($this->getForeignKeys() as $requiredForeignKey)
+            {
+                if(!isset($desc->foreignKeys[$requiredForeignKey]))
                 {
-                    if($shouldBeUnique)
-                    {
-                        //Add UniqueIndex
-                        $AddUniqueIndexCommand = [
-                            "reason" => "Column ".$this->getName()." needs unique index, but it doesn't have it!",
-                            "sql" => 'CREATE UNIQUE INDEX '.$this->parent->getName().'_'.$this->getName().'_mksql_uindex on '.$this->parent->getName().' ('.$this->getName().');'
-                        ];
-                        $Commands[] = $AddUniqueIndexCommand;
-                        Updater::logUpdate($this->parent->getName(), $this->getName(), $AddUniqueIndexCommand);
-                    }
-                    else
-                    {
-                        //Remove all unique indexes
-                        foreach($indexes as $index)
-                        {
-                            if($index["Non_unique"] === 0)
-                            {
-                                $RemoveUniqueIndexCommand = [
-                                    "reason" => "Removing unique index: ".$index["Key_name"],
-                                    "sql" => 'DROP INDEX '.$index["Key_name"].' ON '.$this->parent->getName().';'
-                                ];
-                                $Commands[] = $RemoveUniqueIndexCommand;
-                                Updater::logUpdate($this->parent->getName(), $this->getName(), $RemoveUniqueIndexCommand);
-                            }
-                        }
-                    }
+                    $Commands[] = $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey);
                 }
-                //endregion
+            }
 
-                //region Foreign Key
-
-                $existingForeignKeys = [];
-                foreach($keys as $key)
+            // Unique?
+            if($this->getUnique())
+            {
+                //Must be unique
+                if($desc->uniqueIndex === null)
                 {
-                    if($key["REFERENCED_TABLE_NAME"] !== null && $key["REFERENCED_COLUMN_NAME"] !== null)
-                        $existingForeignKeys[$key["REFERENCED_TABLE_NAME"].'.'.$key["REFERENCED_COLUMN_NAME"]] = $key["CONSTRAINT_NAME"];
+                    $Commands[] = $tdesc->queryMakerClass::createUniqueIndexQuery($desc->table, $desc->column);
                 }
-
-                $keysToCreate = [];
-                $keysToRemove = [];
-
-                //region 1. keys to REMOVE
-                foreach($existingForeignKeys as $existingKey => $keyName)
-                    if(!in_array($existingKey, $this->getForeignKeys()))
-                        $keysToRemove[] = $keyName;
-                //endregion
-
-                //region 2. keys to ADD
-                foreach($this->getForeignKeys() as $key)
-                    if(!isset($existingForeignKeys[$key]))
-                        $keysToCreate[] = $key;
-                //endregion
-
-                foreach($keysToRemove as $keyToRemove)
+            }
+            else
+            {
+                //Must not be unique
+                if($desc->uniqueIndex !== null)
                 {
-                    $RemoveKeyCommand = [
-                        "reason" => "Key '".$keyToRemove."' is unwanted",
-                        "sql" => "ALTER TABLE ".$this->parent->getName()." DROP FOREIGN KEY ".$keyToRemove
-                    ];
-                    $Commands[] = $RemoveKeyCommand;
-                    Updater::logUpdate($this->parent->getName(), $this->getName(), $RemoveKeyCommand);
+                    $Commands[] = $tdesc->queryMakerClass::removeUniqueIndexQuery($desc->table, $desc->column, $desc->uniqueIndex);
                 }
-
-                foreach($keysToCreate as $keyToCreate)
-                {
-                    list($targetTable, $targetColumn) = explode(".",$keyToCreate);
-
-                    $AddKeyCommand = [
-                        "reason" => "Foreign key '".$keyToCreate."' not found, creating...",
-                        "sql" => 'ALTER TABLE '.$this->parent->getName().' ADD CONSTRAINT
-                                 '.$this->parent->getName().'_'.$targetTable.'_'.$this->getName().'_'.$targetColumn.'_mksql_fk
-                                 FOREIGN KEY ('.$this->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');'
-                    ];
-                    $Commands[] = $AddKeyCommand;
-                    Updater::logUpdate($this->parent->getName(), $this->getName(), $AddKeyCommand);
-                }
-                //endregion
             }
         }
-        //endregion
-
         return $Commands;
     }
-
-    /**
-     * @param array $full_desc
-     * @param int $driverType
-     * @return Row|null
-     */
-    private function findMyDescription(array $full_desc, int $driverType) : ?Row
-    {
-        if($driverType === DriverType::MySQL)
-        {
-            foreach($full_desc as $desc_detail)
-                if($desc_detail["Field"] === $this->getName())
-                    return $desc_detail;
-        }
-        return null;
-    }
-
-    /**
-     * @param array $full_indexes
-     * @param int $driverType
-     * @return Row[]
-     */
-    private function findMyIndexes(array $full_indexes, int $driverType) : array
-    {
-        $Indexes = [];
-        if($driverType === DriverType::MySQL)
-        {
-            foreach($full_indexes as $index_row)
-            {
-                if($index_row["Table"] == $this->parent->getName() && $index_row["Column_name"] == $this->getName())
-                    $Indexes[] = $index_row;
-            }
-        }
-        return $Indexes;
-    }
-
-    /**
-     * @param array $full_keys
-     * @param int $driverType
-     * @return Row[]
-     */
-    private function findMyKeys(array $full_keys, int $driverType) : array
-    {
-        $Keys = [];
-        if($driverType === DriverType::MySQL)
-        {
-            foreach($full_keys as $key_row)
-                if($key_row["TABLE_NAME"] == $this->parent->getName() && $key_row["COLUMN_NAME"] == $this->getName())
-                    $Keys[] = $key_row;
-        }
-        return $Keys;
-    }
-
 }

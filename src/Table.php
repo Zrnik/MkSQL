@@ -9,13 +9,11 @@
 namespace Zrny\MkSQL;
 
 
-use Composer\Cache;
 use LogicException;
 use Nette\Database\Connection;
-use PDOException;
-use React\Promise\Util;
-use Tracy\Debugger;
-use Zrny\MkSQL\Enum\DriverType;
+use Zrny\MkSQL\Nette\Metrics;
+use Zrny\MkSQL\Queries\Query;
+use Zrny\MkSQL\Queries\Tables\TableDescription;
 
 class Table
 {
@@ -99,15 +97,30 @@ class Table
 
     /**
      * @param Connection $db
-     * @param int $driverType
-     * @return array
+     * @param TableDescription $desc
+     * @return Query[]
      */
-    public function install(Connection $db, int $driverType): array
+    public function install(Connection $db, TableDescription $desc): array
     {
-        if (!isset(Updater::$_InstallCall[$this->getName()]))
-            Updater::$_InstallCall[$this->getName()] = 0;
-        Updater::$_InstallCall[$this->getName()]++;
+        $Commands = [];
 
+        if(!$desc->tableExists)
+            $Commands[] = $desc->queryMakerClass::createTableQuery($this);
+
+        foreach($this->columns as $column)
+        {
+            $Commands = array_merge($Commands, $column->install($db, $desc, $desc->column($column->getName())));
+            Metrics::logStructure($this,$column);
+
+        }
+
+        return $Commands;
+
+
+        //Konecna zavorka je az dal
+
+
+/*
         $Commands = [];
 
 
@@ -137,11 +150,11 @@ class Table
 
         $tableSqlGenerating = microtime(true) - $tableSqlGeneratingStart;
         Updater::$_SecondsSpentGeneratingCommands += $tableSqlGenerating;
-        return $Commands;
+        return $Commands;*/
     }
 
 
-    private function describeOrCreateTable(Connection $db, int $driverType): array
+    /*private function  describeOrCreateTable(Connection $db, int $driverType): array
     {
         $Result = [];
         try {
@@ -150,9 +163,7 @@ class Table
             }
         } catch (PDOException $ex) {
             if ($driverType === DriverType::MySQL) {
-                $db->query("CREATE TABLE " . $this->tableName . " (id int(11)) COMMENT 'Handled by MkSQL';");
-                $db->query("CREATE UNIQUE INDEX " . $this->tableName . "_uindex_id on " . $this->tableName . " (id) COMMENT 'AutoPrimary by MkSQL';");
-                $db->query("ALTER TABLE " . $this->tableName . " ADD CONSTRAINT " . $this->tableName . "_pkey_id PRIMARY KEY (id);");
+                $db->query("CREATE TABLE " . $this->tableName . " (id int(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT 'mksql handled') COMMENT 'Handled by MkSQL';");
                 $Result = $db->fetchAll("SHOW FULL COLUMNS FROM " . $this->tableName . ";");
             }
         }
@@ -174,13 +185,12 @@ class Table
         $Result = [];
         if ($driverType === DriverType::MySQL)
         {
-            //I only need to get Foreign Keys.
+            //This is faster than querying 'information_schema.KEY_COLUMN_USAGE'
             foreach(explode("\n",$db->fetch("SHOW CREATE TABLE ".$this->getName().";")["Create Table"]) as $Line)
             {
                 if(strpos(trim($Line), "CONSTRAINT") === 0) //Starts with 'CONSTRAINT'
                 {
                     $Data = explode("`",$Line);
-                    /*bdump($Data);*/
 
                     $Result[] = [
                         "TABLE_NAME" => $this->getName(),
@@ -191,17 +201,9 @@ class Table
                     ];
                 }
             }
-
-            //CONSTRAINT
-
-          /*  $required = ["TABLE_NAME","COLUMN_NAME","REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME","CONSTRAINT_NAME"];
-
-            $Result = $db->fetchAll("SELECT ".implode(",",$required)." FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_NAME = ?;", $this->getName());
-*/
-           /*bdump($Result);*/
         }
         return $Result;
-    }
+    }*/
 
 
 }

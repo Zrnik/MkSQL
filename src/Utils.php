@@ -10,7 +10,6 @@ namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
 use Nette\Utils\Strings;
-use Tracy\Debugger;
 
 class Utils
 {
@@ -36,8 +35,6 @@ class Utils
 
         if(str_replace($Allowed,"",$name) !== "")
             throw new InvalidArgumentException("Argument '".$name."' contains invalid characters!");
-
-        bdump(trim(str_replace($Allowed,"",$name)));
 
         return $name;
     }

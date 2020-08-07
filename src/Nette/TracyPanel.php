@@ -8,42 +8,27 @@
 
 namespace Zrny\MkSQL\Nette;
 
-use Nette\Database\Helpers;
-use React\Promise\Util;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Updater;
+use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Utils;
 
 class TracyPanel implements IBarPanel
 {
-
     /**
      * @inheritDoc
      */
     function getTab()
     {
-        $TotalTables = 0;
-        $TotalColumns = 0;
-
-        foreach(Updater::$_UpdateLog as $Table => $Columns)
-        {
-            $TotalTables++;
-            foreach($Columns as $Column => $Log)
-            {
-                $TotalColumns++;
-            }
-        }
-
-        $SelectedImg = ($TotalTables === 0 && $TotalColumns === 0) ? self::$_ImageData_Success : self::$_ImageData_Warning;
+        $SelectedImg = (count(Metrics::getQueries()) === 0) ? self::$_ImageData_Success : self::$_ImageData_Warning;
         $imgDimension = 16;
+
 
         $TabHtml = '';
 
-        $TabHtml .= '<span class="tracy-label"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;"; src="'.$SelectedImg.'"> 
-        MkSQL '.($TotalTables === 0 && $TotalColumns === 0 ? '' : '('.$TotalTables.','.$TotalColumns.')').'</span>';
-
+        $TabHtml .= '<span class="tracy-label"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;" src="'.$SelectedImg.'"> 
+        MkSQL '.((count(Metrics::getQueries()) === 0)  ? '' : '('.count(Metrics::getQueries()).')').'</span>';
 
         return $TabHtml;
     }
@@ -53,18 +38,7 @@ class TracyPanel implements IBarPanel
      */
     function getPanel()
     {
-        $TotalTables = 0;
-        $TotalColumns = 0;
-        foreach(Updater::$_UpdateLog as $Table => $Columns)
-        {
-            $TotalTables++;
-            foreach($Columns as $Column => $Log)
-            {
-                $TotalColumns++;
-            }
-        }
-
-        $hasChanges = ($TotalTables !== 0 || $TotalColumns !== 0);
+        $hasChanges = count(Metrics::getQueries()) > 0;
         $SelectedImg = !$hasChanges? self::$_ImageData_Success : self::$_ImageData_Warning;
         $imgDimension = 22;
 
@@ -72,7 +46,7 @@ class TracyPanel implements IBarPanel
         $PanelHtml .= '<h1 style="color: '.($hasChanges?"orange":"black").';"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;"; src="'.$SelectedImg.'"> MkSQL ';
         if($hasChanges)
         {
-            $PanelHtml .= 'changes: '.$TotalTables.' table(s) and '.$TotalColumns.' column(s)';
+            $PanelHtml .= 'changes: '. count(Metrics::getQueries());
         }
         else
         {
@@ -84,58 +58,43 @@ class TracyPanel implements IBarPanel
         $PanelHtml .= '<table>';
         $PanelHtml .= '<tr><th colspan="2">Speed</th></tr>';
 
-
         $PanelHtml .= '<tr><th colspan="2"></th></tr>';
 
-        $PanelHtml .= '<tr><th>Table Describing</th><td style="text-align: right;">';
-
-        $PanelHtml .= '<table>';
-
-
-        $PanelHtml .= '<tr><td>Table</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["table"]).' ms</pre></td></tr>';
-        $PanelHtml .= '<tr><td>Indexes</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["indexes"]).' ms</pre></td></tr>';
-        $PanelHtml .= '<tr><td>Keys</td><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTableData["keys"]).' ms</pre></td></tr>';
-
-
-
-
-        $PanelHtml .= '</table>';
-
-        //<pre>'.Utils::convertToMs(Updater::$_SecondsSpentDescribingTables).' ms</pre>
-
-        $PanelHtml .= '</td></tr>';
-        $PanelHtml .= '<tr><th>SQL Generating</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentGeneratingCommands).' ms</pre></td></tr>';
-        $PanelHtml .= '<tr><th>Query Executing</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Updater::$_SecondsSpentExecutingQueries).' ms</pre></td></tr>';
+        $PanelHtml .= '<tr><th>Describing & SQL Generating</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Metrics::$_measurementQueryPreparing).' ms</pre></td></tr>';
+        $PanelHtml .= '<tr><th>Query Executing</th><td style="text-align: right;"><pre>'.Utils::convertToMs(Metrics::$_measurementQueryExecuting).' ms</pre></td></tr>';
 
         $PanelHtml .= '<tr><th colspan="2"></th></tr>';
 
 
-        $PanelHtml .= '<tr><th>Total</th><td style="text-align: right;"><pre><b>'.Utils::convertToMs(Updater::$_SecondsSpentInstalling).' ms</b></pre></td></tr>';
+        $PanelHtml .= '<tr><th>Total</th><td style="text-align: right;"><pre><b>'.Utils::convertToMs(Metrics::$_measurementTotal).' ms</b></pre></td></tr>';
 
         $PanelHtml .= '</table>';
 
-//Speed: <b>'.(round(1000*Updater::$_SecondsSpentInstalling,3)).'</b> ms
-        // Structure Info:
+
 
         $structureHtml = '';
         $structureTables = 0;
         $structureColumns = 0;
 
-        foreach(Updater::$_StructureLog as $TableName => $Columns)
+        foreach(Metrics::getStructure() as $TableName => $Columns)
         {
-            $timesCalled = isset(Updater::$_InstallCall[$TableName]) ? Updater::$_InstallCall[$TableName] : 0;
+            $timesCalled = Metrics::getTableCallCount($TableName);
+
+            $descTime = Metrics::$_measurementTables[$TableName]["describing"];
+            $sqlGenTime = Metrics::$_measurementTables[$TableName]["sql-generating"];
 
             $structureTables++;
             $structureHtml .= '<tr>';
             $structureHtml .= '<th>Table: '.$TableName.'</th>';
             $structureHtml .= '<th>'.count($Columns).' columns</th>';
             $structureHtml .= '<th>called '.$timesCalled.'x</th>';
-            $structureHtml .= '<th>'.Utils::convertToMs(Updater::$_InstallSpeed[$TableName]).' ms</th>';
+            $structureHtml .= '<th>Descr.: '.Utils::convertToMs($descTime).' ms</th>';
+            $structureHtml .= '<th>SQL Gen: '.Utils::convertToMs($sqlGenTime).' ms</th>';
             $structureHtml .= '<th><a href="#tracy-table-container-'.$TableName.'" class="tracy-toggle tracy-collapsed">show</a></th>';
 
 
             $structureHtml .= '</tr><tr>';
-            $structureHtml .= '<td colspan="5"><table id="tracy-table-container-'.$TableName.'" class="tracy-collapsed">';
+            $structureHtml .= '<td colspan="6"><table id="tracy-table-container-'.$TableName.'" class="tracy-collapsed">';
 
 
             /**
@@ -153,13 +112,13 @@ class TracyPanel implements IBarPanel
 
 
                 $structureHtml .= '<tr>';
-                $structureHtml .= '<th style="width: 50%;">Not Null</th>';
-                $structureHtml .= '<td style="width: 50%;"><b style="color:'.(($Column->getNotNull())?"darkgreen":"blue").';">'.(($Column->getNotNull())?"Yes":"No").'</b></td>';
+                $structureHtml .= '<th style="width: 30%;">Not Null</th>';
+                $structureHtml .= '<td style="width: 70%;"><b style="color:'.(($Column->getNotNull())?"darkgreen":"blue").';">'.(($Column->getNotNull())?"Yes":"No").'</b></td>';
                 $structureHtml .= '</tr>';
 
                 $structureHtml .= '<tr>';
-                $structureHtml .= '<th style="width: 50%;">Is Unique</th>';
-                $structureHtml .= '<td style="width: 50%;"><b style="color:'.(($Column->getUnique())?"darkgreen":"blue").';">'.(($Column->getUnique())?"Yes":"No").'</b></td>';
+                $structureHtml .= '<th>Is Unique</th>';
+                $structureHtml .= '<td><b style="color:'.(($Column->getUnique())?"darkgreen":"blue").';">'.(($Column->getUnique())?"Yes":"No").'</b></td>';
                 $structureHtml .= '</tr>';
 
 
@@ -179,19 +138,9 @@ class TracyPanel implements IBarPanel
                 $structureHtml .= '</tr>';
 
 
-
-
                 $structureHtml .= '</table>';
 
 
-
-                /*.Debugger::dump([
-                        "NotNull" => $Column->getNotNull(),
-                        "DefaultValue" => $Column->getDefault(),
-                        "IsUnique" => $Column->getUnique(),
-                        "Comment" => $Column->getComment(),
-                        "ForeignKeys" => (count($Column->getForeignKeys()) > 0) ? $Column->getForeignKeys() : false,
-                ],true).*/
                 $structureHtml .= '</td>';
                 $structureHtml .= '</tr>';
             }
@@ -209,41 +158,32 @@ class TracyPanel implements IBarPanel
             </table>
         </div>';
 
-
-
-
-
-
-
         if($hasChanges)
         {
-            $PanelHtml .= '<br><a href="#tracy-addons-mksql-structure-changes" class="tracy-toggle">Changes ('.$TotalTables.' tables and '.$TotalColumns.' columns)</a>';
+            $PanelHtml .= '<br><a href="#tracy-addons-mksql-structure-changes" class="tracy-toggle">Changes ('. count(Metrics::getQueries()).')</a>';
 
 
             $changesHtml = '';
-            foreach(Updater::$_UpdateLog as $Table => $Columns)
+            /**
+             * @var Query $Query
+             */
+            foreach(Metrics::getQueries() as $Query)
             {
-                foreach($Columns as $Column => $Logs)
-                {
-                    foreach($Logs as $Log)
-                    {
-                        $changesHtml .= '<tr>';
-                        $changesHtml .= '<td><b style="color:darkgreen;">'.$Table.'</b></td>';
-                        $changesHtml .= '<td><b style="color:blue;">'.$Column.'</b></td>';
-                        $changesHtml .= '<td><b>'.$Log["reason"].'</b></td>';
-                        $changesHtml .= '</tr>';
+                $changesHtml .= '<tr>';
+                $changesHtml .= '<td><b style="color:darkgreen;">'.$Query->table->getName().'</b></td>';
+                $changesHtml .= '<td><b style="color:blue;">'.($Query->column!==null?$Query->column->getName():"-").'</b></td>';
+                $changesHtml .= '<td><b>'.$Query->reason.'</b></td>';
+                $changesHtml .= '</tr>';
 
-                        $changesHtml .= '<tr>';
-                        $changesHtml .= '<td colspan="3">'.Helpers::dumpSql($Log["sql"]).'</td>';
-                        $changesHtml .= '</tr>';
+                $changesHtml .= '<tr>';
+                $changesHtml .= '<td colspan="3">'.$Query->sql.'</td>';
+                $changesHtml .= '</tr>';
 
 
-                        $changesHtml .= '<tr>';
-                        $changesHtml .= '<th colspan="3"></th>';
-                        $changesHtml .= '</tr>';
-                    }
+                $changesHtml .= '<tr>';
+                $changesHtml .= '<th colspan="3"></th>';
+                $changesHtml .= '</tr>';
 
-                }
             }
 
 
