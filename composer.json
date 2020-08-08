@@ -1,7 +1,7 @@
 {
     "name": "zrny/mksql",
     "description": "MySQL table AutoCreate utility",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "type": "library",
     "keywords": [
         "sql",
