@@ -17,6 +17,7 @@ use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Utils;
 
 class QueryMakerMySQL implements IQueryMaker
 {
@@ -214,9 +215,13 @@ class QueryMakerMySQL implements IQueryMaker
 
     public static function createUniqueIndexQuery(Table $table, Column $column): ?Query
     {
+
+
+        $uniqueKeyName = Utils::confirmKeyName($table->getName().'_'.$column->getName().'_mksql_uindex');
+
         return new Query(
             $table,$column,
-            'CREATE UNIQUE INDEX '.$table->getName().'_'.$column->getName().'_mksql_uindex on '.$table->getName().' ('.$column->getName().');',
+            'CREATE UNIQUE INDEX '.$uniqueKeyName.' on '.$table->getName().' ('.$column->getName().');',
             "Unique index required on column '".$table->getName().".".$column->getName()."'. Creating."
         );
     }
@@ -236,9 +241,11 @@ class QueryMakerMySQL implements IQueryMaker
         $targetTable = $foreignKeyParts[0];
         $targetColumn = $foreignKeyParts[1];
 
+        $foreignKeyName = Utils::confirmKeyName($table->getName().'_'.$targetTable.'_'.$column->getName().'_'.$targetColumn.'_mksql_fk');
+
         return new Query(
             $table,$column,
-            'ALTER TABLE '.$table->getName().' ADD CONSTRAINT '.$table->getName().'_'.$targetTable.'_'.$column->getName().'_'.$targetColumn.'_mksql_fk
+            'ALTER TABLE '.$table->getName().' ADD CONSTRAINT '.$foreignKeyName.'
                          FOREIGN KEY ('.$column->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');',
             "Foreign key on '".$table->getName().".".$column->getName()."' referencing '".$RefPointerString." required!'. Creating."
         );

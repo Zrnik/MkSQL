@@ -66,6 +66,15 @@ class Utils
         return $Type1 === $Type2;
     }
 
+    public static function confirmKeyName(string $keyName) : string
+    {
+        //We are alloed to have maximum key name length of 64!
+        if(Strings::length($keyName) > 64)
+            return md5($keyName);
+        return $keyName;
+    }
+
+
     public static function convertToMs(float $seconds)
     {
         return (number_format(round(1000*$seconds,2),2, '.', ''));
