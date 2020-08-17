@@ -39,6 +39,10 @@ class Query
      * @var bool
      */
     public $rolledBack;
+    /**
+     * @var
+     */
+    public $errorText;
 
     /**
      * Query constructor.

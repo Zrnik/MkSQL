@@ -1,186 +1,170 @@
-# MkSQL 
+# MkSQL
 
- - **Version 0.3.0 notice** - Rewriten SQL generating part, speed improved by >50%. 
- All table properties are parsed from `SHOW CREATE TABLE tablename` as `INFORMATION_SCHEMA` 
- are very slow, and it calls only one query to describe whole table instead of three.
-  (`SHOW FULL COLUMNS FROM tablename` & `SHOW INDEXES FROM tablename` can be 
-   parsed from `SHOW CREATE TABLE` too)
+**<span style="color:red;">Warning: </span> this package has no tests! Its like religion, you gotta believe!**
 
-**<span style="color:red;">Warning: </span> this package has no tests!**
+MkSQL is SQL tables AutoUpdater. Tables are defined in code, 
+and MkSQL makes sure they are up to date.
 
-This package is AutoUpdater for your MySQL database tables. You define tables 
-in the code, and the table structure will be Up2Date.
- 
-Is only creates table and makes sure they fit the description you defined, 
-this code never deletes a table or column if you remove it from definition. 
- 
-Currently only suported drivers are:
-- mysql
+This package is only creating and/or modifying tables and columns, it never deletes them!
 
-Planned drivers to implement:
-- sqlite  
+##### Supported Drivers & Features: 
 
-# Usage
+| Driver | Not Null | Default Value | Comments | Unique Index | Foreign Keys |
+|---|---|---|---|---|---|
+| MySQL | ✅ | ✅ | ✅ | ✅ | ✅ 
+| SQLite | ✅ | ✅ | ❌ | ✅ | ❌  
 
-### Initialization:
+ - no other drivers are supported (yet?)
 
-This package internally uses `nette/database` and
-it requires connection details like PDO. MkSQL is best 
-served cold, with lime and by Dependency Injection.
+### Installation
 
+`composer require zrny/mksql`
 
+This package is best served cold, with lime and by Dependency Injection.
 
+It works with `\Nette\Database\Connection` and so it requires its 
+instance OR database credentials like PDO;
 
-###### Manual Initialization with Credentials:
-
+###### Creating with Credentials
 ```php
 $updater = new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
 ```
-
-
-###### Manual Initialization from `Nette\Database\Connection` object:
+###### Creating with `Connection` instance:
 
 ```php
+// We need connection from somewhere
 $connection= new \Nette\Database\Connection('mysql:host=localhost;dbname=mksql','root','');
-
 ...
-
 $updater = new \Zrny\MkSQL\Updater();
 $updater->setConnection($connection);
 ```
 
-###### Initialization with [Nette Framework](https://nette.org/):
+###### Configuration for [Nette Framework](https://nette.org/)
 
-Register service in configuration file:
-```neon
-services:
-    - Zrny\MkSQL\Updater  
-```
-
-Tracy Panel was added, you can register it like this:
-(Example panel can be seen at the bottom of this readme.)
-
+ - Configuration
+ 
 ```neon
 tracy:
     bar:
         - Zrny\MkSQL\Nette\TracyPanel
 
+services:
+    - Zrny\MkSQL\Updater
 ```
 
-Then you update your factories:
-
-You need to provide connection in your factory this way. 
-Or, you can create Updater factory and provide database connection 
-there.
-
-```php  
+ - Then you can use prepared `MkSQLFactory` factory in your own factories.
+ 
+```php
 class ArticleRepositoryFactory
 {
-    private $db;
-    private $mksql;
+    private $connection;
+    private $mksqlFactory;
 
-    public function __construct(\Nette\Database\Connection $db, \Zrny\MkSQL\Updater $mksql)
+    public function __construct(\Nette\Database\Connection $connection, \Zrny\MkSQL\MkSQLFactory $mksqlFactory)
     {
-        $mksql->setConnection($db);
-        $this->db = $db;
-        $this->mksql = $mksql;
+        $this->connection = $connection;
+        $this->mksqlFactory = $mksqlFactory;
     }
 
     public function create()
     {
-        return new ArticleRepository($this->db,  $this->mksql);
+        return new ArticleRepository($this->connection,  $this->mksqlFactory->create());
     }
 }
 ```
+        
+### Example
 
-And **make sure** you run it **only once** in the repository:
-
-```php 
-class ArticleRepository
-{
-    private $db;
-
-    public function __construct(\Nette\Database\Connection $db, \Zrny\MkSQL\Updater $updater)
-    {
-        $this->db = $db;
-        $this->initializeDatabase($updater);
-   
-    }
-
-    //Run only once!
-    private static $ArticleTablesChecked = false;
-    public function initializeDatabase(\Zrny\MkSQL\Updater $updater)
-    {
-        if(static::$ArticleTablesChecked === false)
-        {              
-            $updater->table("article")
-                ->column("content","longtext")
-                    // ...
-                ->endColumn()
-            ->endTable()->install();
-            static::$ArticleTablesChecked = true;
-        }
-    }
+```php
+$updater->table("roles")
     
-    // ...
-}
-``` 
+        ->column("role_name")
+        ->endColumn()
+    
+    ->endTable()
 
-###### Code:
-
-Keep in mind that every table automatically gets `PRIMARY` column `id` 
-as `int` and `AUTO INCREMENT`, trying to define column `id` will 
-result in error.
- 
-This package does not support **Composite Primary Key**s
-
-```php   
- $updater->table("accounts")
-
-        ->column("login","char(30)")
+    ->table("accounts")
+    
+        ->column("login","varchar(100)")
+            ->setNotNull()
             ->setUnique()
-            ->setNotNull() 
         ->endColumn()
 
-        ->column("email","char(60)")
-            ->setUnique()
+        ->column("password", "varchar(255)")
             ->setNotNull()
         ->endColumn()
-
-        ->column("password", "char(60)")
+    
+        ->column("email", "varchar(255)")
             ->setNotNull()
+            ->setUnique()
+        ->endColumn()
+    
+        ->column("role")
+            ->addForeignKey("roles.id")
         ->endColumn()
 
     ->endTable()
 
     ->table("sessions")
 
-        ->column("session_id","char(32)")
-            ->setComment("SHA 128bit Key")
-            ->setUnique()
-            ->setNotNull()
+        ->column("session_id","char(64)")
         ->endColumn()
 
-        ->column("account"/*, "int"*/) //Type is "int" by default
+        ->column("account")
             ->addForeignKey("accounts.id")
         ->endColumn()
 
-    ->endTable();
-   
-    $updater->install(); 
-
-    /*
-     * or '->endTable()->install();'
-     */
-
+    ->endTable()
+    ->install();
 ```
 
-This code will result in this:
+##### Result in MySQL (creating):
+ - Those speeds are from my personal machine, not from a real server!
 
-![image](code_result.png)
+###### Php Storm Connection Panel
 
-###### Tracy Bar Example
- 
-![image](tracy_bar_up2date.jpg)
+![image](./img/mysql_connection_panel.jpg) 
 
-![image](tracy_bar_example.jpg)
+###### Connection
+
+![image](./img/mysql_query_panel.jpg) 
+
+###### Tracy Panel
+
+![image](./img/mysql_mksql_panel.jpg) 
+
+##### Result in MySQL (check):
+
+###### Connection
+
+![image](./img/mysql_up2date_query_panel.jpg) 
+
+###### Tracy Panel
+
+![image](./img/mysql_up2date_mksql_panel.jpg) 
+
+##### Result in SQLite (creating):
+
+###### Php Storm Connection Panel
+
+![image](./img/sqlite_connection_panel.jpg) 
+
+###### Connection
+
+![image](./img/sqlite_query_panel.jpg) 
+
+###### Tracy Panel
+
+![image](./img/sqlite_mksql_panel.jpg) 
+
+##### Result in SQLite (check):
+
+###### Connection
+
+![image](./img/sqlite_up2date_query_panel.jpg) 
+
+###### Tracy Panel
+
+![image](./img/sqlite_up2date_mksql_panel.jpg) 
+
+

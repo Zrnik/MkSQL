@@ -10,6 +10,7 @@ namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
 use LogicException;
+use Nette\NotImplementedException;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 
@@ -232,23 +233,29 @@ class Column
         {
             $Commands[] = $tdesc->queryMakerClass::createTableColumnQuery($tdesc->table, $this);
 
-            foreach($this->getForeignKeys() as $foreignKey)
-                $Commands[] = $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey);
-
+            try{
+                foreach($this->getForeignKeys() as $foreignKey)
+                    $Commands[] = $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey);
+            }
+            catch (NotImplementedException $ex)
+            {
+                // TODO: Document this behavior
+            }
             if($this->getUnique())
                 $Commands[] = $tdesc->queryMakerClass::createUniqueIndexQuery($tdesc->table, $this);
         }
         else
         {
             $Reasons = [];
-
-            if(!Utils::typeEquals($desc->type, $this->getType()))
+            //Utils::typeEquals($desc->type, $this->getType())
+            if(!$tdesc->queryMakerClass::compareType($desc->type, $this->getType()))
                 $Reasons[] = "type different [".$desc->type." != ".$this->getType()."]";
 
             if($desc->notNull !== $this->getNotNull())
                 $Reasons[] = "not_null [is: ".($desc->notNull?"yes":"no")." need:".($this->getNotNull()?"yes":"no")."]";
 
-            if($desc->comment != $this->getComment())
+            //$desc->comment != $this->getComment()
+            if(!$tdesc->queryMakerClass::compareComment($desc->comment, $this->getComment()))
                 $Reasons[] = "comment [".$desc->comment." != ".$this->getComment()."]";
 
             if($desc->default != $this->getDefault())
@@ -262,26 +269,42 @@ class Column
             }
 
             //Foreign Keys to Delete:
-            if(count($desc->foreignKeys) > 0)
+            try
             {
-                foreach($desc->foreignKeys as $existingForeignKey => $foreignKeyName)
+                    if(count($desc->foreignKeys) > 0)
                 {
-                    if(!in_array($existingForeignKey,$this->getForeignKeys())
-                    )
+                    foreach($desc->foreignKeys as $existingForeignKey => $foreignKeyName)
                     {
-                        $Commands[] = $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName);
+                        if(!in_array($existingForeignKey,$this->getForeignKeys())
+                        )
+                        {
+                            $Commands[] = $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName);
 
+                        }
                     }
                 }
             }
+            catch(NotImplementedException $ex)
+            {
+                // Foreign Keys not implemented,
+                // TODO: Document this behavior
+            }
 
             //Foreign Keys to Add:
-            foreach($this->getForeignKeys() as $requiredForeignKey)
+            try
             {
-                if(!isset($desc->foreignKeys[$requiredForeignKey]))
+                foreach($this->getForeignKeys() as $requiredForeignKey)
                 {
-                    $Commands[] = $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey);
+                    if(!isset($desc->foreignKeys[$requiredForeignKey]))
+                    {
+                        $Commands[] = $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey);
+                    }
                 }
+            }
+            catch(NotImplementedException $ex)
+            {
+                // Foreign Keys not implemented,
+                // TODO: Document this behavior
             }
 
             // Unique?

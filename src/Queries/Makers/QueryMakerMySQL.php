@@ -259,4 +259,25 @@ class QueryMakerMySQL implements IQueryMaker
              "Foreign key '".$ForeignKeyName."' not defined for column '".$column->getName()."'."
          );
     }
+
+    public static function compareType(string $type1, string $type2): bool
+    {
+        $type1 = strtolower($type1);
+        $type2 = strtolower($type2);
+
+        $Exceptions = [
+            "tinyint", "mediumint", "int", "bigint",
+        ];
+
+        foreach($Exceptions as $Exception)
+            if(Strings::startsWith($type1,$Exception) && Strings::startsWith($type2,$Exception))
+                return true;
+
+        return $type1 === $type2;
+    }
+
+    public static function compareComment(?string $type1, ?string $type2): bool
+    {
+        return $type1 === $type2;
+    }
 }

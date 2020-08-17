@@ -11,5 +11,5 @@ use Zrny\Base\Enum;
 class DriverType extends Enum
 {
     const MySQL = 0;
-    // const SQLite = 1; // Coming probably later than soon...
+    const SQLite = 1;
 }

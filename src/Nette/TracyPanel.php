@@ -30,7 +30,7 @@ class TracyPanel implements IBarPanel
 
         $TabHtml = '';
 
-        $TabHtml .= '<span class="tracy-label"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;" src="'.$SelectedImg.'"> 
+        $TabHtml .= '<span class="tracy-label"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;" src="'.$SelectedImg.'" alt="MkSQL Icon"> 
         MkSQL '.((count(Metrics::getQueries()) === 0)  ? '' : '('.count(Metrics::getQueries()).')').'</span>';
 
         return $TabHtml;
@@ -177,10 +177,26 @@ class TracyPanel implements IBarPanel
                 $changesHtml .= '<td><b>'.$Query->reason.'</b></td>';
                 $changesHtml .= '</tr>';
 
+
+
                 $changesHtml .= '<tr>';
                 $changesHtml .= '<td colspan="3">'.$Query->sql.'</td>';
                 $changesHtml .= '</tr>';
 
+                if($Query->errorText !== null)
+                {
+                    $changesHtml .= '<tr>';
+                    $changesHtml .= '<th colspan="3" style="color:red;">'.$Query->errorText.'</th>';
+                    $changesHtml .= '</tr>';
+                }
+
+                if($Query->rolledBack)
+                {
+                    $changesHtml .= '<tr>';
+                    $changesHtml .= '<th colspan="3" style="color:red;">NOT EXECUTED! ROLLBACK!</th>';
+                    $changesHtml .= '</tr>';
+                    break;
+                }
 
                 $changesHtml .= '<tr>';
                 $changesHtml .= '<th colspan="3"></th>';

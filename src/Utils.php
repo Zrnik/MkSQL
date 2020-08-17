@@ -45,26 +45,6 @@ class Utils
         return $name;
     }
 
-    /**
-     * @param string $Type1
-     * @param string $Type2
-     * @return bool
-     */
-    public static function typeEquals(string $Type1, string $Type2) : bool
-    {
-        $Type1 = strtolower($Type1);
-        $Type2 = strtolower($Type2);
-
-        $Exceptions = [
-            "tinyint", "mediumint", "int", "bigint",
-        ];
-
-        foreach($Exceptions as $Exception)
-            if(Strings::startsWith($Type1,$Exception) && Strings::startsWith($Type2,$Exception))
-                return true;
-
-        return $Type1 === $Type2;
-    }
 
     public static function confirmKeyName(string $keyName) : string
     {

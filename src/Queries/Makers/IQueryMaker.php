@@ -35,4 +35,9 @@ interface IQueryMaker
     public static function createForeignKey(Table $table, Column $column, string $RefPointerString) : ?Query;
     public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName) : ?Query;
 
+    //Comparsions:
+
+    public static function compareType(string $type1, string $type2) : bool;
+    public static function compareComment(?string $comment1, ?string $comment2) : bool;
+
 }

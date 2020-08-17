@@ -25,7 +25,7 @@ class Updater
     /**
      * @var Table[]
      */
-    private $tables;
+    private $tables = [];
 
     /**
      * @var Connection
@@ -65,6 +65,7 @@ class Updater
     public function setConnection(Connection $db)
     {
         $this->database = $db;
+        return $this;
     }
 
     /**
@@ -87,6 +88,7 @@ class Updater
         }
         catch (InvalidArgumentException $ex)
         {
+
             return null;
         }
     }
@@ -132,12 +134,15 @@ class Updater
         Metrics::measureQueryPreparing(true);
 
         Metrics::measureQueryExecuting();
+        $ErrorQuery = null;
         if(count($QueryCommands) > 0)
         {
+            Metrics::logQueries($QueryCommands);
             try
             {
                 $this->getConnection()->beginTransaction();
                 foreach($QueryCommands as $QueryCommand){
+                    $ErrorQuery = $QueryCommand;
                     $this->getConnection()->query($QueryCommand->sql);
                     $QueryCommand->setExecuted(true);
                 }
@@ -145,12 +150,13 @@ class Updater
             }
             catch(DriverException $ex)
             {
+                if($ErrorQuery !== null)
+                    $ErrorQuery->errorText = $ex->getMessage();
                 $this->getConnection()->rollBack();
                 foreach($QueryCommands as $QueryCommand)
                     $QueryCommand->setRolledBack(true);
                 throw DriverException::from($ex);
             }
-            Metrics::logQueries($QueryCommands);
         }
 
 
