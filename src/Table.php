@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 9:37
  */
@@ -15,9 +15,9 @@ use Zrny\MkSQL\Queries\Tables\TableDescription;
 class Table
 {
     /**
-     * @var Updater
+     * @var Updater|null
      */
-    private $parent;
+    private ?Updater $parent;
 
     /**
      * @var string
@@ -32,14 +32,37 @@ class Table
     /**
      * Table constructor.
      * @param string $tableName
-     * @param Updater $parent
      */
-    public function __construct(string $tableName, Updater $parent)
+    public function __construct(string $tableName)
     {
         $tableName = Utils::confirmName($tableName);
         $this->tableName = $tableName;
+    }
+
+    //region Parent
+
+    /**
+     * Ends defining of table if using
+     * the fluent way of creating the tables.
+     *
+     * @return Updater
+     */
+    public function endTable(): Updater
+    {
+        return $this->parent;
+    }
+
+    /**
+     * @param Updater $parent
+     */
+    public function setParent(Updater $parent)
+    {
         $this->parent = $parent;
     }
+
+    //endregion
+
+    //region Getters
 
     /**
      * Returns name of the table.
@@ -58,13 +81,32 @@ class Table
         return $this->columns;
     }
 
+    //endregion
 
-    /**
+    //region Columns
+
+
+    public function createColumn(string $columnName, ?string $columnType) : Column
+    {
+        $column = new Column($columnName, $columnType);
+        return $this->addColumn($column);
+    }
+
+    private function addColumn(Column $column)
+    {
+        $this->columns[$column->getName()] = $column;
+        $column->setParent($this);
+        return $column;
+    }
+
+
+
+    /*
      * Creates a table column
      * @param string $colName
      * @param string|null $colType
      * @return Column
-     */
+
     public function column(string $colName, ?string $colType = "int"): Column
     {
         $colName = Utils::confirmName($colName);
@@ -80,16 +122,10 @@ class Table
             throw new LogicException("Cannot redeclare column '" . $colName . "' with type '" . $this->columns[$colName]->getType() . "' as '" . $colType . "'!");
 
         return $this->columns[$colName];
-    }
+    }*/
+    //endregion
 
-    /**
-     * Ends defining of table.
-     * @return Updater
-     */
-    public function endTable(): Updater
-    {
-        return $this->parent;
-    }
+    //region Install
 
     /**
      * @param TableDescription $desc
@@ -109,4 +145,8 @@ class Table
 
         return $Commands;
     }
+
+    //endregion
+
+
 }

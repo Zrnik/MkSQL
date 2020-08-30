@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 9:38
  */
@@ -37,13 +37,10 @@ class Column
      * @param Table $parent
      * @param string $colType
      */
-    public function __construct(string $colName, Table $parent, string $colType = "int")
+    public function __construct(string $columnName, string $columnType = "int")
     {
-        $colName = Utils::confirmName($colName);
-        $colType = Utils::confirmName($colType, ["(", ")", ","]);
-        $this->parent = $parent;
-        $this->name = $colName;
-        $this->type = $colType;
+        $this->name = $columnName;
+        $this->type = $columnType;
     }
 
     /**

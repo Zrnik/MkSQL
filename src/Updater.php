@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 7:54
  */
@@ -8,10 +8,9 @@
 namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
-use Nette\Database\Connection;
-use Nette\Database\DriverException;
 use PDO;
 use Zrny\MkSQL\Enum\DriverType;
+use Zrny\MkSQL\Exceptions\InvalidDriverException;
 use Zrny\MkSQL\Nette\Metrics;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Query;
@@ -22,105 +21,108 @@ use Zrny\MkSQL\Queries\Tables\TableDescription;
  */
 class Updater
 {
+    //region Properties
+
     /**
      * @var Table[]
      */
-    private $tables = [];
+    private array $tables = [];
 
     /**
-     * @var Connection
+     * @var PDO
      */
-    private $database;
+    private PDO $pdo;
 
-    /**
-     * @var array
-     */
-    private $credentials;
+    //endregion
 
     /**
      * Updater constructor.
-     * @param string|null $dsn
-     * @param string|null $user
-     * @param string|null $password
-     * @param array|null $options
-     * @throws DriverException
+     * @param PDO $pdo
      */
-    public function __construct(?string $dsn = null, ?string $user = null, ?string $password = null, ?array $options = null)
+    public function __construct(PDO $pdo)
     {
-        $this->credentials = [$dsn,$user,$password, $options];
-    }
-
-    private function getConnection()
-    {
-        if($this->database === null)
-            $this->database = new Connection(
-                $this->credentials[0],
-                $this->credentials[1],
-                $this->credentials[2],
-                $this->credentials[3]
-            );
-        return $this->database;
-    }
-
-    public function setConnection(Connection $db)
-    {
-        $this->database = $db;
-        return $this;
+        $this->pdo = $pdo;
     }
 
     /**
      * @param string $tableName
      * @return Table
      */
-    public function table(string $tableName) : Table
+    public function createTable(string $tableName) : Table
     {
-        $tableName = Utils::confirmName($tableName);
-        if(!isset($this->tables[$tableName]))
-            $this->tables[$tableName] = new Table($tableName,$this);
-        return $this->tables[$tableName];
+        $newTable = new Table($tableName);
+        return $this->addTable($newTable);
     }
 
-    private function getDriverType()
+    /**
+     * @param Table $table
+     * @return Table
+     */
+    public function addTable(Table $table) : Table
+    {
+        $this->tables[$table->getName()] = $table;
+        $table->setParent($this);
+        return $table;
+    }
+
+    /**
+     * @return string|null
+     */
+    private function getDriverType() : ?string
     {
         try
         {
-            return DriverType::getValue($this->getConnection()->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME), false);
+            return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
         }
         catch (InvalidArgumentException $ex)
         {
-
             return null;
         }
     }
 
+
     public function install()
     {
         Metrics::measureTotal();
+
+        //region QueryPrepare
         Metrics::measureQueryPreparing();
 
+
+        //region Query Array
         /**
          * @var Query[] $QueryCommands
          */
         $QueryCommands = [];
+        //endregion
+
+        //region Driver Type & Query Maker Class
+
+        if($this->getDriverType())
+            throw new InvalidDriverException("Driver type is 'NULL'!");
+
+        $driverName = DriverType::getName($this->getDriverType());
+
+        /** @var IQueryMaker $QueryMakerClass */
+        $QueryMakerClass = "\\Zrny\\MkSQL\\Queries\\Makers\\QueryMaker".$driverName;
+
+        if(!class_exists($QueryMakerClass))
+            throw new InvalidDriverException(
+                "Invalid driver '".$driverName."' for package 'Zrny\\MkSQL' class 'Updater'. 
+                Allowed drivers: ".implode(", ",DriverType::getNames(false)));
+
+        //endregion
 
         foreach($this->tables as $table)
         {
-
             Metrics::measureTable($table->getName(),"describing");
 
             Metrics::logTableInstallCalls($table->getName());
 
-            /** @var IQueryMaker $QueryMakerClass */
-            $QueryMakerClass = "\\Zrny\\MkSQL\\Queries\\Makers\\QueryMaker".DriverType::getName($this->getDriverType());
-
-            if(!class_exists($QueryMakerClass) || $this->getDriverType() === null)
-                throw new DriverException("Invalid driver '".$this->getConnection()->getPdo()->getAttribute(PDO::ATTR_DRIVER_NAME)."'
-                for package 'Zrny\\MkSQL' class 'Updater'. Allowed drivers: ".implode(", ",DriverType::getNames(false)));
-
             /**
              * @var TableDescription $TableDescription
              */
-            $TableDescription = $QueryMakerClass::describeTable($this->getConnection(), $table);
+            $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
             Metrics::measureTable($table->getName(),"describing", true);
 
@@ -132,7 +134,10 @@ class Updater
         }
 
         Metrics::measureQueryPreparing(true);
+        //endregion
 
+
+        //region Query Executing
         Metrics::measureQueryExecuting();
         //$ErrorQuery = null;
         if(count($QueryCommands) > 0)
@@ -167,6 +172,8 @@ class Updater
 
 
         Metrics::measureQueryExecuting(true);
+
+        //endregion
 
         Metrics::measureTotal(true);
 

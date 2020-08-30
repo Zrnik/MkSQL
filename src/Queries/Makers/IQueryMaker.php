@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 06.08.2020 7:44
  */
@@ -19,7 +19,7 @@ interface IQueryMaker
 {
     // Table Information
 
-    public static function describeTable(Connection $db, Table $table) : ?TableDescription;
+    public static function describeTable(\PDO $pdo, Table $table) : ?TableDescription;
 
     // Table Operations
 

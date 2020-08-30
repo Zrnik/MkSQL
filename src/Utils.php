@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 10:21
  */
@@ -13,8 +13,12 @@ use Nette\Utils\Strings;
 
 class Utils
 {
-
-    private static $_defaultAllowedCharacters = [
+    /**
+     * List of default allowed characters.
+     *
+     * @var string[]
+     */
+    private static array $_defaultAllowedCharacters = [
         "A","a","B","b","C","c","D","d","E","e","F","f","G","g","H","h","I","i","J","j",
         "K","k","L","l","M","m","N","n","O","o","P","p","Q","q","R","r","S","s","T","t",
         "U","u","V","v","W","w","X","x","Y","y","Z","z",
@@ -22,35 +26,48 @@ class Utils
     ];
 
     /**
-     * @param $name
+     * This will confirm if the name is good for use in SQL query.
+     * We are using (against all rules) string concat-ing when making queries.
+     *
+     * @param string|null $name
      * @param array $AdditionalAllowed
-     * @throws InvalidArgumentException
+     * @return string|null
      */
-    public static function confirmName($name  , $AdditionalAllowed = []) : void
+    public static function confirmName(?string $name, array $AdditionalAllowed = []) : ?string
     {
+        // Null is invalid
         if($name === null)
             throw new InvalidArgumentException("Name is NULL!");
 
+        // Comments are not allowed obviously :)
         if(Strings::contains($name, "--"))
             throw new InvalidArgumentException("Comment found in SQL query!");
 
         if(Strings::contains($name, "/*") || Strings::contains($name, "*/"))
             throw new InvalidArgumentException("Comment found in SQL query!");
 
+        // Remove allowed characters, if the string isn't empty, it contains invalid characters!
         $Allowed = array_merge(self::$_defaultAllowedCharacters,$AdditionalAllowed);
 
         if(str_replace($Allowed,"",$name) !== "")
             throw new InvalidArgumentException("Argument '".$name."' contains invalid characters!");
 
-        //return $name;
+        // Its kind of FallTrough...
+        return $name;
     }
 
 
-    public static function confirmKeyName(string $keyName) : string
+    /**
+     * If the key is too long, we use md5 to make it shorter and trim it if required.
+     *
+     * @param string $keyName
+     * @param int $maxLen
+     * @return string
+     */
+    public static function confirmKeyName(string $keyName, int $maxLen = 64) : string
     {
-        //We are alloed to have maximum key name length of 64!
-        if(Strings::length($keyName) > 64)
-            return md5($keyName);
+        if(Strings::length($keyName) > $maxLen)
+            return substr(md5($keyName),0,min(32, $maxLen));
         return $keyName;
     }
 
