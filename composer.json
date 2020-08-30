@@ -1,7 +1,7 @@
 {
-    "name": "zrny/mksql",
+    "name": "zrny/mksql-dev",
     "description": "SQL table AutoCreate utility",
-    "version": "0.4.0",
+    "version": "0.4.1",
 
     "minimum-stability": "stable",
 
@@ -27,7 +27,7 @@
     ],
 
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.4",
 
         "ext-pdo": "*",
         "ext-iconv": "*",
@@ -35,20 +35,18 @@
 
         "nette/database": "^3.0",
         "nette/utils": "^3.0",
-
         "zrny/enum": "1.0.0"
     },
 
     "require-dev": {
         "tracy/tracy": "2.7.5",
-        "nette/tester": "2.3.3"
+        "phpunit/phpunit": "^9"
     },
+
 
     "autoload": {
         "psr-4": {
-          "Zrny\\MkSQL\\": "src/",
-          "Zrny\\MkSQL\\Enum\\": "src/Enum/",
-          "Zrny\\MkSQL\\Nette\\": "src/Nette/"
+          "Zrny\\MkSQL\\": "src/"
         }
     }
 }

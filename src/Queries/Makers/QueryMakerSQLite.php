@@ -5,15 +5,12 @@
  * Date: 06.08.2020 7:45
  */
 
-
 namespace Zrny\MkSQL\Queries\Makers;
-
 
 use Nette\Database\Connection;
 use Nette\Database\DriverException;
 use Nette\NotImplementedException;
 use Nette\Utils\Strings;
-use Tracy\Debugger;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
@@ -31,28 +28,27 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function describeTable(Connection $db, Table $table): ?TableDescription
     {
-        //Debug::
-        Debugger::$maxLength = 3000;
-
         $Desc = new TableDescription();
         $Desc->queryMakerClass = __CLASS__;
         $Desc->table = $table;
 
-
         try {
-            //$DescriptionData = explode("\n",$db->fetch(".schema ".$table->getName())["Create Table"]);
+
             $SQLiteTableData = $db->fetchAll("SELECT * FROM sqlite_master WHERE tbl_name = ?;", $table->getName());
 
             if (count($SQLiteTableData) === 0)
                 throw new DriverException("Table does not exist!");
+
             $Desc->tableExists = true;
 
             //Columns:
             foreach ($table->getColumns() as $column) {
+
                 $ColDesc = new ColumnDescription();
                 $ColDesc->table = $table;
                 $ColDesc->column = $column;
 
+                //bdump($SQLiteTableData,$table->getName());
 
                 foreach ($SQLiteTableData as $PartRow) {
                     if (Strings::startsWith($PartRow["sql"], "CREATE TABLE")) {
@@ -60,9 +56,8 @@ class QueryMakerSQLite implements IQueryMaker
                             "CREATE TABLE " . $table->getName() . " (",
                             ")[end]"
                         ], "", $PartRow["sql"] . "[end]"));
-                        $parts = explode(",", $queryToParse);
 
-                        //bdump($table->getName());
+                        $parts = explode(", ", $queryToParse);
 
                         foreach ($parts as $part) {
                             $part = Strings::trim($part);
@@ -70,61 +65,51 @@ class QueryMakerSQLite implements IQueryMaker
                             //Column Exists
                             if (Strings::startsWith($part, $column->getName() . " ")) {
 
-                                //bdump($part);
                                 $ColDesc->columnExists = true;
 
                                 //Type:
-                                $ColDesc->type = explode(" ",$part)[1];
+                                $ColDesc->type = explode(" ", $part)[1];
 
                                 //Not Null
-                                $ColDesc->notNull = Strings::contains($part,"NOT NULL");
+                                $ColDesc->notNull = Strings::contains($part, "NOT NULL");
 
                                 //Default Value:
-                                if(Strings::contains($part, "DEFAULT"))
-                                {
-                                    list($BeforeDefault,$DefaultPart)
+                                if (Strings::contains($part, "DEFAULT")) {
+                                    list($BeforeDefault, $DefaultPart)
                                         = explode("DEFAULT '", $part);
 
                                     $defaultValue = "";
-                                    $defaultParts = explode("'",$DefaultPart);
+                                    $defaultParts = explode("'", $DefaultPart);
 
-                                    foreach($defaultParts as $DefaultPart)
-                                    {
+                                    foreach ($defaultParts as $DefaultPart) {
                                         $defaultValue .= $DefaultPart;
                                         // Je-li posledni znak Escapovany
                                         // apostrof, pokracujeme
-                                        if(Strings::endsWith($DefaultPart,"\\"))
-                                        {
+                                        if (Strings::endsWith($DefaultPart, "\\")) {
                                             $defaultValue .= '\'';
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             break;
                                         }
                                     }
                                     $ColDesc->default = $defaultValue;
                                 }
-
                             }
-
-
                         }
                     }
 
                     if (Strings::startsWith($PartRow["sql"], "CREATE UNIQUE INDEX")) {
                         $row = trim($PartRow["sql"]);
-                        $parts = explode(" ",$row);
+                        $parts = explode(" ", $row);
 
                         $_uniqueIndexKey = $parts[3];
                         $_uniqueIndexTable = $parts[5];
-                        $_uniqueIndexColumn = Strings::trim($parts[6],"()");
+                        $_uniqueIndexColumn = Strings::trim($parts[6], "()");
 
-                        if($_uniqueIndexTable === $ColDesc->table->getName())
-                            if($_uniqueIndexColumn === $ColDesc->column->getName())
+                        if ($_uniqueIndexTable === $ColDesc->table->getName())
+                            if ($_uniqueIndexColumn === $ColDesc->column->getName())
                                 $ColDesc->uniqueIndex = $_uniqueIndexKey;
                     }
                 }
-
 
                 // TODO: Support Foreign Keys
 
@@ -137,79 +122,184 @@ class QueryMakerSQLite implements IQueryMaker
         return $Desc;
     }
 
-    public static function createTableQuery(Table $table): ?Query
+    /**
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
     {
-        $primaryKeyName = Utils::confirmKeyName($table->getName()."_id_pk");
+        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_id_pk");
 
-        return new Query(
-            $table,null,
-            "CREATE TABLE ".$table->getName()." (id integer constraint ".$primaryKeyName." primary key autoincrement);",
-            "Table '".$table->getName()."' does not exist. Creating."
-        );
+        return [
+            new Query(
+                $table, null,
+                "CREATE TABLE " . $table->getName() . " (id integer constraint " . $primaryKeyName . " primary key autoincrement);",
+                "Table '" . $table->getName() . "' does not exist. Creating."
+            )
+        ];
     }
 
-    public static function alterTableColumnQuery(Table $table, Column $column): ?Query
+    /**
+     * @param Table $table
+     * @param Column $_notNeededColumn
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function alterTableColumnQuery(Table $table, Column $_notNeededColumn, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $ModifySQL = 'ALTER TABLE '.$table->getName().' MODIFY '.$column->getName().' '.$column->getType();
+        //dump("I need to modify column ".$_notNeededColumn->getName()." from table ".$table->getName());
 
-        if($column->getDefault())
-            $ModifySQL .= " DEFAULT '".$column->getDefault()."'";
+        $alterTableQueryList = [];
 
-        $ModifySQL .= ($column->getNotNull() ?' NOT ':' ').'NULL';
+        $temporaryName = ($table->getName()."_mksql_tmp");
 
-        return new Query(
-            $table,$column,
-            trim($ModifySQL),
-            "reason-fill-by-column-class"
+        $createTableQuery = static::createTableQuery($table, $oldTableDescription)[0];
+        $createTableQuery->sql = str_replace(
+            "CREATE TABLE ".$table->getName()." (",
+            "CREATE TABLE ".$temporaryName." (",
+            $createTableQuery->sql);
+
+        $alterTableQueryList[] = $createTableQuery;
+        //dump($createTableQuery);
+
+        foreach($table->getColumns() as $column)
+        {
+            $MoveColumns[] = $column->getName();
+            $createColumnQueryList = static::createTableColumnQuery($table,$column, $oldTableDescription, $columnDescription);
+            foreach($createColumnQueryList as $columnQuery)
+            {
+                $columnQuery->sql = str_replace(
+                    "ALTER TABLE ".$table->getName()." ADD",
+                    "ALTER TABLE ".$temporaryName." ADD",
+                    $columnQuery->sql);
+
+                $alterTableQueryList[] = $columnQuery;
+                //dump($column_query);
+            }
+        }
+
+        $keyInBothArrays = ["id"];
+        foreach($MoveColumns as $columnName)
+        {
+            foreach($oldTableDescription->columns as $columnDescription)
+            {
+                if($columnDescription->column->getName() === $columnName)
+                {
+                    $keyInBothArrays[] = $columnName;
+                    break;
+                }
+            }
+
+        }
+
+        $columnList = implode(", ", $keyInBothArrays);
+
+
+        $alterTableQueryList[] = new Query($table,$_notNeededColumn,
+            "INSERT INTO ".$temporaryName."(".$columnList.") SELECT ".$columnList." FROM ".$table->getName(),
+            "Altering table created, filling with data!"
         );
-    }
 
-    public static function createTableColumnQuery(Table $table, Column $column): ?Query
+        $alterTableQueryList[] = new Query($table,$_notNeededColumn,
+            "DROP TABLE ".$table->getName(),
+            "Altering table created, removing old table!"
+        );
+
+        $alterTableQueryList[] = new Query($table,$_notNeededColumn,
+            "ALTER TABLE ".$temporaryName." RENAME TO ".$table->getName(),
+            "Original table dropped, replacing with temporary table!"
+        );
+
+        return $alterTableQueryList;
+        /*dump($alterTableQueryList);
+        die();*/
+  }
+
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $CreateSQL = 'ALTER TABLE '.$table->getName().' ';
-        $CreateSQL .= 'ADD '.$column->getName().' '.$column->getType().' ';
+        $CreateSQL = 'ALTER TABLE ' . $table->getName() . ' ';
+        $CreateSQL .= 'ADD ' . $column->getName() . ' ' . $column->getType() . ' ';
 
         //Default Value
 
-        if($column->getDefault() !== null)
-            $CreateSQL .= 'DEFAULT \''.$column->getDefault().'\' ';
+        if ($column->getDefault() !== null)
+            $CreateSQL .= 'DEFAULT \'' . $column->getDefault() . '\' ';
 
-        if($column->getDefault() === null && $column->getNotNull())
+        if ($column->getDefault() === null && $column->getNotNull())
             $CreateSQL .= 'DEFAULT \'\' ';
 
         //Null/NotNull
-        $CreateSQL .= ( $column->getNotNull() ? "NOT " : '').'NULL ';
+        $CreateSQL .= ($column->getNotNull() ? "NOT " : '') . 'NULL ';
 
         //Comment
 
-        return new Query(
-            $table,$column,
-            trim($CreateSQL),
-            "Column '".$table->getName().".".$column->getName()."' does not exist. Creating."
-        );
+        return [
+            new Query(
+                $table, $column,
+                trim($CreateSQL),
+                "Column '" . $table->getName() . "." . $column->getName() . "' does not exist. Creating."
+            )
+        ];
     }
 
-    public static function createUniqueIndexQuery(Table $table, Column $column): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $uniqueKeyName = Utils::confirmKeyName($table->getName().'_'.$column->getName().'_mksql_uindex');
+        $uniqueKeyName = Utils::confirmKeyName($table->getName() . '_' . $column->getName() . '_mksql_uindex');
 
-        return new Query(
-            $table,$column,
-            'CREATE UNIQUE INDEX '.$uniqueKeyName.' on '.$table->getName().' ('.$column->getName().');',
-            "Unique index required on column '".$table->getName().".".$column->getName()."'. Creating."
-        );
+        return [
+            new Query(
+                $table, $column,
+                'CREATE UNIQUE INDEX ' . $uniqueKeyName . ' on ' . $table->getName() . ' (' . $column->getName() . ');',
+                "Unique index required on column '" . $table->getName() . "." . $column->getName() . "'. Creating."
+            )
+        ];
     }
 
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $uniqueKeyName
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        return new Query(
-            $table,$column,
-            'DROP INDEX '.$uniqueKeyName.' ON '.$table->getName().';',
-            "Unique index on column '".$table->getName().".".$column->getName()."' is unwanted. Removing."
-        );
+        return [
+            new Query(
+                $table, $column,
+                'DROP INDEX ' . $uniqueKeyName . ';',
+                "Unique index on column '" . $table->getName() . "." . $column->getName() . "' is unwanted. Removing."
+            )
+        ];
     }
 
-    public static function createForeignKey(Table $table, Column $column, string $RefPointerString): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $RefPointerString table_name.table_column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         //SQLite needs to Re-Create the table for Foreign Keys, just do not support it for now...
         // TODO: Support Foreign Keys
@@ -217,38 +307,56 @@ class QueryMakerSQLite implements IQueryMaker
 
     }
 
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $ForeignKeyName
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         //SQLite needs to Re-Create the table for Foreign Keys, just do not support it for now...
         // TODO: Support Foreign Keys
         throw new NotImplementedException("Foreign keys are not implemented in SQLite");
     }
 
+    /**
+     * @param string $type1
+     * @param string $type2
+     * @return bool
+     */
     public static function compareType(string $type1, string $type2): bool
     {
         $type1 = strtolower($type1);
         $type2 = strtolower($type2);
 
-        if($type1 === "integer")
+        if ($type1 === "integer")
             $type1 = "int";
 
-        if($type2 === "integer")
+        if ($type2 === "integer")
             $type2 = "int";
 
         $Exceptions = [
             "tinyint", "mediumint", "int", "bigint",
         ];
 
-        foreach($Exceptions as $Exception)
-            if(Strings::startsWith($type1,$Exception) && Strings::startsWith($type2,$Exception))
+        foreach ($Exceptions as $Exception)
+            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception))
                 return true;
 
         return $type1 === $type2;
     }
 
+    /**
+     * @param string|null $type1
+     * @param string|null $type2
+     * @return bool
+     */
     public static function compareComment(?string $type1, ?string $type2): bool
     {
-        //Comments not supported by SQLite, just assume its correct anyhow
+        //Comments not supported by SQLite, just report that its correct anyhow
         return true;
     }
 }

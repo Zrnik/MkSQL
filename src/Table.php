@@ -68,7 +68,7 @@ class Table
     public function column(string $colName, ?string $colType = "int"): Column
     {
         $colName = Utils::confirmName($colName);
-        $colType = Utils::confirmName($colType, ["(", ")"]);
+        $colType = Utils::confirmName($colType, ["(", ")", ","]);
 
         if ($colName === "id")
             throw new \InvalidArgumentException("You cannot redeclare primary column 'id' in table '" . $this->tableName . "'.");
@@ -100,7 +100,7 @@ class Table
         $Commands = [];
 
         if (!$desc->tableExists)
-            $Commands[] = $desc->queryMakerClass::createTableQuery($this);
+            $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
 
         foreach ($this->columns as $column) {
             $Commands = array_merge($Commands, $column->install($desc, $desc->column($column->getName())));

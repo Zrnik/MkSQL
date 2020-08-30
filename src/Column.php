@@ -40,7 +40,7 @@ class Column
     public function __construct(string $colName, Table $parent, string $colType = "int")
     {
         $colName = Utils::confirmName($colName);
-        $colType = Utils::confirmName($colType, ["(", ")"]);
+        $colType = Utils::confirmName($colType, ["(", ")", ","]);
         $this->parent = $parent;
         $this->name = $colName;
         $this->type = $colType;
@@ -231,18 +231,18 @@ class Column
 
         if($desc === null || !$desc->columnExists)
         {
-            $Commands[] = $tdesc->queryMakerClass::createTableColumnQuery($tdesc->table, $this);
+            $Commands = array_merge($Commands, $tdesc->queryMakerClass::createTableColumnQuery($tdesc->table, $this, $tdesc, $desc));
 
             try{
                 foreach($this->getForeignKeys() as $foreignKey)
-                    $Commands[] = $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey);
+                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey, $tdesc, $desc));
             }
             catch (NotImplementedException $ex)
             {
                 // TODO: Document this behavior
             }
             if($this->getUnique())
-                $Commands[] = $tdesc->queryMakerClass::createUniqueIndexQuery($tdesc->table, $this);
+                $Commands = array_merge($Commands, $tdesc->queryMakerClass::createUniqueIndexQuery($tdesc->table, $this, $tdesc, $desc));
         }
         else
         {
@@ -263,23 +263,24 @@ class Column
 
             if(count($Reasons) > 0)
             {
-                $Query = $tdesc->queryMakerClass::alterTableColumnQuery($desc->table, $desc->column);
-                $Query->reason = "Reasons: ".implode(", ",$Reasons);
-                $Commands[] = $Query;
+                $Queries = $tdesc->queryMakerClass::alterTableColumnQuery($desc->table, $desc->column, $tdesc, $desc);
+                foreach($Queries as $alterQuery)
+                    $alterQuery->reason .= "\n<br>"."Reasons: ".implode(", ",$Reasons);
+
+                $Commands = array_merge($Commands, $Queries);
             }
 
             //Foreign Keys to Delete:
             try
             {
-                    if(count($desc->foreignKeys) > 0)
+                if(count($desc->foreignKeys) > 0)
                 {
                     foreach($desc->foreignKeys as $existingForeignKey => $foreignKeyName)
                     {
                         if(!in_array($existingForeignKey,$this->getForeignKeys())
                         )
                         {
-                            $Commands[] = $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName);
-
+                            $Commands = array_merge($Commands, $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName, $tdesc, $desc));
                         }
                     }
                 }
@@ -297,7 +298,7 @@ class Column
                 {
                     if(!isset($desc->foreignKeys[$requiredForeignKey]))
                     {
-                        $Commands[] = $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey);
+                        $Commands = array_merge($Commands, $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey, $tdesc, $desc));
                     }
                 }
             }
@@ -313,7 +314,7 @@ class Column
                 //Must be unique
                 if($desc->uniqueIndex === null)
                 {
-                    $Commands[] = $tdesc->queryMakerClass::createUniqueIndexQuery($desc->table, $desc->column);
+                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::createUniqueIndexQuery($desc->table, $desc->column, $tdesc, $desc));
                 }
             }
             else
@@ -321,7 +322,7 @@ class Column
                 //Must not be unique
                 if($desc->uniqueIndex !== null)
                 {
-                    $Commands[] = $tdesc->queryMakerClass::removeUniqueIndexQuery($desc->table, $desc->column, $desc->uniqueIndex);
+                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::removeUniqueIndexQuery($desc->table, $desc->column, $desc->uniqueIndex, $tdesc, $desc));
                 }
             }
         }

@@ -30,7 +30,7 @@ class TracyPanel implements IBarPanel
 
         $TabHtml = '';
 
-        $TabHtml .= '<span class="tracy-label"><img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;" src="'.$SelectedImg.'" alt="MkSQL Icon"> 
+        $TabHtml .= '<img style="max-width: '.$imgDimension.'px; max-height: '.$imgDimension.'px;" src="'.$SelectedImg.'" alt="MkSQL Icon"><span class="tracy-label"> 
         MkSQL '.((count(Metrics::getQueries()) === 0)  ? '' : '('.count(Metrics::getQueries()).')').'</span>';
 
         return $TabHtml;
@@ -171,29 +171,47 @@ class TracyPanel implements IBarPanel
              */
             foreach(Metrics::getQueries() as $Query)
             {
+
+                $cellBackground = 'rgba(0,150,0,0.1)';
+                $cellTextColor = 'black';
+
+
+                if(!$Query->executed)
+                {
+                    $cellBackground = 'rgba(155,155,155,1)';
+                    $cellTextColor = 'gray';
+                }
+
+                if($Query->errorText !== null)
+                {
+                    $cellBackground = 'rgba(250,150,150,1)';
+                    $cellTextColor = 'black';
+                }
+
+
                 $changesHtml .= '<tr>';
-                $changesHtml .= '<td><b style="color:darkgreen;">'.$Query->table->getName().'</b></td>';
-                $changesHtml .= '<td><b style="color:blue;">'.($Query->column!==null?$Query->column->getName():"-").'</b></td>';
-                $changesHtml .= '<td><b>'.$Query->reason.'</b></td>';
+                $changesHtml .= '<td style="background-color: '.$cellBackground.'; color: '.$cellTextColor.';"><b style="color:darkgreen;">'.$Query->table->getName().'</b></td>';
+                $changesHtml .= '<td style="background-color: '.$cellBackground.'; color: '.$cellTextColor.';"><b style="color:blue;">'.($Query->column!==null?$Query->column->getName():"-").'</b></td>';
+                $changesHtml .= '<td style="background-color: '.$cellBackground.'; color: '.$cellTextColor.';"><b>'.$Query->reason.'</b></td>';
                 $changesHtml .= '</tr>';
 
 
 
                 $changesHtml .= '<tr>';
-                $changesHtml .= '<td colspan="3">'.$Query->sql.'</td>';
+                $changesHtml .= '<td colspan="3" style="background-color: '.$cellBackground.'; color: '.$cellTextColor.';">'.$Query->sql.'</td>';
                 $changesHtml .= '</tr>';
 
                 if($Query->errorText !== null)
                 {
                     $changesHtml .= '<tr>';
-                    $changesHtml .= '<th colspan="3" style="color:red;">'.$Query->errorText.'</th>';
+                    $changesHtml .= '<th colspan="3" style="background-color: '.$cellBackground.';  color: maroon;">'.$Query->errorText.'</th>';
                     $changesHtml .= '</tr>';
                 }
 
                 if($Query->rolledBack)
                 {
                     $changesHtml .= '<tr>';
-                    $changesHtml .= '<th colspan="3" style="color:red;">NOT EXECUTED! ROLLBACK!</th>';
+                    $changesHtml .= '<th colspan="3" style="background-color: '.$cellBackground.'; ">Not Executed!</th>';
                     $changesHtml .= '</tr>';
                     break;
                 }
@@ -226,6 +244,14 @@ class TracyPanel implements IBarPanel
         $PanelHtml .= '</div></div>';
         return $PanelHtml;
 
+    }
+
+
+
+
+    public static function convertToMs(float $seconds)
+    {
+        return (number_format(round(1000*$seconds,2),2, '.', ''));
     }
 
 

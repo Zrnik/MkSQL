@@ -1,6 +1,6 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 06.08.2020 7:45
  */
@@ -161,16 +161,31 @@ class QueryMakerMySQL implements IQueryMaker
         return $Desc;
     }
 
-    public static function createTableQuery(Table $table): ?Query
+
+    /**
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
     {
-        return new Query(
-            $table,null,
-            "CREATE TABLE ".$table->getName()." (id int NOT NULL COMMENT 'mksql handled' AUTO_INCREMENT PRIMARY KEY) COMMENT 'Table handled by MkSQL';",
-            "Table '".$table->getName()."' does not exist. Creating."
-        );
+        return [
+            new Query(
+                $table,null,
+                "CREATE TABLE ".$table->getName()." (id int NOT NULL COMMENT 'mksql handled' AUTO_INCREMENT PRIMARY KEY) COMMENT 'Table handled by MkSQL';",
+                "Table '".$table->getName()."' does not exist. Creating."
+            )
+        ];
     }
 
-    public static function alterTableColumnQuery(Table $table, Column $column): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         $ModifySQL = 'ALTER TABLE '.$table->getName().' MODIFY '.$column->getName().' '.$column->getType();
 
@@ -182,14 +197,23 @@ class QueryMakerMySQL implements IQueryMaker
         if($column->getComment() !== null && $column->getComment() !== "")
             $ModifySQL .= " COMMENT '".$column->getComment()."'";
 
-        return new Query(
-            $table,$column,
-            trim($ModifySQL),
-            "reason-fill-by-column-class"
-        );
+        return [
+            new Query(
+                $table,$column,
+                trim($ModifySQL),
+                "reason-fill-by-column-class"
+            )
+        ];
     }
 
-    public static function createTableColumnQuery(Table $table, Column $column): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         $CreateSQL = 'ALTER TABLE '.$table->getName().' ';
         $CreateSQL .= 'ADD '.$column->getName().' '.$column->getType().' ';
@@ -206,36 +230,64 @@ class QueryMakerMySQL implements IQueryMaker
         if($column->getComment() !== null)
             $CreateSQL .= "COMMENT '".$column->getComment()."' ";
 
-        return new Query(
-            $table,$column,
-            trim($CreateSQL),
-            "Column '".$table->getName().".".$column->getName()."' does not exist. Creating."
-        );
+        return [
+            new Query(
+                $table,$column,
+                trim($CreateSQL),
+                "Column '".$table->getName().".".$column->getName()."' does not exist. Creating."
+            )
+        ];
     }
 
-    public static function createUniqueIndexQuery(Table $table, Column $column): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-
-
         $uniqueKeyName = Utils::confirmKeyName($table->getName().'_'.$column->getName().'_mksql_uindex');
 
-        return new Query(
-            $table,$column,
-            'CREATE UNIQUE INDEX '.$uniqueKeyName.' on '.$table->getName().' ('.$column->getName().');',
-            "Unique index required on column '".$table->getName().".".$column->getName()."'. Creating."
-        );
+        return [
+            new Query(
+                $table,$column,
+                'CREATE UNIQUE INDEX '.$uniqueKeyName.' on '.$table->getName().' ('.$column->getName().');',
+                "Unique index required on column '".$table->getName().".".$column->getName()."'. Creating."
+            )
+        ];
     }
 
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $uniqueKeyName
+     * @param $
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        return new Query(
-            $table,$column,
-            'DROP INDEX '.$uniqueKeyName.' ON '.$table->getName().';',
-            "Unique index on column '".$table->getName().".".$column->getName()."' is unwanted. Removing."
-        );
+        return [
+            new Query(
+                $table,$column,
+                'DROP INDEX '.$uniqueKeyName.' ON '.$table->getName().';',
+                "Unique index on column '".$table->getName().".".$column->getName()."' is unwanted. Removing."
+            )
+        ];
     }
 
-    public static function createForeignKey(Table $table, Column $column, string $RefPointerString): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $RefPointerString
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         $foreignKeyParts = explode(".",$RefPointerString);
         $targetTable = $foreignKeyParts[0];
@@ -243,23 +295,40 @@ class QueryMakerMySQL implements IQueryMaker
 
         $foreignKeyName = Utils::confirmKeyName($table->getName().'_'.$targetTable.'_'.$column->getName().'_'.$targetColumn.'_mksql_fk');
 
-        return new Query(
-            $table,$column,
-            'ALTER TABLE '.$table->getName().' ADD CONSTRAINT '.$foreignKeyName.'
-                         FOREIGN KEY ('.$column->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');',
-            "Foreign key on '".$table->getName().".".$column->getName()."' referencing '".$RefPointerString." required!'. Creating."
-        );
+        return [
+            new Query(
+                $table,$column,
+                'ALTER TABLE '.$table->getName().' ADD CONSTRAINT '.$foreignKeyName.'
+                             FOREIGN KEY ('.$column->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');',
+                "Foreign key on '".$table->getName().".".$column->getName()."' referencing '".$RefPointerString." required!'. Creating."
+            )
+        ];
     }
 
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName): ?Query
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $ForeignKeyName
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-         return new Query(
-             $table,$column,
-             "ALTER TABLE ".$table->getName()." DROP FOREIGN KEY ".$ForeignKeyName.";",
-             "Foreign key '".$ForeignKeyName."' not defined for column '".$column->getName()."'."
-         );
+        return [
+            new Query(
+                $table,$column,
+                "ALTER TABLE ".$table->getName()." DROP FOREIGN KEY ".$ForeignKeyName.";",
+                "Foreign key '".$ForeignKeyName."' not defined for column '".$column->getName()."'."
+            )
+        ];
     }
 
+    /**
+     * @param string $type1
+     * @param string $type2
+     * @return bool
+     */
     public static function compareType(string $type1, string $type2): bool
     {
         $type1 = strtolower($type1);
@@ -276,6 +345,11 @@ class QueryMakerMySQL implements IQueryMaker
         return $type1 === $type2;
     }
 
+    /**
+     * @param string|null $type1
+     * @param string|null $type2
+     * @return bool
+     */
     public static function compareComment(?string $type1, ?string $type2): bool
     {
         return $type1 === $type2;

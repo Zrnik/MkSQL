@@ -24,12 +24,12 @@ class Utils
     /**
      * @param $name
      * @param array $AdditionalAllowed
-     * @return string|null
+     * @throws InvalidArgumentException
      */
-    public static function confirmName($name, $AdditionalAllowed = [])
+    public static function confirmName($name  , $AdditionalAllowed = []) : void
     {
         if($name === null)
-            return null;
+            throw new InvalidArgumentException("Name is NULL!");
 
         if(Strings::contains($name, "--"))
             throw new InvalidArgumentException("Comment found in SQL query!");
@@ -42,7 +42,7 @@ class Utils
         if(str_replace($Allowed,"",$name) !== "")
             throw new InvalidArgumentException("Argument '".$name."' contains invalid characters!");
 
-        return $name;
+        //return $name;
     }
 
 
@@ -55,8 +55,5 @@ class Utils
     }
 
 
-    public static function convertToMs(float $seconds)
-    {
-        return (number_format(round(1000*$seconds,2),2, '.', ''));
-    }
+
 }

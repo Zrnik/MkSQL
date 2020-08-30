@@ -11,6 +11,7 @@ namespace Zrny\MkSQL\Queries\Makers;
 use Nette\Database\Connection;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
+use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
 
@@ -22,18 +23,71 @@ interface IQueryMaker
 
     // Table Operations
 
-    public static function createTableQuery(Table $table) : ?Query;
+    /**
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription) : ?array;
 
     //ColumnOperations
 
-    public static function alterTableColumnQuery(Table $table, Column $column) : ?Query;
-    public static function createTableColumnQuery(Table $table, Column $column) : ?Query;
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription) : ?array;
 
-    public static function createUniqueIndexQuery(Table $table, Column $column) : ?Query;
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex) : ?Query;
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
-    public static function createForeignKey(Table $table, Column $column, string $RefPointerString) : ?Query;
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName) : ?Query;
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $uniqueIndex
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $RefPointerString
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $ForeignKeyName
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
     //Comparsions:
 

@@ -134,29 +134,35 @@ class Updater
         Metrics::measureQueryPreparing(true);
 
         Metrics::measureQueryExecuting();
-        $ErrorQuery = null;
+        //$ErrorQuery = null;
         if(count($QueryCommands) > 0)
         {
             Metrics::logQueries($QueryCommands);
-            try
+
+            //New Version
+
+            $Success = true;
+
+
+            $this->getConnection()->beginTransaction();
+            foreach($QueryCommands as $QueryCommand)
             {
-                $this->getConnection()->beginTransaction();
-                foreach($QueryCommands as $QueryCommand){
-                    $ErrorQuery = $QueryCommand;
+                try
+                {
                     $this->getConnection()->query($QueryCommand->sql);
                     $QueryCommand->setExecuted(true);
                 }
+                catch(DriverException $ex)
+                {
+                    $QueryCommand->setExecuted(false);
+                    $QueryCommand->errorText = $ex->getMessage();
+                    $Success = false;
+                    break;
+                }
+            }
+
+            if($Success)
                 $this->getConnection()->commit();
-            }
-            catch(DriverException $ex)
-            {
-                if($ErrorQuery !== null)
-                    $ErrorQuery->errorText = $ex->getMessage();
-                $this->getConnection()->rollBack();
-                foreach($QueryCommands as $QueryCommand)
-                    $QueryCommand->setRolledBack(true);
-                throw DriverException::from($ex);
-            }
         }
 
 
