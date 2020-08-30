@@ -5,9 +5,7 @@
  * Date: 06.08.2020 7:41
  */
 
-
 namespace Zrny\MkSQL\Queries;
-
 
 use PDO;
 use PDOException;
@@ -65,17 +63,12 @@ class Query
 
     /**
      * @param PDO $pdo
+     * @return bool
      */
-    public function execute(PDO $pdo) : void
+    public function execute(PDO $pdo) : bool
     {
         $this->executed = true;
-        //TODO: Execute Query
-
-        //Tohle tu je kvuli PhpStormu aby neprudil...
-
-        if($pdo->inTransaction())
-            return;
-        $pdo->prepare($this->Query);
+        return $pdo->prepare($this->Query)->execute($this->Parameters);
     }
 
     //region Sql, Reason & Result
@@ -129,45 +122,19 @@ class Query
     //region Parameters
 
     /**
-     * @param string $key
      * @param string $value
      * @return $this
      */
-    public function paramAdd(string $key, string $value) : Query
+    public function paramAdd(string $value) : Query
     {
-        $this->Parameters[$key] = $value;
-        return $this;
-    }
-
-    /**
-     * @param array $param_kv
-     * @return $this
-     */
-    public function paramsAdd(array $param_kv) : Query
-    {
-        foreach($param_kv as $key => $value)
-            $this->paramAdd($key, $value); //This will ensure they are both strings.
-
-        return $this;
-    }
-
-    /**
-     * *Crying in YAGNI*
-     * @param $key
-     * @return Query
-     */
-    public function paramRemove($key) : Query
-    {
-        if(isset($this->Parameters[$key]))
-            unset($this->Parameters[$key]);
-
+        $this->Parameters[] = $value;
         return $this;
     }
 
     /**
      * @return array
      */
-    public function paramList() : array
+    public function params() : array
     {
         return $this->Parameters;
     }
