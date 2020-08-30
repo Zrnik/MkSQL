@@ -8,8 +8,9 @@
 
 namespace Zrny\MkSQL\Queries\Makers;
 
-use Nette\Database\Connection;
+use PDO;
 use Zrny\MkSQL\Column;
+use Zrny\MkSQL\Exceptions\NotImplementedException;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -17,20 +18,29 @@ use Zrny\MkSQL\Table;
 
 interface IQueryMaker
 {
-    // Table Information
+    //region Table Information
+    /**
+     * Creates a TableDescription from PDO and table name.
+     *
+     * @param PDO $pdo
+     * @param Table $table
+     * @return TableDescription|null
+     * @throws NotImplementedException
+     */
+    public static function describeTable(PDO $pdo, Table $table) : ?TableDescription;
+    //endregion
 
-    public static function describeTable(\PDO $pdo, Table $table) : ?TableDescription;
-
-    // Table Operations
-
+    //region Table Operations
     /**
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription) : ?array;
+    //endregion
 
-    //ColumnOperations
+    //region Column Operations
 
     /**
      * @param Table $table
@@ -38,6 +48,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription) : ?array;
 
@@ -47,6 +58,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -56,6 +68,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -66,6 +79,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -76,6 +90,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -86,12 +101,27 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws NotImplementedException
      */
     public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
-    //Comparsions:
+    //endregion
 
+    //region Comparing
+
+    /**
+     * @param string $type1
+     * @param string $type2
+     * @return bool
+     */
     public static function compareType(string $type1, string $type2) : bool;
+
+    /**
+     * @param string|null $comment1
+     * @param string|null $comment2
+     * @return bool
+     */
     public static function compareComment(?string $comment1, ?string $comment2) : bool;
 
+    //endregion
 }

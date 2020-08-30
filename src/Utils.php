@@ -8,8 +8,8 @@
 
 namespace Zrny\MkSQL;
 
-use InvalidArgumentException;
 use Nette\Utils\Strings;
+use Zrny\MkSQL\Exceptions\InvalidArgumentException;
 
 class Utils
 {
@@ -19,41 +19,72 @@ class Utils
      * @var string[]
      */
     private static array $_defaultAllowedCharacters = [
-        "A","a","B","b","C","c","D","d","E","e","F","f","G","g","H","h","I","i","J","j",
-        "K","k","L","l","M","m","N","n","O","o","P","p","Q","q","R","r","S","s","T","t",
-        "U","u","V","v","W","w","X","x","Y","y","Z","z",
-        "0","1","2","3","4","5","6","7","8","9","_"
+        "A", "a", "B", "b", "C", "c", "D", "d", "E", "e", "F", "f", "G", "g", "H", "h", "I", "i", "J", "j",
+        "K", "k", "L", "l", "M", "m", "N", "n", "O", "o", "P", "p", "Q", "q", "R", "r", "S", "s", "T", "t",
+        "U", "u", "V", "v", "W", "w", "X", "x", "Y", "y", "Z", "z",
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_"
     ];
 
     /**
      * This will confirm if the name is good for use in SQL query.
-     * We are using (against all rules) string concat-ing when making queries.
+     * We are (against all rules) concatenating strings when making queries.
      *
-     * @param string|null $name
+     * @param string $name
      * @param array $AdditionalAllowed
-     * @return string|null
+     * @return string
+     * @throws InvalidArgumentException
      */
-    public static function confirmName(?string $name, array $AdditionalAllowed = []) : ?string
+    public static function confirmName(string $name, array $AdditionalAllowed = []): string
     {
-        // Null is invalid
-        if($name === null)
-            throw new InvalidArgumentException("Name is NULL!");
-
         // Comments are not allowed obviously :)
-        if(Strings::contains($name, "--"))
-            throw new InvalidArgumentException("Comment found in SQL query!");
-
-        if(Strings::contains($name, "/*") || Strings::contains($name, "*/"))
+        if (Strings::contains($name, "--") || Strings::contains($name, "/*") || Strings::contains($name, "*/"))
             throw new InvalidArgumentException("Comment found in SQL query!");
 
         // Remove allowed characters, if the string isn't empty, it contains invalid characters!
-        $Allowed = array_merge(self::$_defaultAllowedCharacters,$AdditionalAllowed);
+        $Allowed = array_merge(static::$_defaultAllowedCharacters, $AdditionalAllowed);
 
-        if(str_replace($Allowed,"",$name) !== "")
-            throw new InvalidArgumentException("Argument '".$name."' contains invalid characters!");
+        if (str_replace($Allowed, "", $name) !== "")
+            throw new InvalidArgumentException("Argument '" . $name . "' contains invalid characters!");
 
-        // Its kind of FallTrough...
+        // "It's a kind of fall-trough" - Freddie
         return $name;
+    }
+
+    /**
+     * Table name only allows a-z, A-Z, 0-9 and underscore
+     *
+     * @param string $name
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function confirmTableName(string $name): string
+    {
+        return static::confirmName($name);
+    }
+
+    /**
+     * Column name only allows a-z, A-Z, 0-9 and underscore
+     *
+     * @param string $name
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function confirmColumnName(string $name): string
+    {
+        return static::confirmName($name);
+    }
+
+
+    /**
+     * Table name only allows a-z, A-Z, 0-9, underscore, parentheses and comma
+     *
+     * @param string $type
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function confirmType(string $type): string
+    {
+        return static::confirmName($type, ["(", ")", ","]);
     }
 
 
@@ -63,12 +94,13 @@ class Utils
      * @param string $keyName
      * @param int $maxLen
      * @return string
+     * @throws InvalidArgumentException
      */
-    public static function confirmKeyName(string $keyName, int $maxLen = 64) : string
+    public static function confirmKeyName(string $keyName, int $maxLen = 64): string
     {
-        if(Strings::length($keyName) > $maxLen)
-            return substr(md5($keyName),0,min(32, $maxLen));
-        return $keyName;
+        if (Strings::length($keyName) > $maxLen)
+            return substr(md5($keyName), 0, min(32, $maxLen));
+        return static::confirmName($keyName);
     }
 
 

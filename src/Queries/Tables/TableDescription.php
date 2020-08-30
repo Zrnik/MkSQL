@@ -1,15 +1,14 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 06.08.2020 7:55
  */
 
-
 namespace Zrny\MkSQL\Queries\Tables;
 
-
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
+use Zrny\MkSQL\Table;
 
 class TableDescription
 {
@@ -21,16 +20,17 @@ class TableDescription
     /**
      * @var bool
      */
-    public $tableExists = false;
+    public bool $tableExists = false;
 
     /**
      * @var ColumnDescription[]
      */
-    public $columns = [];
+    public array $columns = [];
+
     /**
-     * @var \Zrny\MkSQL\Table
+     * @var Table
      */
-    public $table;
+    public Table $table;
 
     /**
      * @param string $getName

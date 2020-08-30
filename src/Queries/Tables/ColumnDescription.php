@@ -1,47 +1,59 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 06.08.2020 7:55
  */
 
-
 namespace Zrny\MkSQL\Queries\Tables;
+
+use Zrny\MkSQL\Column;
+use Zrny\MkSQL\Table;
 
 class ColumnDescription
 {
-    public $columnExists = false;
     /**
-     * @var \Zrny\MkSQL\Column
+     * @var bool
      */
-    public $column;
+    public bool $columnExists = false;
+
     /**
-     * @var \Zrny\MkSQL\Table
+     * @var Column
      */
-    public $table;
+    public Column $column;
+
+    /**
+     * @var Table
+     */
+    public Table $table;
 
     /**
      * @var bool
      */
-    public $notNull;
+    public bool $notNull;
+
     /**
      * @var string|null
      */
-    public $comment;
+    public ?string $comment;
+
     /**
      * @var string|null
      */
-    public $uniqueIndex;
+    public ?string $uniqueIndex;
+
     /**
      * @var string[]
      */
-    public $foreignKeys = [];
+    public array $foreignKeys = [];
+
     /**
-     * @var string|null
+     * @var mixed
      */
     public $default;
+
     /**
      * @var string
      */
-    public $type;
+    public string $type;
 }

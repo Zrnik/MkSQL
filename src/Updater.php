@@ -9,9 +9,10 @@ namespace Zrny\MkSQL;
 
 use InvalidArgumentException;
 use PDO;
+use PDOException;
 use Zrny\MkSQL\Enum\DriverType;
 use Zrny\MkSQL\Exceptions\InvalidDriverException;
-use Zrny\MkSQL\Nette\Metrics;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -42,52 +43,88 @@ class Updater
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+
+        $options = [
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ];
+
+        foreach ($options as $key => $value)
+            $this->pdo->setAttribute($key, $value);
     }
 
+    //region Tables
     /**
      * @param string $tableName
+     * @param bool $rewrite
      * @return Table
+     * @throws TableDefinitionExists
      */
-    public function createTable(string $tableName) : Table
+    public function tableCreate(string $tableName, bool $rewrite = false): Table
     {
         $newTable = new Table($tableName);
-        return $this->addTable($newTable);
+        return $this->tableAdd($newTable, $rewrite);
     }
 
     /**
      * @param Table $table
+     * @param bool $rewrite
      * @return Table
+     * @throws TableDefinitionExists
      */
-    public function addTable(Table $table) : Table
+    public function tableAdd(Table $table, bool $rewrite = false): Table
     {
+        if (!$rewrite && isset($this->tables[$table->getName()]))
+            throw new TableDefinitionExists("Table '" . $table->getName() . "' already defined!");
+
         $this->tables[$table->getName()] = $table;
         $table->setParent($this);
         return $table;
     }
 
     /**
+     * @return Table[]
+     */
+    public function tableList(): array
+    {
+        return $this->tables;
+    }
+
+    /**
+     * @param string $tableName
+     * @return Table|null
+     */
+    public function tableGet(string $tableName) : ?Table
+    {
+        if(isset($this->tables[$tableName]))
+            return $this->tables[$tableName];
+        return null;
+    }
+    //endregion
+
+    /**
      * @return string|null
      */
-    private function getDriverType() : ?string
+    private function getDriverType(): ?string
     {
-        try
-        {
+        try {
             return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
-        }
-        catch (InvalidArgumentException $ex)
-        {
+        } catch (InvalidArgumentException $ex) {
             return null;
         }
     }
 
-
-    public function install()
+    /**
+     * @throws Exceptions\NotImplementedException
+     * @throws InvalidDriverException
+     */
+    public function install() : void
     {
         Metrics::measureTotal();
 
-        //region QueryPrepare
+        //region Query[] Preparing
         Metrics::measureQueryPreparing();
-
 
         //region Query Array
         /**
@@ -98,25 +135,25 @@ class Updater
 
         //region Driver Type & Query Maker Class
 
-        if($this->getDriverType())
+        if ($this->getDriverType())
             throw new InvalidDriverException("Driver type is 'NULL'!");
 
         $driverName = DriverType::getName($this->getDriverType());
 
         /** @var IQueryMaker $QueryMakerClass */
-        $QueryMakerClass = "\\Zrny\\MkSQL\\Queries\\Makers\\QueryMaker".$driverName;
+        $QueryMakerClass = "\\Zrny\\MkSQL\\Queries\\Makers\\QueryMaker" . $driverName;
 
-        if(!class_exists($QueryMakerClass))
+        if (!class_exists($QueryMakerClass))
             throw new InvalidDriverException(
-                "Invalid driver '".$driverName."' for package 'Zrny\\MkSQL' class 'Updater'. 
-                Allowed drivers: ".implode(", ",DriverType::getNames(false)));
+                "Invalid driver '" . $driverName . "' for package 'Zrny\\MkSQL' class 'Updater'. 
+                Allowed drivers: " . implode(", ", DriverType::getNames(false)));
 
         //endregion
 
-        foreach($this->tables as $table)
-        {
-            Metrics::measureTable($table->getName(),"describing");
+        foreach ($this->tables as $table) {
 
+            //region Describe Table
+            Metrics::measureTable($table->getName(), "describing");
             Metrics::logTableInstallCalls($table->getName());
 
             /**
@@ -124,58 +161,41 @@ class Updater
              */
             $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
-            Metrics::measureTable($table->getName(),"describing", true);
+            Metrics::measureTable($table->getName(), "describing", true);
+            //endregion
 
-            Metrics::measureTable($table->getName(),"sql-generating");
-            $Commands = $table->install($TableDescription);
+            //region Query Generating
+            Metrics::measureTable($table->getName(), "sql-generating");
 
-            Metrics::measureTable($table->getName(),"sql-generating", true);
-            $QueryCommands = array_merge($QueryCommands, $Commands);
+            $QueryCommands = array_merge($QueryCommands, $table->install($TableDescription));
+
+            Metrics::measureTable($table->getName(), "sql-generating", true);
+            //endregion
+
         }
 
         Metrics::measureQueryPreparing(true);
         //endregion
 
-
-        //region Query Executing
+        //region Query[] Executing
         Metrics::measureQueryExecuting();
-        //$ErrorQuery = null;
-        if(count($QueryCommands) > 0)
-        {
+
+        if (count($QueryCommands) > 0) {
             Metrics::logQueries($QueryCommands);
 
-            //New Version
-
-            $Success = true;
-
-
-            $this->getConnection()->beginTransaction();
-            foreach($QueryCommands as $QueryCommand)
-            {
-                try
-                {
-                    $this->getConnection()->query($QueryCommand->sql);
-                    $QueryCommand->setExecuted(true);
-                }
-                catch(DriverException $ex)
-                {
-                    $QueryCommand->setExecuted(false);
-                    $QueryCommand->errorText = $ex->getMessage();
-                    $Success = false;
+            foreach ($QueryCommands as $QueryCommand) {
+                try {
+                    $QueryCommand->execute($this->pdo);
+                } catch (PDOException $pdoEx) {
+                    $QueryCommand->setError($pdoEx);
                     break;
                 }
             }
-
-            if($Success)
-                $this->getConnection()->commit();
         }
 
-
         Metrics::measureQueryExecuting(true);
-
         //endregion
 
         Metrics::measureTotal(true);
-
     }
 }

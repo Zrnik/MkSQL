@@ -1,22 +1,30 @@
 <?php
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 06.08.2020 8:05
  */
 
 
-namespace Zrny\MkSQL\Nette;
+namespace Zrny\MkSQL;
 
-use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Table;
 
 class Metrics
 {
+    /**
+     * @var float|int
+     */
+    public static float $_measurementTotal = 0;
 
-    public static $_measurementTotal = 0;
-    private static $_measurementTotalBegin = 0;
+    /**
+     * @var float|int
+     */
+    private static float $_measurementTotalBegin = 0;
+
+    /**
+     * @param false $finished
+     */
     public static function measureTotal($finished = false)
     {
         if($finished)
@@ -29,9 +37,18 @@ class Metrics
         }
     }
 
+    /**
+     * @var float|int
+     */
+    public static float $_measurementQueryExecuting = 0;
+    /**
+     * @var float|int
+     */
+    private static float $_measurementQueryExecutingBegin = 0;
 
-    public static $_measurementQueryExecuting = 0;
-    private static $_measurementQueryExecutingBegin = 0;
+    /**
+     * @param false $finished
+     */
     public static function measureQueryExecuting($finished = false)
     {
         if($finished)
@@ -44,10 +61,19 @@ class Metrics
         }
     }
 
+    /**
+     * @var float|int
+     */
+    public static float $_measurementQueryPreparing = 0;
+    /**
+     * @var float|int
+     */
+    private static float $_measurementQueryPreparingBegin = 0;
 
-    public static $_measurementQueryPreparing = 0;
-    private static $_measurementQueryPreparingBegin = 0;
-    public static function measureQueryPreparing($finished = false)
+    /**
+     * @param bool $finished
+     */
+    public static function measureQueryPreparing(bool $finished = false)
     {
         if($finished)
         {
@@ -59,9 +85,20 @@ class Metrics
         }
     }
 
+    /**
+     * @var array
+     */
+    public static array $_measurementTables = [];
+    /**
+     * @var array
+     */
+    private static array $_measurementTablesBegins = [];
 
-    public static $_measurementTables = [];
-    private static $_measurementTablesBegins = [];
+    /**
+     * @param string $TableName
+     * @param string $Action
+     * @param false $finished
+     */
     public static function measureTable(string $TableName, string $Action, $finished = false)
     {
         if(!isset(static::$_measurementTables[$TableName]))
@@ -85,7 +122,14 @@ class Metrics
         }
     }
 
-    private static $_TableCalls = [];
+    /**
+     * @var array
+     */
+    private static array $_TableCalls = [];
+
+    /**
+     * @param string $tableName
+     */
     public static function logTableInstallCalls(string $tableName) : void
     {
         if(!isset(static::$_TableCalls[$tableName]))
@@ -93,6 +137,10 @@ class Metrics
         static::$_TableCalls[$tableName]++;
     }
 
+    /**
+     * @param string $tableName
+     * @return mixed
+     */
     public static function getTableCallCount(string $tableName)
     {
         if(!isset(static::$_TableCalls[$tableName]))
@@ -103,7 +151,7 @@ class Metrics
     /**
      * @var Query[]
      */
-    private static $_Queries = [];
+    private static array $_Queries = [];
     public static function logQueries(array $Queries)
     {
         static::$_Queries = array_merge(static::$_Queries, $Queries);
@@ -112,13 +160,21 @@ class Metrics
     /**
      * @return Query[]
      */
-    public static function getQueries()
+    public static function getQueries() : array
     {
         return static::$_Queries;
     }
 
 
-    private static $_Structure = [];
+    /**
+     * @var array
+     */
+    private static array $_Structure = [];
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     */
     public static function logStructure(Table $table, Column $column)
     {
         if(!isset(static::$_Structure[$table->getName()]))
@@ -128,6 +184,9 @@ class Metrics
             static::$_Structure[$table->getName()][$column->getName()] = $column;
     }
 
+    /**
+     * @return array
+     */
     public static function getStructure()
     {
         return static::$_Structure;

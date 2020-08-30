@@ -7,7 +7,8 @@
 
 namespace Zrny\MkSQL;
 
-use LogicException;
+use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Nette\Metrics;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -22,12 +23,12 @@ class Table
     /**
      * @var string
      */
-    private $tableName;
+    private string $tableName;
 
     /**
      * @var Column[]
      */
-    private $columns = [];
+    private array $columns = [];
 
     /**
      * Table constructor.
@@ -35,8 +36,7 @@ class Table
      */
     public function __construct(string $tableName)
     {
-        $tableName = Utils::confirmName($tableName);
-        $this->tableName = $tableName;
+        $this->tableName =  Utils::confirmTableName($tableName);
     }
 
     //region Parent
@@ -73,63 +73,71 @@ class Table
         return $this->tableName;
     }
 
-    /**
-     * @return Column[]
-     */
-    public function getColumns(): array
-    {
-        return $this->columns;
-    }
-
     //endregion
 
     //region Columns
 
-
-    public function createColumn(string $columnName, ?string $columnType) : Column
+    /**
+     * @param string $columnName
+     * @param string|null $columnType
+     * @param bool $rewrite
+     * @return Column
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
+    public function columnCreate(string $columnName, ?string $columnType, bool $rewrite = false) : Column
     {
         $column = new Column($columnName, $columnType);
-        return $this->addColumn($column);
+        return $this->columnAdd($column, $rewrite);
     }
 
-    private function addColumn(Column $column)
+    /**
+     * @param Column $column
+     * @param bool $rewrite
+     * @return Column
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
+    private function columnAdd(Column $column, bool $rewrite = false) : Column
     {
+        if($column->getName() === "id")
+            throw new PrimaryKeyAutomaticException("Primary, auto incrementing key 'id' is created automatically.");
+
+        if(!$rewrite && isset($this->columns[$column->getName()]))
+            throw new ColumnDefinitionExists("Column '".$column->getName()."' already defined in table '".$this->getName()."'.");
+
         $this->columns[$column->getName()] = $column;
         $column->setParent($this);
         return $column;
     }
 
-
-
-    /*
-     * Creates a table column
-     * @param string $colName
-     * @param string|null $colType
-     * @return Column
-
-    public function column(string $colName, ?string $colType = "int"): Column
+    /**
+     * @return Column[]
+     */
+    public function columnList(): array
     {
-        $colName = Utils::confirmName($colName);
-        $colType = Utils::confirmName($colType, ["(", ")", ","]);
+        return $this->columns;
+    }
 
-        if ($colName === "id")
-            throw new \InvalidArgumentException("You cannot redeclare primary column 'id' in table '" . $this->tableName . "'.");
+    /**
+     * @param string $columnName
+     * @return Column|null
+     */
+    public function columnGet(string $columnName) : ?Column
+    {
+        if(isset($this->columns[$columnName]))
+            return $this->columns[$columnName];
 
-        if (!isset($this->columns[$colName]))
-            $this->columns[$colName] = new Column($colName, $this, $colType);
+        return null;
+    }
 
-        if ($this->columns[$colName]->getType() !== $colType)
-            throw new LogicException("Cannot redeclare column '" . $colName . "' with type '" . $this->columns[$colName]->getType() . "' as '" . $colType . "'!");
-
-        return $this->columns[$colName];
-    }*/
     //endregion
 
     //region Install
-
     /**
      * @param TableDescription $desc
      * @return Query[]
+     * @throws Exceptions\NotImplementedException
      */
     public function install(TableDescription $desc): array
     {
@@ -145,7 +153,6 @@ class Table
 
         return $Commands;
     }
-
     //endregion
 
 

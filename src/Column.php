@@ -8,9 +8,8 @@
 
 namespace Zrny\MkSQL;
 
-use InvalidArgumentException;
-use LogicException;
-use Nette\NotImplementedException;
+use Zrny\MkSQL\Exceptions\InvalidArgumentException;
+use Zrny\MkSQL\Exceptions\InvalidForeignKeyIdentifierException;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 
@@ -19,38 +18,53 @@ class Column
     /**
      * @var string
      */
-    private $type;
+    private string $type;
 
     /**
      * @var string
      */
-    private $name;
+    private string $name;
 
     /**
-     * @var Table
+     * @var Table|null
      */
-    private $parent;
+    private ?Table $parent;
 
     /**
      * Column constructor.
-     * @param string $colName
-     * @param Table $parent
-     * @param string $colType
+     * @param string $columnName
+     * @param string $columnType
      */
     public function __construct(string $columnName, string $columnType = "int")
     {
-        $this->name = $columnName;
-        $this->type = $columnType;
+        $this->name = Utils::confirmColumnName($columnName);
+        $this->type = Utils::confirmType($columnType);
     }
 
+    //region Parent
+
     /**
-     * Returns back to parent table.
+     * Ends defining of column if using
+     * the fluent way of creating the tables.
+     *
      * @return Table
      */
-    public function endColumn(): Table
+    public function endTable(): Table
     {
         return $this->parent;
     }
+
+    /**
+     * @param Table $parent
+     */
+    public function setParent(Table $parent)
+    {
+        $this->parent = $parent;
+    }
+
+    //endregion
+
+    //region Getters
 
     /**
      * Returns column name.
@@ -70,12 +84,14 @@ class Column
         return $this->type;
     }
 
+    //endregion
+
     //region Unique
 
     /**
      * @var bool
      */
-    private $unique = false;
+    private bool $unique = false;
 
     /**
      * Sets column to be unique or not
@@ -85,8 +101,11 @@ class Column
     public function setUnique(bool $Unique = true): Column
     {
         //Unique must be NotNull
-        $this->setNotNull();
+        if($Unique)
+            $this->setNotNull(true);
+
         $this->unique = $Unique;
+
         return $this;
     }
 
@@ -104,7 +123,7 @@ class Column
     /**
      * @var bool
      */
-    private $NotNull = false;
+    private bool $NotNull = false;
 
     /**
      * Sets column to be NOT NULL or can be NULL
@@ -128,6 +147,7 @@ class Column
     //endregion
 
     //region Default Value
+
     /**
      * @var mixed|null
      */
@@ -157,7 +177,7 @@ class Column
     /**
      * @var string[]
      */
-    private $foreignKeys = [];
+    private array $foreignKeys = [];
 
     /**
      * Add foreign key on column
@@ -167,7 +187,7 @@ class Column
     public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmName($foreignKey, ["."]);
-        $setForeignException = new LogicException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
+        $setForeignException = new InvalidForeignKeyIdentifierException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
         $exploded = explode(".", $foreignKey);
 
         if (count($exploded) != 2)
@@ -197,7 +217,7 @@ class Column
     /**
      * @var string|null
      */
-    private $comment = 'mksql handled';
+    private ?string $comment = 'mksql handled';
 
     /**
      * Set or unset (with null) comment string for column
@@ -222,104 +242,92 @@ class Column
 
     //endregion
 
-    public function install(TableDescription $tdesc, ?ColumnDescription $desc): array
+    /**
+     * @param TableDescription $tableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return array
+     * @throws Exceptions\NotImplementedException
+     */
+    public function install(TableDescription $tableDescription, ?ColumnDescription $columnDescription): array
     {
         $Commands = [];
 
-        if($desc === null || !$desc->columnExists)
+        if($columnDescription === null || !$columnDescription->columnExists)
         {
-            $Commands = array_merge($Commands, $tdesc->queryMakerClass::createTableColumnQuery($tdesc->table, $this, $tdesc, $desc));
+            $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createTableColumnQuery($tableDescription->table, $this, $tableDescription, $columnDescription));
 
-            try{
-                foreach($this->getForeignKeys() as $foreignKey)
-                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::createForeignKey($tdesc->table, $this, $foreignKey, $tdesc, $desc));
-            }
-            catch (NotImplementedException $ex)
-            {
-                // TODO: Document this behavior
-            }
+            foreach($this->getForeignKeys() as $foreignKey)
+                $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createForeignKey($tableDescription->table, $this, $foreignKey, $tableDescription, $columnDescription));
+
             if($this->getUnique())
-                $Commands = array_merge($Commands, $tdesc->queryMakerClass::createUniqueIndexQuery($tdesc->table, $this, $tdesc, $desc));
+                $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createUniqueIndexQuery($tableDescription->table, $this, $tableDescription, $columnDescription));
         }
         else
         {
             $Reasons = [];
             //Utils::typeEquals($desc->type, $this->getType())
-            if(!$tdesc->queryMakerClass::compareType($desc->type, $this->getType()))
-                $Reasons[] = "type different [".$desc->type." != ".$this->getType()."]";
+            if(!$tableDescription->queryMakerClass::compareType($columnDescription->type, $this->getType()))
+                $Reasons[] = "type different [".$columnDescription->type." != ".$this->getType()."]";
 
-            if($desc->notNull !== $this->getNotNull())
-                $Reasons[] = "not_null [is: ".($desc->notNull?"yes":"no")." need:".($this->getNotNull()?"yes":"no")."]";
+            if($columnDescription->notNull !== $this->getNotNull())
+                $Reasons[] = "not_null [is: ".($columnDescription->notNull?"yes":"no")." need:".($this->getNotNull()?"yes":"no")."]";
 
             //$desc->comment != $this->getComment()
-            if(!$tdesc->queryMakerClass::compareComment($desc->comment, $this->getComment()))
-                $Reasons[] = "comment [".$desc->comment." != ".$this->getComment()."]";
+            if(!$tableDescription->queryMakerClass::compareComment($columnDescription->comment, $this->getComment()))
+                $Reasons[] = "comment [".$columnDescription->comment." != ".$this->getComment()."]";
 
-            if($desc->default != $this->getDefault())
-                $Reasons[] = "default [".$desc->default." != ".$this->getDefault()."]";
+            if($columnDescription->default != $this->getDefault())
+                $Reasons[] = "default [".$columnDescription->default." != ".$this->getDefault()."]";
 
             if(count($Reasons) > 0)
             {
-                $Queries = $tdesc->queryMakerClass::alterTableColumnQuery($desc->table, $desc->column, $tdesc, $desc);
+                $Queries = $tableDescription->queryMakerClass::alterTableColumnQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription);
+
+                $reasons = 'Reasons: '.implode(", ",$Reasons);
+
                 foreach($Queries as $alterQuery)
-                    $alterQuery->reason .= "\n<br>"."Reasons: ".implode(", ",$Reasons);
+                    $alterQuery->setReason($reasons);
 
                 $Commands = array_merge($Commands, $Queries);
             }
 
             //Foreign Keys to Delete:
-            try
+            if(count($columnDescription->foreignKeys) > 0)
             {
-                if(count($desc->foreignKeys) > 0)
+                foreach($columnDescription->foreignKeys as $existingForeignKey => $foreignKeyName)
                 {
-                    foreach($desc->foreignKeys as $existingForeignKey => $foreignKeyName)
+                    if(!in_array($existingForeignKey,$this->getForeignKeys())
+                    )
                     {
-                        if(!in_array($existingForeignKey,$this->getForeignKeys())
-                        )
-                        {
-                            $Commands = array_merge($Commands, $tdesc->queryMakerClass::removeForeignKey($desc->table, $desc->column, $foreignKeyName, $tdesc, $desc));
-                        }
+                        $Commands = array_merge($Commands, $tableDescription->queryMakerClass::removeForeignKey($columnDescription->table, $columnDescription->column, $foreignKeyName, $tableDescription, $columnDescription));
                     }
                 }
-            }
-            catch(NotImplementedException $ex)
-            {
-                // Foreign Keys not implemented,
-                // TODO: Document this behavior
             }
 
             //Foreign Keys to Add:
-            try
+            foreach($this->getForeignKeys() as $requiredForeignKey)
             {
-                foreach($this->getForeignKeys() as $requiredForeignKey)
+                if(!isset($columnDescription->foreignKeys[$requiredForeignKey]))
                 {
-                    if(!isset($desc->foreignKeys[$requiredForeignKey]))
-                    {
-                        $Commands = array_merge($Commands, $tdesc->queryMakerClass::createForeignKey($desc->table, $desc->column, $requiredForeignKey, $tdesc, $desc));
-                    }
+                    $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription));
                 }
-            }
-            catch(NotImplementedException $ex)
-            {
-                // Foreign Keys not implemented,
-                // TODO: Document this behavior
             }
 
             // Unique?
             if($this->getUnique())
             {
                 //Must be unique
-                if($desc->uniqueIndex === null)
+                if($columnDescription->uniqueIndex === null)
                 {
-                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::createUniqueIndexQuery($desc->table, $desc->column, $tdesc, $desc));
+                    $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createUniqueIndexQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription));
                 }
             }
             else
             {
                 //Must not be unique
-                if($desc->uniqueIndex !== null)
+                if($columnDescription->uniqueIndex !== null)
                 {
-                    $Commands = array_merge($Commands, $tdesc->queryMakerClass::removeUniqueIndexQuery($desc->table, $desc->column, $desc->uniqueIndex, $tdesc, $desc));
+                    $Commands = array_merge($Commands, $tableDescription->queryMakerClass::removeUniqueIndexQuery($columnDescription->table, $columnDescription->column, $columnDescription->uniqueIndex, $tableDescription, $columnDescription));
                 }
             }
         }
