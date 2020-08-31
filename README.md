@@ -1,170 +1,141 @@
 # MkSQL
 
-**<span style="color:red;">Warning: </span> this package has no tests! Its like religion, you gotta believe!**
+
 
 MkSQL is SQL tables AutoUpdater. Tables are defined in code, 
 and MkSQL makes sure they are up to date.
 
 This package is only creating and/or modifying tables and columns, it never deletes them!
 
+##### Installation
+
+`composer require zrny/mksql`
+
 ##### Supported Drivers & Features: 
 
 | Driver | Not Null | Default Value | Comments | Unique Index | Foreign Keys |
 |---|---|---|---|---|---|
-| MySQL | ✅ | ✅ | ✅ | ✅ | ✅ 
-| SQLite | ✅ | ✅ | ❌ | ✅ | ❌  
+| [MySQL](https://www.mysql.com) ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 
+| [SQLite](https://www.sqlite.org/index.html) ✅ | ✅ | ✅ | ❌ | ✅ | ✅  
+| [PgSQL](https://www.postgresql.org) ❌ <td colspan=5> coming soon (or maybe later)
 
- - no other drivers are supported (yet?)
+ - No other drivers are planned to be implemented
 
-### Installation
-
-`composer require zrny/mksql`
-
-This package is best served cold, with lime and by Dependency Injection.
-
-It works with `\Nette\Database\Connection` and so it requires its 
-instance OR database credentials like PDO;
-
-###### Creating with Credentials
-```php
-$updater = new \Zrny\MkSQL\Updater('mysql:host=localhost;dbname=mksql','root','');
-```
-###### Creating with `Connection` instance:
+# Usage
 
 ```php
-// We need connection from somewhere
-$connection= new \Nette\Database\Connection('mysql:host=localhost;dbname=mksql','root','');
-...
-$updater = new \Zrny\MkSQL\Updater();
-$updater->setConnection($connection);
-```
+//For Example:
+use Zrny\MkSQL\Updater;
+use Zrny\MkSQL\Column;
+use Zrny\MkSQL\Table;
 
-###### Configuration for [Nette Framework](https://nette.org/)
-
- - Configuration
- 
-```neon
-tracy:
-    bar:
-        - Zrny\MkSQL\Nette\TracyPanel
-
-services:
-    - Zrny\MkSQL\Updater
-```
-
- - Then you can use prepared `MkSQLFactory` factory in your own factories.
- 
-```php
-class ArticleRepositoryFactory
-{
-    private $connection;
-    private $mksqlFactory;
-
-    public function __construct(\Nette\Database\Connection $connection, \Zrny\MkSQL\MkSQLFactory $mksqlFactory)
+class Repository
+{    
+    public function __construct(PDO $pdo)
     {
-        $this->connection = $connection;
-        $this->mksqlFactory = $mksqlFactory;
-    }
-
-    public function create()
-    {
-        return new ArticleRepository($this->connection,  $this->mksqlFactory->create());
+        $Updater = new Updater($pdo);
+    
+        // Example of doing same structure
+        // 1. We can create objects
+    
+        // Every table automatically gets "id" column that is auto increment.
+        $Accounts = new Table("accounts");
+    
+        $Login = new Column("login", "varchar(60)");
+        $Login->setUnique();
+        $Login->setNotNull();
+        $Accounts->columnAdd($Login);
+    
+        $Email = new Column("email", "varchar(60)");
+        $Email->setUnique();
+        $Email->setNotNull();
+        $Accounts->columnAdd($Email);
+    
+        $Password = new Column("password", "varchar(255)");
+        $Password->setNotNull();
+        $Accounts->columnAdd($Password);
+    
+        $Updater->tableAdd($Accounts);
+    
+        $Sessions = new Table("sessions");
+    
+        $SessionID = new Column("session_id");
+        $SessionID->setComment("SHA 128bit Key");
+        $SessionID->setUnique();
+        $SessionID->setNotNull();
+        $Sessions->columnAdd($SessionID);
+    
+        $Account = new Column("account_id");
+        $Account->addForeignKey("accounts.id");
+        $Sessions->columnAdd($Account);
+    
+        $Updater->install();
+    
+        // 2. Or we can create whole structure fluently: (depends on your taste)
+    
+       $Updater->tableCreate("accounts")
+    
+            ->columnCreate("login","varchar(60)")
+                ->setUnique()
+                ->setNotNull()
+            ->endColumn()
+    
+            ->columnCreate("email","varchar(60)")
+                ->setUnique()
+                ->setNotNull()
+            ->endColumn()
+    
+            ->columnCreate("password", "varchar(255)")
+                ->setNotNull()
+            ->endColumn()
+        ->endTable()
+    
+        ->tableCreate("roles")
+            ->columnCreate("desc","char(60)")
+            ->endColumn()
+        ->endTable()
+    
+        ->tableCreate("sessions")
+    
+            ->columnCreate("session_id","char(32)")
+                ->setComment("SHA 128bit Key")
+                ->setUnique()
+                ->setNotNull()
+            ->endColumn()
+    
+            ->columnCreate("account") //Type is "int" by default
+                ->addForeignKey("accounts.id")
+            ->endColumn()
+    
+        ->endTable()
+        ->install();
     }
 }
 ```
-        
-### Example
+    
+### [Tracy](https://tracy.nette.org/en/) Panel
 
+Add this to your bootstrap file:
 ```php
-$updater->table("roles")
-    
-        ->column("role_name")
-        ->endColumn()
-    
-    ->endTable()
+use \Zrny\MkSQL\Tracy\Panel;
+Tracy\Debugger::getBar()->addPanel(new Panel());
+````
 
-    ->table("accounts")
-    
-        ->column("login","varchar(100)")
-            ->setNotNull()
-            ->setUnique()
-        ->endColumn()
+Or, if you are using [Nette Framework](https://nette.org/en/), 
+register it in your configuration file:
 
-        ->column("password", "varchar(255)")
-            ->setNotNull()
-        ->endColumn()
-    
-        ->column("email", "varchar(255)")
-            ->setNotNull()
-            ->setUnique()
-        ->endColumn()
-    
-        ->column("role")
-            ->addForeignKey("roles.id")
-        ->endColumn()
-
-    ->endTable()
-
-    ->table("sessions")
-
-        ->column("session_id","char(64)")
-        ->endColumn()
-
-        ->column("account")
-            ->addForeignKey("accounts.id")
-        ->endColumn()
-
-    ->endTable()
-    ->install();
+```neon
+tracy: 
+    bar: 
+        - Zrny\MkSQL\Tracy\Panel
 ```
 
-##### Result in MySQL (creating):
- - Those speeds are from my personal machine, not from a real server!
 
-###### Php Storm Connection Panel
+     
+    
+        
 
-![image](./img/mysql_connection_panel.jpg) 
 
-###### Connection
 
-![image](./img/mysql_query_panel.jpg) 
-
-###### Tracy Panel
-
-![image](./img/mysql_mksql_panel.jpg) 
-
-##### Result in MySQL (check):
-
-###### Connection
-
-![image](./img/mysql_up2date_query_panel.jpg) 
-
-###### Tracy Panel
-
-![image](./img/mysql_up2date_mksql_panel.jpg) 
-
-##### Result in SQLite (creating):
-
-###### Php Storm Connection Panel
-
-![image](./img/sqlite_connection_panel.jpg) 
-
-###### Connection
-
-![image](./img/sqlite_query_panel.jpg) 
-
-###### Tracy Panel
-
-![image](./img/sqlite_mksql_panel.jpg) 
-
-##### Result in SQLite (check):
-
-###### Connection
-
-![image](./img/sqlite_up2date_query_panel.jpg) 
-
-###### Tracy Panel
-
-![image](./img/sqlite_up2date_mksql_panel.jpg) 
 
 

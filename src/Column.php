@@ -31,6 +31,12 @@ class Column
     private ?Table $parent;
 
     /**
+     * @var array
+     * @internal
+     */
+    public array $_parameters = [];
+
+    /**
      * Column constructor.
      * @param string $columnName
      * @param string $columnType
@@ -41,6 +47,8 @@ class Column
         $this->type = Utils::confirmType($columnType);
     }
 
+
+
     //region Parent
 
     /**
@@ -49,7 +57,7 @@ class Column
      *
      * @return Table
      */
-    public function endTable(): Table
+    public function endColumn(): Table
     {
         return $this->parent;
     }
@@ -186,7 +194,7 @@ class Column
      */
     public function addForeignKey(string $foreignKey): Column
     {
-        $foreignKey = Utils::confirmName($foreignKey, ["."]);
+        $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
         $setForeignException = new InvalidForeignKeyIdentifierException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
         $exploded = explode(".", $foreignKey);
 
@@ -217,7 +225,7 @@ class Column
     /**
      * @var string|null
      */
-    private ?string $comment = 'mksql handled';
+    private ?string $comment = null;
 
     /**
      * Set or unset (with null) comment string for column
@@ -226,8 +234,7 @@ class Column
      */
     public function setComment(?string $commentString): Column
     {
-        $commentString = Utils::confirmName($commentString, [".", ",", " "]); //Allow dots, commas and spaces to form sentences :)
-        $this->comment = $commentString;
+        $this->comment = Utils::confirmComment($commentString);
         return $this;
     }
 
@@ -246,7 +253,6 @@ class Column
      * @param TableDescription $tableDescription
      * @param ColumnDescription|null $columnDescription
      * @return array
-     * @throws Exceptions\NotImplementedException
      */
     public function install(TableDescription $tableDescription, ?ColumnDescription $columnDescription): array
     {
@@ -309,7 +315,9 @@ class Column
             {
                 if(!isset($columnDescription->foreignKeys[$requiredForeignKey]))
                 {
-                    $Commands = array_merge($Commands, $tableDescription->queryMakerClass::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription));
+                    $alterationCommands = $tableDescription->queryMakerClass::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription);
+
+                    $Commands = array_merge($Commands, $alterationCommands);
                 }
             }
 

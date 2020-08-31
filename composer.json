@@ -1,7 +1,7 @@
 {
-    "name": "zrny/mksql-dev",
-    "description": "SQL table AutoCreate utility",
-    "version": "0.4.1",
+    "name": "zrny/mksql",
+    "description": "MkSQL is SQL tables AutoUpdater. Tables are defined in code, and MkSQL makes sure they are up to date.",
+    "version": "0.5.0",
 
     "minimum-stability": "stable",
 
@@ -34,7 +34,7 @@
         "ext-intl": "*",
 
         "nette/utils": "^3.0",
-        "zrny/enum": "1.0.0"
+        "zrny/enum": "^1.0"
     },
 
     "require-dev": {
@@ -42,10 +42,10 @@
         "phpunit/phpunit": "^9"
     },
 
-
     "autoload": {
         "psr-4": {
-          "Zrny\\MkSQL\\": "src/"
+          "Zrny\\MkSQL\\": "src/",
+          "Mock\\": "tests/Mock/"
         }
     }
 }

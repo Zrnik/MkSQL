@@ -11,7 +11,6 @@ namespace Zrny\MkSQL\Tracy;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Metrics;
 
 /**
  * This needs a cleanup...

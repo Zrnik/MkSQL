@@ -34,7 +34,7 @@ class Utils
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function confirmName(string $name, array $AdditionalAllowed = []): string
+    private static function confirmName(string $name, array $AdditionalAllowed = []): string
     {
         // Comments are not allowed obviously :)
         if (Strings::contains($name, "--") || Strings::contains($name, "/*") || Strings::contains($name, "*/"))
@@ -48,6 +48,16 @@ class Utils
 
         // "It's a kind of fall-trough" - Freddie
         return $name;
+    }
+
+    /**
+     * YAGNI but testing for peace of mind
+     * @param string $name
+     * @return string
+     */
+    public static function __testCommentsError(string $name)
+    {
+        return static::confirmName($name,["/","*","-"]);
     }
 
     /**
@@ -74,7 +84,6 @@ class Utils
         return static::confirmName($name);
     }
 
-
     /**
      * Table name only allows a-z, A-Z, 0-9, underscore, parentheses and comma
      *
@@ -84,7 +93,7 @@ class Utils
      */
     public static function confirmType(string $type): string
     {
-        return static::confirmName($type, ["(", ")", ","]);
+        return static::confirmName(str_replace(" ","", $type), ["(", ")", ","]);
     }
 
 
@@ -102,6 +111,43 @@ class Utils
             return substr(md5($keyName), 0, min(32, $maxLen));
         return static::confirmName($keyName);
     }
+
+    /**
+     * It actually needs a dot... and only one!
+     *
+     * @param string $keyTarget
+     * @return string
+     * @throws InvalidArgumentException
+     */
+    public static function confirmForeignKeyTarget(string $keyTarget): string
+    {
+        $keyTarget = static::confirmName($keyTarget,["."]);
+
+        if(Strings::length($keyTarget) - 1 !== Strings::length(str_replace(".","",$keyTarget)))
+            throw new InvalidArgumentException("There is no, or more than one dot in a foreign key target!");
+
+        return $keyTarget;
+    }
+
+
+    /**
+     * Comment only allows a-z, A-Z, 0-9, underscore, dot, comma and a space.
+     * We like to form sentences, but no apostrophe or quotes, sorry...
+     *
+     * Can be NULL!
+     *
+     * @param string|null $name
+     * @return string|null
+     * @throws InvalidArgumentException
+     */
+    public static function confirmComment(?string $name): ?string
+    {
+        if($name === null)
+            return null;
+
+        return static::confirmName($name, [",","."," "]);
+    }
+
 
 
 

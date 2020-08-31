@@ -10,7 +10,6 @@ namespace Zrny\MkSQL\Queries\Makers;
 
 use PDO;
 use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Exceptions\NotImplementedException;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -25,9 +24,9 @@ interface IQueryMaker
      * @param PDO $pdo
      * @param Table $table
      * @return TableDescription|null
-     * @throws NotImplementedException
      */
     public static function describeTable(PDO $pdo, Table $table) : ?TableDescription;
+
     //endregion
 
     //region Table Operations
@@ -35,7 +34,6 @@ interface IQueryMaker
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription) : ?array;
     //endregion
@@ -48,7 +46,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription) : ?array;
 
@@ -58,7 +55,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -68,7 +64,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -79,7 +74,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -90,7 +84,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 
@@ -101,7 +94,6 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
-     * @throws NotImplementedException
      */
     public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
 

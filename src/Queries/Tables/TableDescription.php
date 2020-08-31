@@ -33,6 +33,12 @@ class TableDescription
     public Table $table;
 
     /**
+     * @var array
+     * @internal
+     */
+    public array $_parameters = [];
+
+    /**
      * @param string $getName
      * @return ColumnDescription|null
      */

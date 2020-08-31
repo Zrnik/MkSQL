@@ -8,10 +8,9 @@
 
 namespace Zrny\MkSQL\Queries\Makers;
 
-
-use Nette\Database\Connection;
-use Nette\Database\DriverException;
 use Nette\Utils\Strings;
+use PDO;
+use PDOException;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
@@ -22,23 +21,24 @@ use Zrny\MkSQL\Utils;
 class QueryMakerMySQL implements IQueryMaker
 {
     /**
-     * Describing using "SHOW CREATE TABLE" because its the fastest method!
-     * @param Connection $db
-     * @param Table $table
-     * @return TableDescription|null
+     * @inheritDoc
      */
-    public static function describeTable(Connection $db, Table $table): ?TableDescription
+    public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
         $Desc = new TableDescription();
         $Desc->queryMakerClass = __CLASS__;
         $Desc->table = $table;
-        try{
-            $DescriptionData = explode("\n",$db->fetch("SHOW CREATE TABLE ".$table->getName())["Create Table"]);
+
+        try {
+            $Statement = $pdo->prepare("SHOW CREATE TABLE " . $table->getName());
+            $Statement->execute();
+            $result = $Statement->fetch(PDO::FETCH_ASSOC)["Create Table"];
+
             $Desc->tableExists = true;
 
-            //Columns:
-            foreach($table->getColumns() as $column)
-            {
+            $DescriptionData = explode("\n", $result);
+
+            foreach ($table->columnList() as $column) {
                 $ColDesc = new ColumnDescription();
                 $ColDesc->table = $table;
                 $ColDesc->column = $column;
@@ -49,77 +49,67 @@ class QueryMakerMySQL implements IQueryMaker
                 $unique_index_key = null;
                 $foreign_keys = [];
                 //region Find Column Descriptions
-                foreach($DescriptionData as $DescriptionLine)
-                {
+                foreach ($DescriptionData as $DescriptionLine) {
                     $DescriptionLine = trim($DescriptionLine);
 
 
-                    if(Strings::startsWith($DescriptionLine,"`".$column->getName()."`" ))
+                    if (Strings::startsWith($DescriptionLine, "`" . $column->getName() . "`"))
                         $col_desc = $DescriptionLine;
 
-                    if(
-                        Strings::startsWith($DescriptionLine,"UNIQUE KEY") &&
+                    if (
+                        Strings::startsWith($DescriptionLine, "UNIQUE KEY") &&
                         (
-                            Strings::endsWith($DescriptionLine, "(`".$column->getName()."`)")
+                            Strings::endsWith($DescriptionLine, "(`" . $column->getName() . "`)")
                             ||
-                            Strings::endsWith($DescriptionLine, "(`".$column->getName()."`),")
+                            Strings::endsWith($DescriptionLine, "(`" . $column->getName() . "`),")
                         )
-                    )
-                    {
+                    ) {
 
-                        $unique_index_key = explode("`",$DescriptionLine)[1];
+                        $unique_index_key = explode("`", $DescriptionLine)[1];
 
 
                     }
 
-                    if(
-                        Strings::startsWith($DescriptionLine,"CONSTRAINT ") &&
-                        Strings::contains($DescriptionLine,"FOREIGN KEY")
-                    )
-                    {
+                    if (
+                        Strings::startsWith($DescriptionLine, "CONSTRAINT ") &&
+                        Strings::contains($DescriptionLine, "FOREIGN KEY")
+                    ) {
                         $fkData = explode("`", $DescriptionLine);
-                        if($fkData[3] === $column->getName())
-                            $foreign_keys[$fkData[5].".".$fkData[7]] = $fkData[1];
+                        if ($fkData[3] === $column->getName())
+                            $foreign_keys[$fkData[5] . "." . $fkData[7]] = $fkData[1];
                     }
                 }
                 //endregion
 
-                if($col_desc === null)
-                {
+                if ($col_desc === null) {
                     $ColDesc->columnExists = false;
-                }
-                else
-                {
+                } else {
                     $ColDesc->columnExists = true;
 
                     //Need:
                     // - Type
-                    $ColDesc->type = explode(" ",$col_desc)[1];
+                    $ColDesc->type = explode(" ", $col_desc)[1];
 
                     // - NOT NULL
-                    $ColDesc->notNull = strpos($col_desc,"NOT NULL") !== false;
+                    $ColDesc->notNull = strpos($col_desc, "NOT NULL") !== false;
                     // - Unique
                     $ColDesc->uniqueIndex = $unique_index_key;
                     // - Default Value
-                    if(Strings::contains($col_desc,"DEFAULT '"))
-                    {
-                        list($trash,$default_part) = explode("DEFAULT '",$col_desc);
-                        $RestOfDefault = explode("'",$default_part);
+                    if (Strings::contains($col_desc, "DEFAULT '")) {
+                        list($trash, $default_part) = explode("DEFAULT '", $col_desc);
+                        $RestOfDefault = explode("'", $default_part);
 
                         $Index = 0;
                         $DefaultValue = $RestOfDefault[$Index];
 
-                        //it ends with backshlash, that means it was real apostrophe that was escaped!
-                        while(Strings::endsWith($DefaultValue,"\\") && isset($RestOfDefault[$Index + 1]))
-                        {
+                        //it ends with backslash, that means it was real apostrophe that was escaped!
+                        while (Strings::endsWith($DefaultValue, "\\") && isset($RestOfDefault[$Index + 1])) {
                             $Index++;
-                            $DefaultValue .= "'".$RestOfDefault[$Index];
+                            $DefaultValue .= "'" . $RestOfDefault[$Index];
                         }
 
                         $ColDesc->default = $DefaultValue;
-                    }
-                    else
-                    {
+                    } else {
                         $ColDesc->default = null;
                     }
 
@@ -127,38 +117,41 @@ class QueryMakerMySQL implements IQueryMaker
                     $ColDesc->foreignKeys = $foreign_keys;
 
                     // - Comment
-                    if(Strings::contains($col_desc,"COMMENT '"))
-                    {
-                        list($trash,$comment_part) = explode("COMMENT '",$col_desc);
-                        $RestOfComments = explode("'",$comment_part);
+                    if (Strings::contains($col_desc, "COMMENT '")) {
+                        list($trash, $comment_part) = explode("COMMENT '", $col_desc);
+                        $RestOfComments = explode("'", $comment_part);
 
                         $Index = 0;
                         $Comment = $RestOfComments[$Index];
 
-                        //it ends with backshlash, that means it was real apostrophe that was escaped!
-                        while(Strings::endsWith($Comment,"\\") && isset($RestOfComments[$Index + 1]))
-                        {
+                        //it ends with backslash, that means it was real apostrophe that was escaped!
+                        while (Strings::endsWith($Comment, "\\") && isset($RestOfComments[$Index + 1])) {
                             $Index++;
-                            $Comment .= "'".$RestOfComments[$Index];
+                            $Comment .= "'" . $RestOfComments[$Index];
                         }
 
                         $ColDesc->comment = $Comment;
-                    }
-                    else
-                    {
+                    } else {
                         $ColDesc->comment = null;
                     }
                 }
 
                 $Desc->columns[] = $ColDesc;
             }
-        }
-        catch(DriverException $ex)
-        {
+
+
+        } catch (PDOException $pdoEx) {
             $Desc->tableExists = false;
         }
 
         return $Desc;
+
+        /*
+
+             //Columns:
+
+       */
+
     }
 
 
@@ -169,12 +162,16 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
     {
-        return [
-            new Query(
-                $table,null,
-                "CREATE TABLE ".$table->getName()." (id int NOT NULL COMMENT 'mksql handled' AUTO_INCREMENT PRIMARY KEY) COMMENT 'Table handled by MkSQL';",
-                "Table '".$table->getName()."' does not exist. Creating."
+        $CreateTableQuery = (new Query($table, null))
+            ->setQuery(
+                "CREATE TABLE " .
+                $table->getName()
+                . " (id int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
             )
+            ->setReason("Table '" . $table->getName() . "' not found.");
+
+        return [
+            $CreateTableQuery
         ];
     }
 
@@ -187,22 +184,24 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $ModifySQL = 'ALTER TABLE '.$table->getName().' MODIFY '.$column->getName().' '.$column->getType();
+        $alterTableQuery = new Query($table, $column);
 
-        if($column->getDefault())
-            $ModifySQL .= " DEFAULT '".$column->getDefault()."'";
+        $ModifySQL = 'ALTER TABLE ' . $table->getName() . ' MODIFY ' . $column->getName() . ' ' . $column->getType();
 
-        $ModifySQL .= ($column->getNotNull() ?' NOT ':' ').'NULL';
+        if ($column->getDefault())
+            $ModifySQL .= " DEFAULT '" . $column->getDefault() . "'";
 
-        if($column->getComment() !== null && $column->getComment() !== "")
-            $ModifySQL .= " COMMENT '".$column->getComment()."'";
+        $ModifySQL .= ($column->getNotNull() ? ' NOT ' : ' ') . 'NULL';
+
+        if ($column->getComment() !== null && $column->getComment() !== "")
+            $ModifySQL .= " COMMENT '" . $column->getComment() . "'";
+
+        $alterTableQuery->setReason("to-be-determined");
+
+        $alterTableQuery->setQuery(trim($ModifySQL));
 
         return [
-            new Query(
-                $table,$column,
-                trim($ModifySQL),
-                "reason-fill-by-column-class"
-            )
+            $alterTableQuery
         ];
     }
 
@@ -215,27 +214,24 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $CreateSQL = 'ALTER TABLE '.$table->getName().' ';
-        $CreateSQL .= 'ADD '.$column->getName().' '.$column->getType().' ';
+        $CreateSQL = 'ALTER TABLE ' . $table->getName() . ' ';
+        $CreateSQL .= 'ADD ' . $column->getName() . ' ' . $column->getType() . ' ';
 
         //Default Value
-
-        if($column->getDefault() !== null)
-            $CreateSQL .= 'DEFAULT \''.$column->getDefault().'\' ';
+        if ($column->getDefault() !== null)
+            $CreateSQL .= 'DEFAULT \'' . $column->getDefault() . '\' ';
 
         //Null/NotNull
-        $CreateSQL .= ( $column->getNotNull() ? "NOT " : '').'NULL ';
+        $CreateSQL .= ($column->getNotNull() ? "NOT " : '') . 'NULL ';
 
         //Comment
-        if($column->getComment() !== null)
-            $CreateSQL .= "COMMENT '".$column->getComment()."' ";
+        if ($column->getComment() !== null)
+            $CreateSQL .= "COMMENT '" . $column->getComment() . "' ";
 
         return [
-            new Query(
-                $table,$column,
-                trim($CreateSQL),
-                "Column '".$table->getName().".".$column->getName()."' does not exist. Creating."
-            )
+            (new Query($table, $column))
+                ->setQuery(trim($CreateSQL))
+                ->setReason("Column '" . $table->getName() . "." . $column->getName() . "' not found.")
         ];
     }
 
@@ -248,14 +244,18 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $uniqueKeyName = Utils::confirmKeyName($table->getName().'_'.$column->getName().'_mksql_uindex');
+        $MySQL_Key_MaxLength = 64;
+
+        $newKey = Utils::confirmKeyName(
+            "unique_index_" . $table->getName() . "_" . $column->getName(),
+            $MySQL_Key_MaxLength
+        );
 
         return [
-            new Query(
-                $table,$column,
-                'CREATE UNIQUE INDEX '.$uniqueKeyName.' on '.$table->getName().' ('.$column->getName().');',
-                "Unique index required on column '".$table->getName().".".$column->getName()."'. Creating."
-            )
+            (new Query($table, $column))
+                ->setQuery('CREATE UNIQUE INDEX ' . $newKey . ' on ' . $table->getName() . ' (' . $column->getName() . ');')
+                ->setReason("Unique index for '" . $table->getName() . "." . $column->getName() . "' not found.")
+
         ];
     }
 
@@ -263,19 +263,16 @@ class QueryMakerMySQL implements IQueryMaker
      * @param Table $table
      * @param Column $column
      * @param string $uniqueKeyName
-     * @param $
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return Query[]|null
+     * @return array|null
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         return [
-            new Query(
-                $table,$column,
-                'DROP INDEX '.$uniqueKeyName.' ON '.$table->getName().';',
-                "Unique index on column '".$table->getName().".".$column->getName()."' is unwanted. Removing."
-            )
+            (new Query($table, $column))
+                ->setQuery('DROP INDEX ' . $uniqueKeyName . ' ON ' . $table->getName() . ';')
+                ->setReason("There is unexpected unique index '" . $uniqueKeyName . "' on '" . $table->getName() . "." . $column->getName() . "'.")
         ];
     }
 
@@ -289,19 +286,20 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        $foreignKeyParts = explode(".",$RefPointerString);
+        $pointerString = Utils::confirmForeignKeyTarget($RefPointerString);
+        // $pointerString has exactly one dot or the exception was already thrown!
+
+        $foreignKeyParts = explode(".", $pointerString);
         $targetTable = $foreignKeyParts[0];
         $targetColumn = $foreignKeyParts[1];
 
-        $foreignKeyName = Utils::confirmKeyName($table->getName().'_'.$targetTable.'_'.$column->getName().'_'.$targetColumn.'_mksql_fk');
+        $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn);
 
         return [
-            new Query(
-                $table,$column,
-                'ALTER TABLE '.$table->getName().' ADD CONSTRAINT '.$foreignKeyName.'
-                             FOREIGN KEY ('.$column->getName().') REFERENCES '.$targetTable.' ('.$targetColumn.');',
-                "Foreign key on '".$table->getName().".".$column->getName()."' referencing '".$RefPointerString." required!'. Creating."
-            )
+            (new Query($table, $column))
+                ->setQuery('ALTER TABLE ' . $table->getName() . ' ADD CONSTRAINT ' . $foreignKeyName . '
+                             FOREIGN KEY (' . $column->getName() . ') REFERENCES ' . $targetTable . ' (' . $targetColumn . ');')
+                ->setReason("Foreign key on '" . $table->getName() . "." . $column->getName() . "' referencing '" . $RefPointerString . "' not found.")
         ];
     }
 
@@ -316,11 +314,9 @@ class QueryMakerMySQL implements IQueryMaker
     public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         return [
-            new Query(
-                $table,$column,
-                "ALTER TABLE ".$table->getName()." DROP FOREIGN KEY ".$ForeignKeyName.";",
-                "Foreign key '".$ForeignKeyName."' not defined for column '".$column->getName()."'."
-            )
+            (new Query($table, $column))
+                ->setQuery("ALTER TABLE " . $table->getName() . " DROP FOREIGN KEY " . $ForeignKeyName . ";")
+                ->setReason("Unexpected foreign key '" . $ForeignKeyName . "' found for column '" . $column->getName() . "'.")
         ];
     }
 
@@ -338,8 +334,8 @@ class QueryMakerMySQL implements IQueryMaker
             "tinyint", "mediumint", "int", "bigint",
         ];
 
-        foreach($Exceptions as $Exception)
-            if(Strings::startsWith($type1,$Exception) && Strings::startsWith($type2,$Exception))
+        foreach ($Exceptions as $Exception)
+            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception))
                 return true;
 
         return $type1 === $type2;
@@ -354,4 +350,6 @@ class QueryMakerMySQL implements IQueryMaker
     {
         return $type1 === $type2;
     }
+
+
 }

@@ -9,9 +9,9 @@ namespace Zrny\MkSQL;
 
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Nette\Metrics;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
+use Zrny\MkSQL\Tracy\Metrics;
 
 class Table
 {
@@ -29,6 +29,12 @@ class Table
      * @var Column[]
      */
     private array $columns = [];
+
+    /**
+     * @var array
+     * @internal
+     */
+    public array $_parameters = [];
 
     /**
      * Table constructor.
@@ -66,6 +72,8 @@ class Table
 
     /**
      * Returns name of the table.
+     * The result is already checked and corrected in constructor.
+     *
      * @return string|null
      */
     public function getName(): string
@@ -85,7 +93,7 @@ class Table
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    public function columnCreate(string $columnName, ?string $columnType, bool $rewrite = false) : Column
+    public function columnCreate(string $columnName, ?string $columnType = "int", bool $rewrite = false) : Column
     {
         $column = new Column($columnName, $columnType);
         return $this->columnAdd($column, $rewrite);
@@ -98,7 +106,7 @@ class Table
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    private function columnAdd(Column $column, bool $rewrite = false) : Column
+    public function columnAdd(Column $column, bool $rewrite = false) : Column
     {
         if($column->getName() === "id")
             throw new PrimaryKeyAutomaticException("Primary, auto incrementing key 'id' is created automatically.");
@@ -137,7 +145,6 @@ class Table
     /**
      * @param TableDescription $desc
      * @return Query[]
-     * @throws Exceptions\NotImplementedException
      */
     public function install(TableDescription $desc): array
     {

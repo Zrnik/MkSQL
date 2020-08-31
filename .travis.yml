@@ -1,0 +1,6 @@
+language: php
+php:
+  - '7.4'
+
+install:
+  - travis_retry composer install --no-progress --prefer-dist

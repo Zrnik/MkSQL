@@ -30,17 +30,17 @@ class ColumnDescription
     /**
      * @var bool
      */
-    public bool $notNull;
+    public bool $notNull = false;
 
     /**
      * @var string|null
      */
-    public ?string $comment;
+    public ?string $comment = null;
 
     /**
      * @var string|null
      */
-    public ?string $uniqueIndex;
+    public ?string $uniqueIndex = null;
 
     /**
      * @var string[]
@@ -56,4 +56,10 @@ class ColumnDescription
      * @var string
      */
     public string $type;
+
+    /**
+     * @var array
+     * @internal
+     */
+    public array $_parameters = [];
 }

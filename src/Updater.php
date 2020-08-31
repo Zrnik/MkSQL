@@ -16,6 +16,7 @@ use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
+use Zrny\MkSQL\Tracy\Metrics;
 
 /**
  * @package Zrny\MkSQL
@@ -104,9 +105,9 @@ class Updater
     //endregion
 
     /**
-     * @return string|null
+     * @return mixed|null
      */
-    private function getDriverType(): ?string
+    private function getDriverType()
     {
         try {
             return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
@@ -116,7 +117,6 @@ class Updater
     }
 
     /**
-     * @throws Exceptions\NotImplementedException
      * @throws InvalidDriverException
      */
     public function install() : void
@@ -135,7 +135,7 @@ class Updater
 
         //region Driver Type & Query Maker Class
 
-        if ($this->getDriverType())
+        if ($this->getDriverType() === null)
             throw new InvalidDriverException("Driver type is 'NULL'!");
 
         $driverName = DriverType::getName($this->getDriverType());

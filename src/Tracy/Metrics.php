@@ -6,9 +6,11 @@
  */
 
 
-namespace Zrny\MkSQL;
+namespace Zrny\MkSQL\Tracy;
 
+use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
+use Zrny\MkSQL\Table;
 
 class Metrics
 {

@@ -2,5 +2,7 @@
 
 namespace Zrny\MkSQL\Exceptions;
 
-class ColumnDefinitionExists extends \Exception
+use Exception;
+
+class ColumnDefinitionExists extends Exception
 {}
