@@ -145,7 +145,40 @@ class Utils
         if($name === null)
             return null;
 
-        return static::confirmName($name, [",","."," "]);
+        return static::checkForbiddenWords(static::confirmName($name, [",","."," "]));
+    }
+
+
+    /**
+     * List of banned words in comments & default values!
+     * (As i am using them to parse SHOW CREATE TABLE results)
+     *
+     * @var string[]
+     */
+    private static array $_Forbidden = [
+        "NOT NULL", "DEFAULT", "CREATE TABLE", "CONSTRAINT",
+        "REFERENCES", "CREATE UNIQUE INDEX"
+    ];
+
+    /**
+     * Fall trough checking for banned words in string.
+     * Case Insensitive
+     *
+     * @param $text
+     * @return mixed
+     */
+    public static function checkForbiddenWords($text)
+    {
+        foreach(static::$_Forbidden as $ForbiddenWord)
+        {
+            if(Strings::contains(
+                strtolower($text),
+                strtolower($ForbiddenWord)
+            ))
+                throw new \InvalidArgumentException("Forbidden word '".strtolower($ForbiddenWord)."' encountered!");
+        }
+
+        return $text;
     }
 
 

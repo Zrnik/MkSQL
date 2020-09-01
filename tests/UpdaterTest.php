@@ -49,9 +49,16 @@ class UpdaterTest extends TestCase
         $Updater->tableAdd($Table);
         $this->addToAssertionCount(1); //Created (because no exception)
 
-        //Now it exists, it should throw an exception
-        $this->expectException(\Zrny\MkSQL\Exceptions\TableDefinitionExists::class);
-        $Updater->tableAdd($Table);
+        try
+        {
+            $Updater->tableAdd($Table);
+            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\TableDefinitionExists::class." not thrown!");
+        }
+        catch(\Zrny\MkSQL\Exceptions\TableDefinitionExists $_)
+        {
+            $this->addToAssertionCount(1);
+        }
+
     }
 
     public function testTableCreate()
@@ -63,8 +70,17 @@ class UpdaterTest extends TestCase
         $this->addToAssertionCount(1); //Created (because no exception)
 
         //Now it exists, it should throw an exception
-        $this->expectException(\Zrny\MkSQL\Exceptions\TableDefinitionExists::class);
-        $Table = $Updater->tableCreate("someTable");
+        try
+        {
+            $Table = $Updater->tableCreate("someTable");
+            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\TableDefinitionExists::class." not thrown!");
+        }
+        catch(\Zrny\MkSQL\Exceptions\TableDefinitionExists $_)
+        {
+            $this->addToAssertionCount(1);
+        }
+
+
     }
 
 

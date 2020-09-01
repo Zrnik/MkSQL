@@ -28,7 +28,7 @@ class Column
     /**
      * @var Table|null
      */
-    private ?Table $parent;
+    private ?Table $parent = null;
 
     /**
      * @var array
@@ -55,9 +55,9 @@ class Column
      * Ends defining of column if using
      * the fluent way of creating the tables.
      *
-     * @return Table
+     * @return Table|null
      */
-    public function endColumn(): Table
+    public function endColumn(): ?Table
     {
         return $this->parent;
     }
@@ -166,8 +166,11 @@ class Column
      * @param mixed|null $defaultValue
      * @return $this
      */
-    public function setDefault($defaultValue): Column
+    public function setDefault($defaultValue = null): Column
     {
+        if(is_string($defaultValue))
+            $defaultValue = Utils::checkForbiddenWords($defaultValue);
+
         $this->default = $defaultValue;
         return $this;
     }
@@ -195,14 +198,19 @@ class Column
     public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
-        $setForeignException = new InvalidForeignKeyIdentifierException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
-        $exploded = explode(".", $foreignKey);
 
-        if (count($exploded) != 2)
-            throw $setForeignException;
+        /*
+            //Checked in  "Utils::confirmForeignKeyTarget"
 
-        if (strlen($exploded[0]) <= 0 || strlen($exploded[1]) <= 0)
-            throw $setForeignException;
+            $setForeignException = new InvalidForeignKeyIdentifierException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
+            $exploded = explode(".", $foreignKey);
+
+            if (count($exploded) != 2)
+                throw $setForeignException;
+
+            if (strlen($exploded[0]) <= 0 || strlen($exploded[1]) <= 0)
+                throw $setForeignException;
+        */
 
         if (in_array($foreignKey, $this->foreignKeys))
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
@@ -232,7 +240,7 @@ class Column
      * @param string|null $commentString
      * @return $this
      */
-    public function setComment(?string $commentString): Column
+    public function setComment(?string $commentString = null): Column
     {
         $this->comment = Utils::confirmComment($commentString);
         return $this;

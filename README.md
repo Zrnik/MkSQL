@@ -4,10 +4,13 @@
 ![Travis (.com)](https://img.shields.io/travis/com/zrny/mksql)
 ![Packagist Version](https://img.shields.io/packagist/v/zrny/mksql)
 
-MkSQL is SQL tables AutoUpdater. Tables are defined in code, 
-and MkSQL makes sure they are up to date.
+MkSQL is an SQL table updater. It allows you to define table 
+structure in code instead of fiddling with Adminer (or PHPMyAdmin).
 
-This package is only creating and/or modifying tables and columns, it never deletes them!
+It's a good tool for developing, but I would better disable it in production
+and setup production tables by hand to save some runtime resources, OR I would
+create separate script to run it only once which is enough to 
+make everything up to date.
 
 ##### Installation
 
@@ -15,9 +18,14 @@ This package is only creating and/or modifying tables and columns, it never dele
 
 ##### Supported Drivers & Features: 
 
+Currently supported:
+
 - [✅ MySQL](https://www.mysql.com) 
 - [✅ SQLite](https://www.sqlite.org/index.html) 
-- [❌ PgSQL](https://www.postgresql.org) (soon or later i will do this)
+
+Planned support:
+
+- [❌ PgSQL](https://www.postgresql.org) (*one day...*)
 
 No other drivers are planned to be implemented, **change my mind**!
 

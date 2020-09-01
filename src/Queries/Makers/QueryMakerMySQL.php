@@ -33,7 +33,6 @@ class QueryMakerMySQL implements IQueryMaker
             $Statement = $pdo->prepare("SHOW CREATE TABLE " . $table->getName());
             $Statement->execute();
             $result = $Statement->fetch(PDO::FETCH_ASSOC)["Create Table"];
-
             $Desc->tableExists = true;
 
             $DescriptionData = explode("\n", $result);
@@ -145,13 +144,6 @@ class QueryMakerMySQL implements IQueryMaker
         }
 
         return $Desc;
-
-        /*
-
-             //Columns:
-
-       */
-
     }
 
 

@@ -42,7 +42,7 @@ class TableDescription
      * @param string $getName
      * @return ColumnDescription|null
      */
-    public function column(string $getName) : ?ColumnDescription
+    public function columnGet(string $getName) : ?ColumnDescription
     {
         $desc = null;
 

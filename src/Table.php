@@ -154,7 +154,7 @@ class Table
             $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
 
         foreach ($this->columns as $column) {
-            $Commands = array_merge($Commands, $column->install($desc, $desc->column($column->getName())));
+            $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));
             Metrics::logStructure($this, $column);
         }
 

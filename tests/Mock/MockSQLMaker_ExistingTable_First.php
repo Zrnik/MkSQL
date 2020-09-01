@@ -17,7 +17,7 @@ use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
 
-class MockSQLMaker_ExistingTables implements IQueryMaker
+class MockSQLMaker_ExistingTable_First implements IQueryMaker
 {
 
     /**
@@ -25,7 +25,32 @@ class MockSQLMaker_ExistingTables implements IQueryMaker
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
+        //New Desc
         $Description = new TableDescription();
+        $Description->queryMakerClass = static::class;
+
+        //Existing!
+        $Description->tableExists = true;
+
+        // Create Definition
+        $table = new Table("existing_1");
+        $table->columnCreate("name","varchar(255)")->setUnique()->setNotNull();
+        $table->columnCreate("desc","text");
+        $Description->table = $table;
+
+        // Add Columns to Definition
+        $Column_Name = new ColumnDescription();
+        $Column_Name->table = $table;
+        $Column_Name->column = $table->columnGet("name") ?? new Column("name","varchar(255)");
+        $Column_Name->type =  $Column_Name->column->getType();
+
+        $Column_Desc = new ColumnDescription();
+        $Column_Desc->table = $table;
+        $Column_Desc->column = $table->columnGet("desc") ?? new Column("desc", "text");
+        $Column_Desc->type =  $Column_Desc->column->getType();
+
+        $Description->columns[] = $Column_Name;
+        $Description->columns[] = $Column_Desc;
 
         return $Description;
     }

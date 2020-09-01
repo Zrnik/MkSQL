@@ -95,7 +95,7 @@ class Query
      * @param string $reason
      * @return $this
      */
-    public function setReason(string $reason) : Query
+    public function setReason(string $reason = "") : Query
     {
         $this->reason = $reason;
         return $this;
@@ -122,10 +122,10 @@ class Query
     //region Parameters
 
     /**
-     * @param string $value
+     * @param mixed $value
      * @return $this
      */
-    public function paramAdd(string $value) : Query
+    public function paramAdd($value) : Query
     {
         $this->Parameters[] = $value;
         return $this;

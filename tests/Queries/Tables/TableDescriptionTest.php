@@ -7,11 +7,8 @@
 
 namespace Queries\Tables;
 
-use Mock\MockSQLMakerExistingTables;
+use Mock\MockSQLMaker_ExistingTable_First;
 use Mock\PDO;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Queries\Tables\ColumnDescription;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
 
@@ -22,22 +19,23 @@ class TableDescriptionTest extends TestCase
     {
         //Mock some description:
 
-        $tableDescription = MockSQLMakerExistingTables::describeTable(new PDO(), new Table("null"));
+        $tableDescription = MockSQLMaker_ExistingTable_First::describeTable(new PDO(), new Table("null"));
 
         $existingColumns = [
-            "random_column"
+            "name",
+            "desc",
         ];
 
         foreach($existingColumns as $colName)
-            $this->assertNotNull($tableDescription->column($colName));
+            $this->assertNotNull($tableDescription->columnGet($colName));
 
         $nonExistingColumns = [
-            "another_column_that_doesnt_exists",
+            "column_that_doesnt_exists",
             "hello_world_column",
         ];
 
         foreach($nonExistingColumns as $colName)
-            $this->assertNull($tableDescription->column($colName));
+            $this->assertNull($tableDescription->columnGet($colName));
     }
 
 }

@@ -32,13 +32,14 @@ class QueryMakerSQLite implements IQueryMaker
 
         try {
 
-            //$SQLiteTableData = $db->fetchAll("SELECT * FROM sqlite_master WHERE tbl_name = ?;", $table->getName());
-            $Statement = $pdo->prepare("SELECT * FROM sqlite_master WHERE tbl_name = ?;");
-            $Statement->execute([$table->getName()]);
+            $Statement = $pdo->prepare("SELECT * FROM sqlite_master WHERE tbl_name = '".$table->getName()."'");
+            $Statement->execute();
             $SQLiteTableData = $Statement->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($SQLiteTableData) === 0)
+            {
                 throw new Exception("Table does not exist!");
+            }
 
             $Desc->tableExists = true;
 
@@ -50,11 +51,21 @@ class QueryMakerSQLite implements IQueryMaker
                 $ColDesc->column = $column;
 
                 foreach ($SQLiteTableData as $PartRow) {
-                    if (Strings::startsWith($PartRow["sql"], "CREATE TABLE")) {
+
+                    $sql = str_replace("\n"," ",$PartRow["sql"]);
+                    $sql = str_replace("CREATE TABLE \"".$table->getName()."\"","CREATE TABLE ".$table->getName(),$sql);
+
+                    //remove doublespaces etc...
+                    while(Strings::contains($sql,"  "))
+                        $sql = str_replace("  "," ",$sql);
+
+                    if (Strings::startsWith($sql, "CREATE TABLE")) {
+
+
                         $queryToParse = Strings::trim(str_replace([
                             "CREATE TABLE " . $table->getName() . " (",
                             ")[end]"
-                        ], "", $PartRow["sql"] . "[end]"));
+                        ], "", $sql . "[end]"));
 
                         $parts = explode(", ", $queryToParse);
 
@@ -70,12 +81,26 @@ class QueryMakerSQLite implements IQueryMaker
                                 $ColDesc->type = explode(" ", $part)[1];
 
                                 //Not Null
-                                $ColDesc->notNull = Strings::contains($part, "NOT NULL");
+                                $ColDesc->notNull =
+                                    Strings::contains($part, "NOT NULL")
+                                    ||
+                                    Strings::contains($part, "not null")
+                                ;
 
                                 //Default Value:
-                                if (Strings::contains($part, "DEFAULT")) {
-                                    list($BeforeDefault, $DefaultPart)
-                                        = explode("DEFAULT '", $part);
+                                if (Strings::contains($part, "DEFAULT") || Strings::contains($part, "default")) {
+
+                                    $BeforeDefault = '';
+                                    $DefaultPart = '';
+
+                                    if (Strings::contains($part, "DEFAULT"))
+                                        list($BeforeDefault, $DefaultPart)
+                                            = explode("DEFAULT '", $part);
+
+                                    if (Strings::contains($part, "default"))
+                                        list($BeforeDefault, $DefaultPart)
+                                            = explode("default '", $part);
+
 
                                     $defaultValue = "";
                                     $defaultParts = explode("'", $DefaultPart);
@@ -93,12 +118,16 @@ class QueryMakerSQLite implements IQueryMaker
                                 }
 
                                 //Foreign Keys:
-                                if (Strings::contains($part, "CONSTRAINT"))
+                                if (
+                                    Strings::contains($part, "CONSTRAINT")
+                                    ||
+                                    Strings::contains($part, "constraint"))
                                 {
-                                    $Constraints = [];
+
+                                    $constWord = Strings::contains($part, "CONSTRAINT") ? "CONSTRAINT" : "constraint";
 
                                     $f = true;
-                                    foreach(explode("CONSTRAINT",$part) as $constraint)
+                                    foreach(explode($constWord,$part) as $constraint)
                                     {
                                         if($f)
                                         {
@@ -106,10 +135,16 @@ class QueryMakerSQLite implements IQueryMaker
                                             continue;
                                         }
 
-                                        if(Strings::contains($constraint,"REFERENCES"))
+                                        if(
+                                            Strings::contains($constraint,"REFERENCES")
+                                            ||
+                                            Strings::contains($constraint,"references")
+                                        )
                                         {
+                                            $refWord = Strings::contains($part, "REFERENCES") ? "REFERENCES" : "references";
+
                                             //Yup, seems like foreign key
-                                            list($key, $ref) = explode("REFERENCES", $constraint);
+                                            list($key, $ref) = explode($refWord, $constraint);
 
                                             $ref = str_replace([")"," "],"",$ref);
                                             $ref = str_replace("(",".",$ref);
@@ -122,8 +157,8 @@ class QueryMakerSQLite implements IQueryMaker
                         }
                     }
 
-                    if (Strings::startsWith($PartRow["sql"], "CREATE UNIQUE INDEX")) {
-                        $row = trim($PartRow["sql"]);
+                    if (Strings::startsWith($sql, "CREATE UNIQUE INDEX")) {
+                        $row = trim($sql);
                         $parts = explode(" ", $row);
 
                         $_uniqueIndexKey = $parts[3];

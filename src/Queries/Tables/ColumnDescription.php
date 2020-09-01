@@ -50,12 +50,12 @@ class ColumnDescription
     /**
      * @var mixed
      */
-    public $default;
+    public $default = null;
 
     /**
      * @var string
      */
-    public string $type;
+    public string $type = '';
 
     /**
      * @var array
