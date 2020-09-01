@@ -1,3 +1,5 @@
 /nette_test.php
 /mksql_test.sqlite
 /.phpunit.result.cache
+/composer.lock
+/vendor/

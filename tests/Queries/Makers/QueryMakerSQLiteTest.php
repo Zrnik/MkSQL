@@ -1,13 +1,15 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:44
  */
 
 namespace Queries\Makers;
 
+use Mock\MockSQLMaker_NotExistingTable_First;
 use Mock\PDO;
+use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Makers\QueryMakerSQLite;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
@@ -122,25 +124,50 @@ class QueryMakerSQLiteTest extends TestCase
 
         $this->assertTrue($description->tableExists);
 
+        //var_dump($description->columnGet("parent"));
+
         $this->assertSame("int", $description->columnGet("parent")->type);
 
         $this->assertSame([
             'known_table.id' => 'sub_table_known_table_id_fk'
         ], $description->columnGet("parent")->foreignKeys);
 
+        //SQLite does not support comments!
         $this->assertSame(
-            "example comment",
+            null,
             $description->columnGet("parent")->comment
         );
     }
 
 
     public function testCreateTableQuery()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::createTableQuery($Desc->table, $Desc);
+
+        //Create SQLite Table = 1 query
+        $this->assertCount(
+            1,$Queries
+        );
+    }
 
 
     public function testCreateUniqueIndexQuery()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::createUniqueIndexQuery(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            $Desc,
+            $Desc->columnGet("name")
+        );
+
+        //Create SQLite Unique Index = 1 query
+        $this->assertCount(
+            1,$Queries
+        );
+
+    }
 
     public function testRemoveUniqueIndexQuery()
     {}
