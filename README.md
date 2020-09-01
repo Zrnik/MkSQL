@@ -15,13 +15,11 @@ This package is only creating and/or modifying tables and columns, it never dele
 
 ##### Supported Drivers & Features: 
 
-| Driver | Not Null | Default Value | Comments | Unique Index | Foreign Keys |
-|---|---|---|---|---|---|
-| [MySQL](https://www.mysql.com) ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 
-| [SQLite](https://www.sqlite.org/index.html) ✅ | ✅ | ✅ | ❌ | ✅ | ✅  
-| [PgSQL](https://www.postgresql.org) ❌ | coming soon (or maybe later)
+- [✅ MySQL](https://www.mysql.com) 
+- [✅ SQLite](https://www.sqlite.org/index.html) 
+- [❌ PgSQL](https://www.postgresql.org) (soon or later i will do this)
 
- - No other drivers are planned to be implemented
+No other drivers are planned to be implemented, **change my mind**!
 
 # Usage
 
