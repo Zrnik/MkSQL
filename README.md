@@ -1,6 +1,8 @@
 # MkSQL
-
-
+![GitHub](https://img.shields.io/github/license/zrny/mksql)
+![Packagist Downloads](https://img.shields.io/packagist/dm/zrny/mksql)
+![Travis (.com)](https://img.shields.io/travis/com/zrny/mksql)
+![Packagist Version](https://img.shields.io/packagist/v/zrny/mksql)
 
 MkSQL is SQL tables AutoUpdater. Tables are defined in code, 
 and MkSQL makes sure they are up to date.
@@ -17,7 +19,7 @@ This package is only creating and/or modifying tables and columns, it never dele
 |---|---|---|---|---|---|
 | [MySQL](https://www.mysql.com) ✅ | ✅ | ✅ | ✅ | ✅ | ✅ 
 | [SQLite](https://www.sqlite.org/index.html) ✅ | ✅ | ✅ | ❌ | ✅ | ✅  
-| [PgSQL](https://www.postgresql.org) ❌ <td colspan=5> coming soon (or maybe later)
+| [PgSQL](https://www.postgresql.org) ❌ | coming soon (or maybe later)
 
  - No other drivers are planned to be implemented
 
