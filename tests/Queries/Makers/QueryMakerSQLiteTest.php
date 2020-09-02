@@ -14,6 +14,7 @@ use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Queries\Makers\QueryMakerSQLite;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 class QueryMakerSQLiteTest extends TestCase
 {
@@ -21,6 +22,7 @@ class QueryMakerSQLiteTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws \Zrny\MkSQL\Exceptions\TableDefinitionExists
      */
     public function testDescribeTable()
     {
@@ -47,7 +49,7 @@ class QueryMakerSQLiteTest extends TestCase
                     "name" => "sub_table",
                     "tbl_name" => "sub_table",
                     "rootpage" => 6,
-                    "sql" => /** @lang SQLite */ "CREATE TABLE \"sub_table\"
+                    "sql" => /** @lang */ "CREATE TABLE \"sub_table\"
                         (
                             id integer not null
                                 constraint sub_table_pk
@@ -60,12 +62,14 @@ class QueryMakerSQLiteTest extends TestCase
             ],
         ]);
 
+        $updater = new Updater($MockPDO);
+
         $description = QueryMakerSQLite::describeTable($MockPDO, new Table("tested_not_exist"));
 
         $this->assertNotNull($description);
         $this->assertNotTrue($description->tableExists);
 
-        $Table = new Table("known_table");
+        $Table = $updater->tableCreate("known_table");
 
         $Table->columnCreate("name","varchar(255)")->setNotNull()->setDefault("undefined");
         $Table->columnCreate("price","decimal(13, 2)");
@@ -120,7 +124,7 @@ class QueryMakerSQLiteTest extends TestCase
         );
 
 
-        $Table = new Table("sub_table");
+        $Table = $updater->tableCreate("sub_table");
         $Table->columnCreate("parent")->addForeignKey("known_table.id");
 
         $description = QueryMakerSQLite::describeTable($MockPDO,$Table);
@@ -141,6 +145,25 @@ class QueryMakerSQLiteTest extends TestCase
         $this->assertSame(
             null,
             $description->columnGet("parent")->comment
+        );
+    }
+
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
+    public function testChangePrimaryKeyQuery()
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::changePrimaryKeyQuery(
+            "id",
+            $Desc->table,
+            $Desc
+        );
+
+        // Same like altering a column, requires a temp table...
+        $this->assertGreaterThanOrEqual(
+            4, $Queries
         );
     }
 

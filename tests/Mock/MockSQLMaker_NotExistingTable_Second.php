@@ -17,6 +17,7 @@ use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 class MockSQLMaker_NotExistingTable_Second implements IQueryMaker
 {
@@ -38,12 +39,21 @@ class MockSQLMaker_NotExistingTable_Second implements IQueryMaker
         $Description->tableExists = false;
 
         // Create Definition
-        $table = new Table("not_existing_2");
+        $updater = new Updater($pdo);
+        $table = $updater->tableCreate("not_existing_2");
         $table->columnCreate("parent")->setUnique()->setNotNull()->addForeignKey("not_existing_1.id");
         $table->columnCreate("create_time");
         $Description->table = $table;
 
         return $Description;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+        return [];
     }
 
     /**

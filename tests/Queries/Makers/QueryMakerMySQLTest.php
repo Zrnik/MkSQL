@@ -7,14 +7,18 @@
 
 namespace Queries\Makers;
 
+use Mock\MockSQLMaker_ExistingTable_First;
+use Mock\MockSQLMaker_ExistingTable_Second;
 use Mock\MockSQLMaker_NotExistingTable_First;
 use Mock\PDO;
 use PDOException;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\QueryMakerMySQL;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 /**
  * Class QueryMakerMySQLTest
@@ -25,6 +29,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testDescribeTable()
     {
@@ -52,12 +57,14 @@ class QueryMakerMySQLTest extends TestCase
             ]
         ]);
 
+        $updater = new Updater($MockPDO);
+
         $description = QueryMakerMySQL::describeTable($MockPDO, new Table("tested_not_exist"));
 
         $this->assertNotNull($description);
         $this->assertNotTrue($description->tableExists);
 
-        $Table = new Table("known_table");
+        $Table = $updater->tableCreate("known_table");
 
         $Table->columnCreate("name","varchar(255)")->setNotNull()->setDefault("undefined");
         $Table->columnCreate("price","decimal(13, 2)");
@@ -112,7 +119,7 @@ class QueryMakerMySQLTest extends TestCase
         );
 
 
-        $Table = new Table("sub_table");
+        $Table = $updater->tableCreate("sub_table");
         $Table->columnCreate("parent")->addForeignKey("known_table.id");
 
         $description = QueryMakerMySQL::describeTable($MockPDO,$Table);
@@ -134,6 +141,38 @@ class QueryMakerMySQLTest extends TestCase
         );
     }
 
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
+    public function testChangePrimaryKeyQuery()
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerMySQL::changePrimaryKeyQuery(
+            "id",
+            $Desc->table,
+            $Desc
+        );
+
+        $this->assertCount(
+            1, $Queries
+        );
+
+        $this->assertStringContainsString(
+            "ALTER TABLE",
+            $Queries[0]->getQuery()
+        );
+
+        $this->assertStringContainsString(
+            "int NOT NULL AUTO_INCREMENT",
+            $Queries[0]->getQuery()
+        );
+
+        $this->assertStringContainsString(
+            "CHANGE",
+            $Queries[0]->getQuery()
+        );
+    }
 
     /**
      * @throws ColumnDefinitionExists
@@ -214,16 +253,18 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testRemoveUniqueIndexQuery()
     {
-        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Desc = MockSQLMaker_ExistingTable_Second::describeTable(new PDO(), new Table(""));
+
         $Queries = QueryMakerMySQL::removeUniqueIndexQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $Desc->table->columnGet("parent"),
             "some_index_we_have_found",
             $Desc,
-            $Desc->columnGet("name")
+            $Desc->columnGet("parent")
         );
 
         //Alter MySQL Column = 1 query
@@ -235,12 +276,12 @@ class QueryMakerMySQLTest extends TestCase
             /** @lang */"DROP INDEX some_index_we_have_found ON",
             $Queries[0]->getQuery()
         );
-
     }
 
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testCreateTableColumnQuery()
     {
@@ -355,6 +396,7 @@ class QueryMakerMySQLTest extends TestCase
         foreach($NotSameTypes as $t1 => $t2)
             $this->assertNotTrue(QueryMakerMySQL::compareType($t1,$t2));
     }
+
 
     public function testCompareComment()
     {

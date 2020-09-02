@@ -81,7 +81,6 @@ class TableTest extends TestCase
         $this->addToAssertionCount(1);
 
 
-
         try
         {
             $Column = $TestedTable->columnCreate("invalid.column.name");
@@ -176,6 +175,23 @@ class TableTest extends TestCase
 
         $this->assertIsObject($TestedTable->columnList()["testedColumn"]);
         $this->assertIsObject($TestedTable->columnList()["anotherColumn"]);
+    }
+
+    public function testPrimaryKeyName()
+    {
+        //Private property wraper
+        $TestedTable = new Table("testedTable");
+        $this->assertSame(
+            "id",
+            $TestedTable->getPrimaryKeyName()
+        );
+
+        $TestedTable->setPrimaryKeyName("testing_id");
+
+        $this->assertSame(
+            "testing_id",
+            $TestedTable->getPrimaryKeyName()
+        );
     }
 
 

@@ -13,10 +13,12 @@ use PDO;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 class MockSQLMaker_ExistingTable_Second implements IQueryMaker
 {
@@ -27,6 +29,7 @@ class MockSQLMaker_ExistingTable_Second implements IQueryMaker
      * @return TableDescription|null
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
@@ -38,26 +41,38 @@ class MockSQLMaker_ExistingTable_Second implements IQueryMaker
         $Description->tableExists = true;
  
         // Create Definition
-        $table = new Table("existing_2");
-        $table->columnCreate("parent")->setUnique()->setNotNull()->addForeignKey("existing_1.id");
-        $table->columnCreate("create_time");
+        $updater = new Updater($pdo);
+        //Referenced Table
+        $updater->tableCreate("existing_1");
+
+        $table = $updater->tableCreate("existing_2");
+        $colParent = $table->columnCreate("parent")->setUnique()->setNotNull()->addForeignKey("existing_1.id");
+        $colCreate = $table->columnCreate("create_time");
         $Description->table = $table;
 
         // Add Columns to Definition
         $Column_Parent = new ColumnDescription();
         $Column_Parent->table = $table;
-        $Column_Parent->column = $table->columnGet("parent") ?? new Column("parent");
+        $Column_Parent->column = $colParent;
         $Column_Parent->type =  $Column_Parent->column->getType();
 
         $Column_CreateTime = new ColumnDescription();
         $Column_CreateTime->table = $table;
-        $Column_CreateTime->column = $table->columnGet("create_time") ?? new Column("create_time");
+        $Column_CreateTime->column = $colCreate;
         $Column_CreateTime->type =  $Column_CreateTime->column->getType();
 
         $Description->columns[] = $Column_Parent;
         $Description->columns[] = $Column_CreateTime;
 
         return $Description;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+        return [];
     }
 
     /**

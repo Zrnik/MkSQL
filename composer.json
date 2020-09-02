@@ -1,6 +1,6 @@
 {
     "name": "zrny/mksql",
-    "description": "MkSQL is SQL tables AutoUpdater. Tables are defined in code, and MkSQL makes sure they are up to date.",
+    "description": "MkSQL is an SQL table updater. It allows you to define table structure in code instead of fiddling with Adminer (or PHPMyAdmin).",
     "version": "0.5.0",
 
     "minimum-stability": "stable",

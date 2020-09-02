@@ -107,7 +107,7 @@ class Updater
     /**
      * @return mixed|null
      */
-    private function getDriverType()
+    public function getDriverType()
     {
         try {
             return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
@@ -117,10 +117,13 @@ class Updater
     }
 
     /**
+     * @return bool
      * @throws InvalidDriverException
      */
-    public function install() : void
+    public function install() : bool
     {
+        $Success = true;
+
         Metrics::measureTotal();
 
         //region Query[] Preparing
@@ -187,6 +190,7 @@ class Updater
                 try {
                     $QueryCommand->execute($this->pdo);
                 } catch (PDOException $pdoEx) {
+                    $Success = false;
                     $QueryCommand->setError($pdoEx);
                     break;
                 }
@@ -197,5 +201,7 @@ class Updater
         //endregion
 
         Metrics::measureTotal(true);
+
+        return $Success;
     }
 }

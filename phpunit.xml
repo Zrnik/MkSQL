@@ -1,5 +1,21 @@
-<phpunit>
-    <testsuite name="Full">
-        <directory>tests</directory>
-    </testsuite>
+<phpunit bootstrap="tests\Bootstrap.php">
+
+    <extensions>
+        <extension class="\Hooks\IntegrationErrorReport" />
+    </extensions>
+
+
+
+    <testsuites>
+
+        <testsuite name="unit">
+            <directory>tests</directory>
+            <exclude>./tests/IntegrationTest.php</exclude>
+        </testsuite>
+
+        <testsuite name="integration">
+            <file>./tests/IntegrationTest.php</file>
+        </testsuite>
+
+    </testsuites>
 </phpunit>

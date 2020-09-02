@@ -29,11 +29,15 @@ class Column
      */
     private ?Table $parent = null;
 
+
     /**
-     * @var array
+     * @var bool
      * @internal
      */
-    public array $_parameters = [];
+    public bool $handled = false;
+
+    //TO find bad code and then delte it
+    public bool $_parameters;
 
     /**
      * Column constructor.
@@ -43,7 +47,7 @@ class Column
     public function __construct(string $columnName, string $columnType = "int")
     {
         $this->name = Utils::confirmColumnName($columnName);
-        $this->type = Utils::confirmType($columnType);
+        $this->setType($columnType);
     }
 
 
@@ -90,6 +94,19 @@ class Column
     {
         return $this->type;
     }
+
+
+    /**
+     * Returns column type.
+     * @param string $columnType
+     * @return Column
+     */
+    public function setType(string $columnType) : Column
+    {
+        $this->type = Utils::confirmType($columnType);
+        return $this;
+    }
+
 
     //endregion
 
@@ -210,16 +227,45 @@ class Column
      * Add foreign key on column
      * @param string $foreignKey
      * @return Column
+     * @throws InvalidArgumentException
      */
     public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
+
+        list($_refTable, $_refColumn) = explode(".",$foreignKey);
+
+        $referencedTable = $this->endColumn()->endTable()->tableGet($_refTable);
+        if($referencedTable === null)
+            throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '".$_refTable."' but that table is not defined!");
+
+        $referencedColumn =  $referencedTable->columnGet($_refColumn);
+        if($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
+            throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '".$_refColumn."' in table '".$_refTable."' but that column is not defined!");
+
+        if (
+            $_refTable === $this->endColumn()->getName()
+            && $_refColumn === $this->getName()
+        )
+            throw new InvalidArgumentException("Foreign key of column '".$foreignKey."' cannot point to itself!");
 
         if (in_array($foreignKey, $this->foreignKeys))
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
 
         $this->foreignKeys[] = $foreignKey;
 
+        return $this;
+    }
+
+    /**
+     * @param string $foreignKey
+     * @return Column
+     */
+    public function dropForeignKey(string $foreignKey) : Column
+    {
+        if (($key = array_search($foreignKey, $this->foreignKeys)) !== false) {
+            unset($this->foreignKeys[$key]);
+        }
         return $this;
     }
 
@@ -282,6 +328,7 @@ class Column
         else
         {
             $Reasons = [];
+
             //Utils::typeEquals($desc->type, $this->getType())
             if(!$tableDescription->queryMakerClass::compareType($columnDescription->type, $this->getType()))
                 $Reasons[] = "type different [".$columnDescription->type." != ".$this->getType()."]";

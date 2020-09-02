@@ -68,6 +68,17 @@ class QueryMakerSQLite implements IQueryMaker
 
                         $parts = explode(", ", $queryToParse);
 
+                        //Find Primary Key Name:
+                        foreach($parts as $part)
+                        {
+                            if(Strings::contains(strtolower($part), "primary key"))
+                            {
+                                list($primaryKey) = explode(" ",Strings::normalize($part));
+                                $primaryKey = Strings::normalize($primaryKey);
+                                $Desc->primaryKeyName = $primaryKey;
+                            }
+                        }
+
                         foreach ($parts as $part) {
                             $part = Strings::trim($part);
 
@@ -154,7 +165,7 @@ class QueryMakerSQLite implements IQueryMaker
                                             // the primary kes is ID...
 
                                             if (!Strings::contains($ref, "."))
-                                                $ref = $ref . ".id";
+                                                $ref = $ref . "." . $table->getPrimaryKeyName();
 
                                             $ColDesc->foreignKeys[$ref] = trim($key);
                                             //echo "Found ForeignKey: ".$ref.'=>'.$key.PHP_EOL;
@@ -190,17 +201,33 @@ class QueryMakerSQLite implements IQueryMaker
     }
 
     /**
+     * @param string $oldKey
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+
+        return static::alterTableColumnQuery(
+            $table,
+            new Column("not_needed"),
+            $oldTableDescription,
+            null,[$table->getPrimaryKeyName() => $oldKey]);
+    }
+
+    /**
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
      * @return Query[]|null
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
     {
-        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_id_pk");
+        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_".$table->getPrimaryKeyName()."_pk");
 
         return [
             (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (id integer constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setQuery("CREATE TABLE " . $table->getName() . " (".$table->getPrimaryKeyName()." integer constraint " . $primaryKeyName . " primary key autoincrement);")
                 ->setReason("Table '" . $table->getName() . "' not found.")
         ];
     }
@@ -210,17 +237,14 @@ class QueryMakerSQLite implements IQueryMaker
      * @param Column $_notNeededColumn
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
+     * @param array $swapPrimaryKeyName
      * @return Query[]|null
      */
-    public static function alterTableColumnQuery(Table $table, Column $_notNeededColumn, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function alterTableColumnQuery(Table $table, Column $_notNeededColumn, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, $swapPrimaryKeyName = []): ?array
     {
         $alterTableQueryList = [];
 
-        if (
-            isset($_notNeededColumn->_parameters["handled"])
-            &&
-            $_notNeededColumn->_parameters["handled"] === true
-        )
+        if ($_notNeededColumn->handled)
             return [];
 
         $temporaryName = Utils::confirmTableName($table->getName() . "_mksql_tmp");
@@ -238,8 +262,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         foreach ($table->columnList() as $column) {
             $MoveColumns[] = $column->getName();
-            $column->_parameters["handled"] = true;
-            $createColumnQueryList = static::createTableColumnQuery($table, $column, $oldTableDescription, $columnDescription);
+            $createColumnQueryList = static::createTableColumnQuery($table, $column, $oldTableDescription, $columnDescription, true);
             foreach ($createColumnQueryList as $columnQuery) {
                 $columnQuery->setQuery(str_replace(
                     "ALTER TABLE " . $table->getName() . " ADD",
@@ -250,7 +273,7 @@ class QueryMakerSQLite implements IQueryMaker
             }
         }
 
-        $keyInBothArrays = ["id"];
+        $keyInBothArrays = [$table->getPrimaryKeyName()];
         foreach ($MoveColumns as $columnName) {
             foreach ($oldTableDescription->columns as $columnDescription) {
                 if ($columnDescription->column->getName() === $columnName) {
@@ -258,14 +281,28 @@ class QueryMakerSQLite implements IQueryMaker
                     break;
                 }
             }
-
         }
 
         $columnList = implode(", ", $keyInBothArrays);
 
-
         $InsertIntoQuery = new Query($table, $_notNeededColumn);
-        $InsertIntoQuery->setQuery("INSERT INTO " . $temporaryName . "(" . $columnList . ") SELECT " . $columnList . " FROM " . $table->getName());
+
+        //Implementation of $swapColumnNames
+        $originalList = [];
+        foreach($keyInBothArrays as $oldColName)
+        {
+            $insertCol = $oldColName;
+
+            if(isset($swapPrimaryKeyName[$insertCol]))
+                $insertCol = $swapPrimaryKeyName[$insertCol];
+
+            $originalList[] = $insertCol;
+        }
+
+        $selectList = implode(", ",$originalList);
+
+
+        $InsertIntoQuery->setQuery("INSERT INTO " . $temporaryName . "(" . $columnList . ") SELECT " . $selectList . " FROM " . $table->getName());
         $InsertIntoQuery->setReason("Altering Table '" . $temporaryName . "' created, moving data...");
         $alterTableQueryList[] = $InsertIntoQuery;
 
@@ -308,10 +345,15 @@ class QueryMakerSQLite implements IQueryMaker
      * @param Column $column
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
+     * @param bool $isForTemporaryTable
      * @return Query[]|null
      */
-    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription,  bool $isForTemporaryTable = false): ?array
     {
+
+        if (!$isForTemporaryTable && $column->handled)
+            return [];
+
         $CreateSQL = 'ALTER TABLE ' . $table->getName() . ' ';
         $CreateSQL .= 'ADD ' . $column->getName() . ' ' . $column->getType() . ' ';
 

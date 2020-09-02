@@ -13,10 +13,12 @@ use PDO;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 class MockSQLMaker_NotExistingTable_First implements IQueryMaker
 {
@@ -27,6 +29,7 @@ class MockSQLMaker_NotExistingTable_First implements IQueryMaker
      * @return TableDescription|null
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
@@ -37,13 +40,23 @@ class MockSQLMaker_NotExistingTable_First implements IQueryMaker
         //Existing!
         $Description->tableExists = false;
 
+
         // Create Definition
-        $table = new Table("not_existing_1");
+        $updater = new Updater($pdo);
+        $table = $updater->tableCreate("not_existing_1");
         $table->columnCreate("name","varchar(255)")->setUnique()->setNotNull();
         $table->columnCreate("desc","text");
         $Description->table = $table;
 
         return $Description;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+        return [];
     }
 
     /**

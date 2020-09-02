@@ -37,6 +37,18 @@ class QueryMakerMySQL implements IQueryMaker
 
             $DescriptionData = explode("\n", $result);
 
+            //Find Primary Key Name:
+            foreach($DescriptionData as $DescriptionRow)
+            {
+                if(Strings::contains($DescriptionRow, "PRIMARY KEY"))
+                {
+                    list($trash, $keyPart) = explode("(",$DescriptionRow);
+                    list($keyPart) = explode(")",$keyPart);
+                    $keyPart = Strings::normalize(str_replace("`","",$keyPart));
+                    $Desc->primaryKeyName = $keyPart;
+                }
+            }
+
             foreach ($table->columnList() as $column) {
                 $ColDesc = new ColumnDescription();
                 $ColDesc->table = $table;
@@ -63,10 +75,7 @@ class QueryMakerMySQL implements IQueryMaker
                             Strings::endsWith($DescriptionLine, "(`" . $column->getName() . "`),")
                         )
                     ) {
-
                         $unique_index_key = explode("`", $DescriptionLine)[1];
-
-
                     }
 
                     if (
@@ -93,6 +102,7 @@ class QueryMakerMySQL implements IQueryMaker
                     $ColDesc->notNull = strpos($col_desc, "NOT NULL") !== false;
                     // - Unique
                     $ColDesc->uniqueIndex = $unique_index_key;
+
                     // - Default Value
                     if (Strings::contains($col_desc, "DEFAULT '")) {
                         list($trash, $default_part) = explode("DEFAULT '", $col_desc);
@@ -146,6 +156,20 @@ class QueryMakerMySQL implements IQueryMaker
         return $Desc;
     }
 
+    /**
+     * @param string $oldKey
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+         return [
+             (new Query($table, null))
+                ->setQuery("ALTER TABLE ".$table->getName()." CHANGE ".$oldKey." ".$table->getPrimaryKeyName()." int NOT NULL AUTO_INCREMENT;")
+                ->setReason("Primary key '".$table->getPrimaryKeyName()."' required but '".$oldKey."' found.")
+         ];
+    }
 
     /**
      * @param Table $table
@@ -156,9 +180,9 @@ class QueryMakerMySQL implements IQueryMaker
     {
         $CreateTableQuery = (new Query($table, null))
             ->setQuery(
-                "CREATE TABLE " .
+                "CREATE TABLE ".
                 $table->getName()
-                . " (id int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
+                . " (".$table->getPrimaryKeyName()." int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
             )
             ->setReason("Table '" . $table->getName() . "' not found.");
 
@@ -180,7 +204,7 @@ class QueryMakerMySQL implements IQueryMaker
 
         $ModifySQL = 'ALTER TABLE ' . $table->getName() . ' MODIFY ' . $column->getName() . ' ' . $column->getType();
 
-        if ($column->getDefault())
+        if ($column->getDefault() !== null)
             $ModifySQL .= " DEFAULT '" . $column->getDefault() . "'";
 
         $ModifySQL .= ($column->getNotNull() ? ' NOT ' : ' ') . 'NULL';
@@ -261,11 +285,35 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        return [
-            (new Query($table, $column))
-                ->setQuery('DROP INDEX ' . $uniqueKeyName . ' ON ' . $table->getName() . ';')
-                ->setReason("There is unexpected unique index '" . $uniqueKeyName . "' on '" . $table->getName() . "." . $column->getName() . "'.")
-        ];
+        //Remove Foreign Keys and then add them back after the index was removed!
+        $Queries = [];
+
+        //var_dump($columnDescription->foreignKeys);
+        foreach($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName)
+        {
+            $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
+            foreach($DropQueries as $DropQuery)
+                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[".$uniqueKeyName."]'".PHP_EOL.$DropQuery->getReason());
+
+            $Queries = array_merge($Queries, $DropQueries);
+        }
+
+        $Queries[] = (new Query($table, $column))
+            ->setQuery('DROP INDEX ' . $uniqueKeyName . ' ON ' . $table->getName() . ';')
+            ->setReason("There is unexpected unique index '" . $uniqueKeyName . "' on '"
+                . $table->getName() . "." . $column->getName() . "'.");
+
+        foreach($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName)
+        {
+            $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
+
+            foreach($CreateQueries as $CreateQuery)
+                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[".$uniqueKeyName."]'".PHP_EOL.$CreateQuery->getReason());
+
+            $Queries = array_merge($Queries, $CreateQueries);
+        }
+
+        return $Queries;
     }
 
     /**
@@ -342,6 +390,4 @@ class QueryMakerMySQL implements IQueryMaker
     {
         return $type1 === $type2;
     }
-
-
 }

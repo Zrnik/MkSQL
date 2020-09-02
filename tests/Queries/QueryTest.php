@@ -109,6 +109,7 @@ class QueryTest extends TestCase
         $query->paramAdd(10); //id
 
         $query->execute($MockPDO);
+        $this->addToAssertionCount(1);
     }
 
 

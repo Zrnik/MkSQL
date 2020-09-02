@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 /*
  * Zrník.eu | MkSQL
  * User: Programátor
@@ -8,6 +9,7 @@
 namespace Zrny\MkSQL;
 
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrny\MkSQL\Exceptions\InvalidArgumentException;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Queries\Query;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -18,7 +20,7 @@ class Table
     /**
      * @var Updater|null
      */
-    private ?Updater $parent;
+    private ?Updater $parent = null;
 
     /**
      * @var string
@@ -26,15 +28,14 @@ class Table
     private string $tableName;
 
     /**
+     * @var string
+     */
+    private string $primaryKeyName = "id";
+
+    /**
      * @var Column[]
      */
     private array $columns = [];
-
-    /**
-     * @var array
-     * @internal
-     */
-    public array $_parameters = [];
 
     /**
      * Table constructor.
@@ -43,6 +44,24 @@ class Table
     public function __construct(string $tableName)
     {
         $this->tableName =  Utils::confirmTableName($tableName);
+    }
+
+    /**
+     * @param string $newPrimaryKeyName
+     * @return $this
+     */
+    public function setPrimaryKeyName(string $newPrimaryKeyName) : Table
+    {
+        $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrimaryKeyName() : string
+    {
+        return $this->primaryKeyName;
     }
 
     //region Parent
@@ -105,6 +124,7 @@ class Table
      * @return Column
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws InvalidArgumentException
      */
     public function columnAdd(Column $column, bool $rewrite = false) : Column
     {
@@ -114,8 +134,12 @@ class Table
         if(!$rewrite && isset($this->columns[$column->getName()]))
             throw new ColumnDefinitionExists("Column '".$column->getName()."' already defined in table '".$this->getName()."'.");
 
+        if($column->getName() == $this->getName())
+            throw new InvalidArgumentException("Column name '".$column->getName()."' cannot be same as table name '".$this->getName()."'.");
+
         $this->columns[$column->getName()] = $column;
         $column->setParent($this);
+
         return $column;
     }
 
@@ -153,7 +177,20 @@ class Table
         if (!$desc->tableExists)
             $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
 
+        if($desc->tableExists)
+        {
+            //echo "FoundKey: ".$desc->primaryKeyName." required: ".$this->getPrimaryKeyName().PHP_EOL;
+            if($desc->primaryKeyName !== $this->getPrimaryKeyName())
+            {
+                $Commands = array_merge($Commands, $desc->queryMakerClass::changePrimaryKeyQuery(
+                    $desc->primaryKeyName,
+                    $this, $desc
+                ));
+            }
+        }
+
         foreach ($this->columns as $column) {
+            $column->handled = false;
             $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));
             Metrics::logStructure($this, $column);
         }
@@ -161,6 +198,4 @@ class Table
         return $Commands;
     }
     //endregion
-
-
 }

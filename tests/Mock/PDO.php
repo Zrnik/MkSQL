@@ -6,7 +6,6 @@ use PDOException;
 
 class PDO extends \PDO
 {
-
     public function __construct()
     {
         parent::__construct("sqlite::memory:", null, null, null);
@@ -66,8 +65,4 @@ class PDO extends \PDO
 
         return $pdoStatement;
     }
-
-
-
-
 }

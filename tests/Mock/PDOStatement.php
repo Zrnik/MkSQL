@@ -96,4 +96,3 @@ class PDOStatement extends \PDOStatement
         return true;
     }
 }
-

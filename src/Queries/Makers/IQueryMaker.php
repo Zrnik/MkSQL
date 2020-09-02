@@ -36,6 +36,19 @@ interface IQueryMaker
      * @return Query[]|null
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription) : ?array;
+
+
+    /**
+     * @param string $oldKey
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function changePrimaryKeyQuery(
+        string $oldKey,
+        Table $table, ?TableDescription $oldTableDescription
+    ) : ?array;
+
     //endregion
 
     //region Column Operations

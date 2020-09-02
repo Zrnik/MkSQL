@@ -123,8 +123,11 @@ class Utils
     {
         $keyTarget = static::confirmName($keyTarget,["."]);
 
-        if(Strings::length($keyTarget) - 1 !== Strings::length(str_replace(".","",$keyTarget)))
-            throw new InvalidArgumentException("There is no, or more than one dot in a foreign key target!");
+        if(!Strings::contains($keyTarget,"."))
+            throw new InvalidArgumentException("Invalid foreign key target '".$keyTarget."'. Dot is missing.");
+
+        if(substr_count($keyTarget, '.') > 1)
+            throw new InvalidArgumentException("Invalid foreign key target '".$keyTarget."'. Too many dots.");
 
         return $keyTarget;
     }
@@ -157,7 +160,7 @@ class Utils
      */
     private static array $_Forbidden = [
         "NOT NULL", "DEFAULT", "CREATE TABLE", "CONSTRAINT",
-        "REFERENCES", "CREATE UNIQUE INDEX"
+        "REFERENCES", "CREATE UNIQUE INDEX", "PRIMARY KEY"
     ];
 
     /**

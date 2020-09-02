@@ -23,6 +23,11 @@ class TableDescription
     public bool $tableExists = false;
 
     /**
+     * @var string
+     */
+    public string $primaryKeyName = 'id';
+
+    /**
      * @var ColumnDescription[]
      */
     public array $columns = [];
