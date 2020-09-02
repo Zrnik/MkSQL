@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Table;
+use Zrny\MkSQL\Updater;
 
 class ColumnTest extends TestCase
 {
@@ -24,29 +25,23 @@ class ColumnTest extends TestCase
         $column = new Column("tested");
         $this->addToAssertionCount(1);
 
-        $column = new Column("tested","text");
+        $column = new Column("tested", "text");
         $this->addToAssertionCount(1);
 
-        $column = new Column("tested","something(10, 20, 30)");
+        $column = new Column("tested", "something(10, 20, 30)");
         $this->addToAssertionCount(1);
 
-        try
-        {
-            $column = new Column("tested.table","text");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            $column = new Column("tested.table", "text");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
-            $column = new Column("tested","text.value");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            $column = new Column("tested", "text.value");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -71,64 +66,61 @@ class ColumnTest extends TestCase
      */
     public function testForeignKeys()
     {
-        $column = new Column("tested");
+        $updater = new Updater(new \Mock\PDO());
+
+        $accounts = $updater->tableCreate("accounts");
+        $sessions = $updater->tableCreate("sessions")
+            ->columnCreate("account");
 
         $this->assertSame(
             [],
-            $column->getForeignKeys()
+            $sessions->getForeignKeys()
         );
 
-        $column->addForeignKey("table.column");
+        $sessions->addForeignKey("accounts.id");
 
         $this->assertSame(
             [
-                "table.column"
+                "accounts.id"
             ],
-            $column->getForeignKeys()
+            $sessions->getForeignKeys()
         );
 
-        $column->addForeignKey("account.id");
-
-        $this->assertSame(
-            [
-                "table.column",
-                "account.id"
-            ],
-            $column->getForeignKeys()
-        );
-
-        //Already Exists
-        try
-        {
-            $column->addForeignKey("table.column");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            $sessions->addForeignKey("double.dot.error");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-
-        //database in identifier not supported (is it even possible?)
-        try
-        {
-            $column->addForeignKey("database.table.column");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            $sessions->addForeignKey("no_dot_error");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-
-        //database in identifier not supported (is it even possible?)
-        try
-        {
-            $column->addForeignKey("database");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
+        try {
+            //Already Defined Error
+            $sessions->addForeignKey("accounts.id");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            $this->addToAssertionCount(1);
         }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+
+        try {
+            //Column account_id is not defined in accounts table
+            $sessions->addForeignKey("accounts.account_id");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            $this->addToAssertionCount(1);
+        }
+
+        try {
+            //Table user is not defined in accounts table
+            $sessions->addForeignKey("user.id");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -162,23 +154,17 @@ class ColumnTest extends TestCase
         $this->assertNull($column->getComment());
 
         // only  A-Z a-z 0-9 underscore comma space allowed!
-        try
-        {
+        try {
             $column->setComment("It works!");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
+        try {
             $column->setComment("Really?");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -210,13 +196,10 @@ class ColumnTest extends TestCase
 
 
         //something invalid in type:
-        try
-        {
-            new Column("hello","world.invalid");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            new Column("hello", "world.invalid");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -255,8 +238,6 @@ class ColumnTest extends TestCase
         $tested->setUnique(true);
         $this->assertTrue($tested->getUnique());
     }
-
-
 
 
     public function testDefault()
@@ -354,7 +335,7 @@ class ColumnTest extends TestCase
         $column = $desc->table->columnGet("name");
 
         //Should not fail.
-        $QueriesToExecute = $column->install($desc,$desc->columnGet("name"));
+        $QueriesToExecute = $column->install($desc, $desc->columnGet("name"));
 
         //Mock SQLMakers are (and should) not create any queries!
         $this->assertSame(
