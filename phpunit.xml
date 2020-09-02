@@ -1,4 +1,4 @@
-<phpunit bootstrap="tests\Bootstrap.php">
+<phpunit bootstrap="tests/Bootstrap.php">
 
     <extensions>
         <extension class="\Hooks\IntegrationErrorReport" />
