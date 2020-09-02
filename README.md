@@ -16,16 +16,14 @@ make everything up to date.
 
 `composer require zrny/mksql`
 
-##### Supported Drivers & Features: 
-
-Currently supported:
+##### Supported Drivers: 
 
 - [✅ MySQL](https://www.mysql.com) 
 - [✅ SQLite](https://www.sqlite.org/index.html) 
 
 Planned support:
 
-- [❌ PgSQL](https://www.postgresql.org) (*one day...*)
+- [❌ PgSQL](https://www.postgresql.org) (*one day... or another...*)
 
 No other drivers are planned to be implemented, **change my mind**!
 

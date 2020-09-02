@@ -10,11 +10,16 @@ namespace Queries\Tables;
 use Mock\MockSQLMaker_ExistingTable_First;
 use Mock\PDO;
 use PHPUnit\Framework\TestCase;
+use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Table;
 
 class TableDescriptionTest extends TestCase
 {
-
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testColumn()
     {
         //Mock some description:

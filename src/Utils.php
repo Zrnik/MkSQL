@@ -151,7 +151,7 @@ class Utils
 
     /**
      * List of banned words in comments & default values!
-     * (As i am using them to parse SHOW CREATE TABLE results)
+     * (As we are using them to parse SHOW CREATE TABLE results)
      *
      * @var string[]
      */

@@ -10,6 +10,7 @@ namespace Mock;
 
 
 use PDO;
+use PDOException;
 use Throwable;
 
 class PDOStatement extends \PDOStatement
@@ -17,7 +18,7 @@ class PDOStatement extends \PDOStatement
     /**
      * @var array|null
      */
-    private $_expectedParams;
+    private ?array $_expectedParams;
 
     /**
      * PDOStatement constructor.
@@ -85,8 +86,8 @@ class PDOStatement extends \PDOStatement
                     ||
                     $input_parameters[$ExpectedIndex] != $ExpectedParam
                 )
-                    throw new \PDOException(
-                        "Mock pdostatement expected '".$ExpectedIndex."' 
+                    throw new PDOException(
+                        "Mock PDOStatement expected '".$ExpectedIndex."' 
                     at index '".$ExpectedParam."' but got
                      '".($input_parameters[$ExpectedIndex]??strval(null))."'."
                     );

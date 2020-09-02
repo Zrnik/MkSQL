@@ -7,18 +7,22 @@
  */
 
 
-use Mock\PDO;
+use Zrny\MkSQL\Exceptions\InvalidDriverException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
+use Zrny\MkSQL\Table;
 use Zrny\MkSQL\Updater;
 use PHPUnit\Framework\TestCase;
 
 class UpdaterTest extends TestCase
 {
-
     private function createPDO() : \Mock\PDO
     {
         return new \Mock\PDO();
     }
 
+    /**
+     * @throws InvalidDriverException
+     */
     public function testInstall()
     {
 
@@ -29,7 +33,9 @@ class UpdaterTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
-
+    /**
+     * @throws TableDefinitionExists
+     */
     public function testTableGet()
     {
         $Updater = new Updater($this->createPDO());
@@ -40,27 +46,35 @@ class UpdaterTest extends TestCase
 
     }
 
+    /**
+     * @throws TableDefinitionExists
+     * @throws Exception
+     */
     public function testTableAdd()
     {
         $Updater = new Updater($this->createPDO());
 
         //No problem with adding table now
-        $Table = new \Zrny\MkSQL\Table("someTable");
+        $Table = new Table("someTable");
         $Updater->tableAdd($Table);
         $this->addToAssertionCount(1); //Created (because no exception)
 
         try
         {
             $Updater->tableAdd($Table);
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\TableDefinitionExists::class." not thrown!");
+            throw new Exception("Expected exception ". TableDefinitionExists::class." not thrown!");
         }
-        catch(\Zrny\MkSQL\Exceptions\TableDefinitionExists $_)
+        catch(TableDefinitionExists $_)
         {
             $this->addToAssertionCount(1);
         }
 
     }
 
+    /**
+     * @throws TableDefinitionExists
+     * @throws Exception
+     */
     public function testTableCreate()
     {
         $Updater = new Updater($this->createPDO());
@@ -73,9 +87,9 @@ class UpdaterTest extends TestCase
         try
         {
             $Table = $Updater->tableCreate("someTable");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\TableDefinitionExists::class." not thrown!");
+            throw new Exception("Expected exception ". TableDefinitionExists::class." not thrown!");
         }
-        catch(\Zrny\MkSQL\Exceptions\TableDefinitionExists $_)
+        catch(TableDefinitionExists $_)
         {
             $this->addToAssertionCount(1);
         }
@@ -84,7 +98,9 @@ class UpdaterTest extends TestCase
     }
 
 
-
+    /**
+     * @throws TableDefinitionExists
+     */
     public function testTableList()
     {
         $Updater = new Updater($this->createPDO());

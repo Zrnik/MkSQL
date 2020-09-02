@@ -102,10 +102,10 @@ class QueryTest extends TestCase
 
         $MockPDO = new PDO();
 
-        $MockPDO->expectQuery("SELECT * FROM random_table WHERE id = ?");
+        $MockPDO->expectQuery(/** @lang */"SELECT * FROM random_table WHERE id = ?");
         $MockPDO->expectParams([10]);
 
-        $query->setQuery("SELECT * FROM random_table WHERE id = ?");
+        $query->setQuery(/** @lang */"SELECT * FROM random_table WHERE id = ?");
         $query->paramAdd(10); //id
 
         $query->execute($MockPDO);

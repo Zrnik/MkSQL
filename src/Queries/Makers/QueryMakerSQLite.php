@@ -426,8 +426,8 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function compareType(string $type1, string $type2): bool
     {
-        $type1 = strtolower($type1);
-        $type2 = strtolower($type2);
+        $type1 = Utils::confirmType(strtolower($type1));
+        $type2 = Utils::confirmType(strtolower($type2));
 
         if ($type1 === "integer")
             $type1 = "int";

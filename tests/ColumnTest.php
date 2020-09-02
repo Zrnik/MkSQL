@@ -343,6 +343,10 @@ class ColumnTest extends TestCase
         );
     }
 
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testInstall()
     {
         //Get Mocked QueryMaker TableDefinition with prepared Tables:

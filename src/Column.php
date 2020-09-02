@@ -9,7 +9,6 @@
 namespace Zrny\MkSQL;
 
 use Zrny\MkSQL\Exceptions\InvalidArgumentException;
-use Zrny\MkSQL\Exceptions\InvalidForeignKeyIdentifierException;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
 
@@ -162,13 +161,30 @@ class Column
     private $default = null;
 
     /**
+     * @var string[]
+     */
+    private static array $_AllowedDefaultValues = [
+        "boolean",
+        "integer",
+        "double", // float
+        "string",
+        "NULL",
+    ];
+
+    /**
      * Set or unset (with null) default value of column.
      * @param mixed|null $defaultValue
      * @return $this
      */
     public function setDefault($defaultValue = null): Column
     {
-        if(is_string($defaultValue))
+        $type = gettype($defaultValue);
+
+        if(!in_array($type, static::$_AllowedDefaultValues))
+            throw new InvalidArgumentException("Comment must be '".
+                implode(", ",static::$_AllowedDefaultValues)."'. Got '" . $type . "' instead!");
+
+        if($type === "string")
             $defaultValue = Utils::checkForbiddenWords($defaultValue);
 
         $this->default = $defaultValue;
@@ -198,19 +214,6 @@ class Column
     public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
-
-        /*
-            //Checked in  "Utils::confirmForeignKeyTarget"
-
-            $setForeignException = new InvalidForeignKeyIdentifierException("Foreign key needs to target another table. Use dot. (E.g. 'TableName.ColumnName')");
-            $exploded = explode(".", $foreignKey);
-
-            if (count($exploded) != 2)
-                throw $setForeignException;
-
-            if (strlen($exploded[0]) <= 0 || strlen($exploded[1]) <= 0)
-                throw $setForeignException;
-        */
 
         if (in_array($foreignKey, $this->foreignKeys))
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");

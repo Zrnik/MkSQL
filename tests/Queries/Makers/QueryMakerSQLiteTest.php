@@ -9,7 +9,8 @@ namespace Queries\Makers;
 
 use Mock\MockSQLMaker_NotExistingTable_First;
 use Mock\PDO;
-use Zrny\MkSQL\Column;
+use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Queries\Makers\QueryMakerSQLite;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
@@ -17,12 +18,16 @@ use Zrny\MkSQL\Table;
 class QueryMakerSQLiteTest extends TestCase
 {
 
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testDescribeTable()
     {
         $MockPDO = new PDO();
         $MockPDO->mockResult([
-            "SELECT * FROM sqlite_master WHERE tbl_name = 'tested_not_exist'" => [],
-            "SELECT * FROM sqlite_master WHERE tbl_name = 'known_table'" => [
+            /** @lang text */ "SELECT * FROM sqlite_master WHERE tbl_name = 'tested_not_exist'" => [],
+            /** @lang text */ "SELECT * FROM sqlite_master WHERE tbl_name = 'known_table'" => [
                 [
                     "type" => "table",
                     "name" => "known_table",
@@ -36,7 +41,7 @@ class QueryMakerSQLiteTest extends TestCase
                     , name varchar(255) default 'undefined' not null, price decimal(13,2))"
                 ]
             ],
-            "SELECT * FROM sqlite_master WHERE tbl_name = 'sub_table'" => [
+            /** @lang text */ "SELECT * FROM sqlite_master WHERE tbl_name = 'sub_table'" => [
                 [
                     "type" => "table",
                     "name" => "sub_table",
@@ -139,7 +144,10 @@ class QueryMakerSQLiteTest extends TestCase
         );
     }
 
-
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testCreateTableQuery()
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
@@ -151,7 +159,88 @@ class QueryMakerSQLiteTest extends TestCase
         );
     }
 
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
+    public function testAlterTableColumnQuery()
+    {
 
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::alterTableColumnQuery(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            $Desc,
+            $Desc->columnGet("name")
+        );
+
+        // Changing a table in SQLite requires creating of temporary table!
+        // 1. Create Temporary Table (+1)
+        // 2. Add columns to temporary table (+0 as there can be none)
+        // 3. Move Data (+1)
+        // 3. Drop Old Table (+1)
+        // 3. Rename Temporary Table (+1)
+        // 2. Crate unique indexes (+0 as there can be none)
+        //
+        // = Minimum of 4!
+        $this->assertGreaterThanOrEqual(
+            4,$Queries
+        );
+
+        // Create Temporary Table
+        $this->assertStringContainsString(
+            "CREATE TABLE",
+            $Queries[0]->getQuery()
+        );
+
+        $index = count($Queries) - 1;
+        while(strpos($Queries[$index]->getQuery(),"CREATE UNIQUE INDEX") !== false)
+        {
+            $index--;
+        }
+
+        //Now we go backwards:
+
+        //RENAME TEMPORARY TO ORIGINAL
+        $this->assertStringContainsString(
+            "ALTER TABLE",
+            $Queries[$index]->getQuery()
+        );
+
+        $this->assertStringContainsString(
+            "RENAME TO",
+            $Queries[$index]->getQuery()
+        );
+
+        //DROP OLD TABLE
+        $this->assertStringContainsString(
+            "DROP TABLE",
+            $Queries[$index - 1]->getQuery()
+        );
+
+        //INSERT FROM OLD TABLE TO TEMP TABLE
+        $this->assertStringContainsString(
+            "INSERT INTO",
+            $Queries[$index - 2]->getQuery()
+        );
+        $this->assertStringContainsString(
+            "SELECT",
+            $Queries[$index - 2]->getQuery()
+        );
+        $this->assertStringContainsString(
+            "FROM",
+            $Queries[$index - 2]->getQuery()
+        );
+
+        // Rest of queries are adding
+        // columns to temp table and/or
+        // creating indexes
+    }
+
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testCreateUniqueIndexQuery()
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
@@ -167,30 +256,151 @@ class QueryMakerSQLiteTest extends TestCase
             1,$Queries
         );
 
+        $this->assertStringContainsString(
+            "CREATE UNIQUE INDEX",
+            $Queries[0]->getQuery()
+        );
+
+
     }
 
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testRemoveUniqueIndexQuery()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::removeUniqueIndexQuery(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            "some_index_we_have_found",
+            $Desc,
+            $Desc->columnGet("name")
+        );
 
+        //Remove SQLite Unique Index = 1 query
+        $this->assertCount(
+            1,$Queries
+        );
 
+        $this->assertStringContainsString(
+            /** @lang text */ "DROP INDEX some_index_we_have_found",
+            $Queries[0]->getQuery()
+        );
+    }
+
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testCreateTableColumnQuery()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::createTableColumnQuery(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            $Desc,
+            $Desc->columnGet("name")
+        );
 
-    public function testAlterTableColumnQuery()
-    {}
+        //Create SQLite Column = 1 query
+        $this->assertCount(
+            1,$Queries
+        );
 
+        $this->assertStringContainsString(
+        /** @lang text */ "ALTER TABLE",
+            $Queries[0]->getQuery()
+        );
 
+        $this->assertStringContainsString(
+        /** @lang text */ "ADD",
+            $Queries[0]->getQuery()
+        );
+    }
+
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testCreateForeignKey()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::createForeignKey(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            "table.column",
+            $Desc,
+            $Desc->columnGet("name")
+        );
 
+        // Same like altering a column, requires a temp table...
+        $this->assertGreaterThanOrEqual(
+            4, $Queries
+        );
+    }
+
+    /**
+     * @throws ColumnDefinitionExists
+     * @throws PrimaryKeyAutomaticException
+     */
     public function testRemoveForeignKey()
-    {}
+    {
+        $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+        $Queries = QueryMakerSQLite::removeForeignKey(
+            $Desc->table,
+            $Desc->table->columnGet("name"),
+            "some_key_we_have_found_before",
+            $Desc,
+            $Desc->columnGet("name")
+        );
+
+        // Again, rewriting whole table. good luck XD
+        $this->assertGreaterThanOrEqual(
+            4, $Queries
+        );
+    }
 
 
     public function testCompareType()
-    {}
+    {
+        $SameTypes = [
+            "InTeGeR" => "integer",
+            "int" => "integer",
+            "Hello (1, 2, 3)" => "hello(1,2,3)",
+            "integer" => "int",
+            "tinyint(1)" => "tinyint",
+            "int(3310)" => "integer",
+            "int(3310) " => "int",
+        ];
+
+        foreach($SameTypes as $t1 => $t2)
+            $this->assertTrue(QueryMakerSQLite::compareType($t1,$t2));
+
+        $NotSameTypes = [
+            "int" => "string",
+            "tinyint" => "mediumint",
+            "text" => "varchar(255)"
+        ];
+
+        foreach($NotSameTypes as $t1 => $t2)
+            $this->assertNotTrue(QueryMakerSQLite::compareType($t1,$t2));
+    }
 
     public function testCompareComment()
-    {}
+    {
+        $LiterallyAnything = [
+            "yep" => "yep",
+            "hello" => "world",
+            ":)"=>":(",
+            "string_or_null"=>null,
+            null=>"string_or_null"
+        ];
+
+        //As sqlite does not support comments, it always returns true so it does not trigger an update everytime.
+        foreach($LiterallyAnything as $c1 => $c2)
+            $this->assertTrue(QueryMakerSQLite::compareComment($c1,$c2));
+    }
 
 }

@@ -12,6 +12,9 @@ use PHPUnit\Framework\TestCase;
 
 class UtilsTest extends TestCase
 {
+    /**
+     * @throws Exception
+     */
     public function testConfirmKeyName()
     {
         /* *
@@ -91,6 +94,9 @@ class UtilsTest extends TestCase
          }
     }
 
+    /**
+     * @throws Exception
+     */
     public function testConfirmForeignKeyTarget()
     {
         $CorrectValues = [
@@ -126,6 +132,9 @@ class UtilsTest extends TestCase
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function testConfirmType()
     {
         $ValidTypes = [
@@ -144,7 +153,7 @@ class UtilsTest extends TestCase
             );
 
         $InvalidTypes = [
-            "Some'Type",
+            "Someone'sType",
             "JustTesting!",
             "decimal[15,5]",
             "varchar{666}",
@@ -164,7 +173,9 @@ class UtilsTest extends TestCase
         }
     }
 
-
+    /**
+     * @throws Exception
+     */
     public function testConfirmColumnName()
     {
         $defaultOKValues = $this->getDefaultTestedValuesOK();
@@ -190,7 +201,9 @@ class UtilsTest extends TestCase
         }
     }
 
-
+    /**
+     * @throws Exception
+     */
     public function testConfirmTableName()
     {
         $defaultOKValues = $this->getDefaultTestedValuesOK();
@@ -244,7 +257,9 @@ class UtilsTest extends TestCase
     }
 
 
-
+    /**
+     * @throws Exception
+     */
     public function testConfirmComment()
     {
         $OKComments = [
@@ -280,7 +295,9 @@ class UtilsTest extends TestCase
 
     }
 
-
+    /**
+     * @throws Exception
+     */
     public function testCommentsException()
     {
         $ValidKeys = [
