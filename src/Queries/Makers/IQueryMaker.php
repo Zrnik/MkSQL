@@ -25,7 +25,7 @@ interface IQueryMaker
      * @param Table $table
      * @return TableDescription|null
      */
-    public static function describeTable(PDO $pdo, Table $table) : ?TableDescription;
+    public static function describeTable(PDO $pdo, Table $table): ?TableDescription;
 
     //endregion
 
@@ -35,7 +35,7 @@ interface IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @return Query[]|null
      */
-    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription) : ?array;
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array;
 
 
     /**
@@ -47,7 +47,7 @@ interface IQueryMaker
     public static function changePrimaryKeyQuery(
         string $oldKey,
         Table $table, ?TableDescription $oldTableDescription
-    ) : ?array;
+    ): ?array;
 
     //endregion
 
@@ -60,7 +60,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription) : ?array;
+    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription): ?array;
 
     /**
      * @param Table $table
@@ -69,7 +69,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array;
 
     /**
      * @param Table $table
@@ -78,7 +78,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array;
 
     /**
      * @param Table $table
@@ -88,7 +88,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array;
 
     /**
      * @param Table $table
@@ -98,7 +98,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array;
 
     /**
      * @param Table $table
@@ -108,7 +108,7 @@ interface IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription) : ?array;
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array;
 
     //endregion
 
@@ -119,14 +119,14 @@ interface IQueryMaker
      * @param string $type2
      * @return bool
      */
-    public static function compareType(string $type1, string $type2) : bool;
+    public static function compareType(string $type1, string $type2): bool;
 
     /**
      * @param string|null $comment1
      * @param string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $comment1, ?string $comment2) : bool;
+    public static function compareComment(?string $comment1, ?string $comment2): bool;
 
     //endregion
 }

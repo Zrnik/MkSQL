@@ -1,51 +1,41 @@
 {
-    "name": "zrny/mksql",
-    "description": "MkSQL is an SQL table updater. It allows you to define table structure in code instead of fiddling with Adminer (or PHPMyAdmin).",
-    "version": "0.5.0",
-
-    "minimum-stability": "stable",
-
-    "type": "library",
-
-    "keywords": [
-        "sql",
-        "table",
-        "create",
-        "mysql",
-        "sqlite"
-    ],
-    "license": "MIT",
-
-    "homepage": "https://github.com/Zrny/MkSQL",
-
-    "authors": [
-        {
-            "name": "Štěpán Zrník",
-            "email": "stepan.zrnik@gmail.com",
-            "homepage": "https://stepan.zrnik.eu/"
-        }
-    ],
-
-    "require": {
-        "php": ">=7.4",
-
-        "ext-pdo": "*",
-        "ext-iconv": "*",
-        "ext-intl": "*",
-
-        "nette/utils": "^3.0",
-        "zrny/enum": "^1.0"
-    },
-
-    "require-dev": {
-        "tracy/tracy": "2.7.5",
-        "phpunit/phpunit": "^9"
-    },
-
-    "autoload": {
-        "psr-4": {
-          "Zrny\\MkSQL\\": "src/",
-          "Mock\\": "tests/Mock/"
-        }
+  "name": "zrny/mksql",
+  "description": "MkSQL is an SQL table updater. It allows you to define table structure in code instead of fiddling with Adminer (or PHPMyAdmin).",
+  "version": "0.5.0",
+  "minimum-stability": "stable",
+  "type": "library",
+  "keywords": [
+    "sql",
+    "table",
+    "create",
+    "mysql",
+    "sqlite"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/Zrny/MkSQL",
+  "authors": [
+    {
+      "name": "Štěpán Zrník",
+      "email": "stepan.zrnik@gmail.com",
+      "homepage": "https://stepan.zrnik.eu/"
     }
+  ],
+  "require": {
+    "php": ">=7.4",
+    "ext-pdo": "*",
+    "ext-iconv": "*",
+    "ext-intl": "*",
+    "nette/utils": "^3.0",
+    "zrny/enum": "^1.0"
+  },
+  "require-dev": {
+    "tracy/tracy": "2.7.5",
+    "phpunit/phpunit": "^9"
+  },
+  "autoload": {
+    "psr-4": {
+      "Zrny\\MkSQL\\": "src/",
+      "Mock\\": "tests/Mock/"
+    }
+  }
 }

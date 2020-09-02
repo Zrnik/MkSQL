@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 16:56
  */
@@ -43,20 +43,20 @@ class MockSQLMaker_ExistingTable_First implements IQueryMaker
         // Create Definition
         $updater = new Updater($pdo);
         $table = $updater->tableCreate("existing_1");
-        $table->columnCreate("name","varchar(255)")->setUnique()->setNotNull();
-        $table->columnCreate("desc","text");
+        $table->columnCreate("name", "varchar(255)")->setUnique()->setNotNull();
+        $table->columnCreate("desc", "text");
         $Description->table = $table;
 
         // Add Columns to Definition
         $Column_Name = new ColumnDescription();
         $Column_Name->table = $table;
-        $Column_Name->column = $table->columnGet("name") ?? new Column("name","varchar(255)");
-        $Column_Name->type =  $Column_Name->column->getType();
+        $Column_Name->column = $table->columnGet("name") ?? new Column("name", "varchar(255)");
+        $Column_Name->type = $Column_Name->column->getType();
 
         $Column_Desc = new ColumnDescription();
         $Column_Desc->table = $table;
         $Column_Desc->column = $table->columnGet("desc") ?? new Column("desc", "text");
-        $Column_Desc->type =  $Column_Desc->column->getType();
+        $Column_Desc->type = $Column_Desc->column->getType();
 
         $Description->columns[] = $Column_Name;
         $Description->columns[] = $Column_Desc;

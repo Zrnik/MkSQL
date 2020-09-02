@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 8:00
  */
 
 
-use Zrny\MkSQL\Utils;
 use PHPUnit\Framework\TestCase;
+use Zrny\MkSQL\Utils;
 
 class UtilsTest extends TestCase
 {
@@ -44,15 +44,13 @@ class UtilsTest extends TestCase
                 ],
         ];
 
-        foreach($TestedValues as $TestedKey => $ResultArray)
-        {
-            foreach($ResultArray as $ResultInfo)
-            {
+        foreach ($TestedValues as $TestedKey => $ResultArray) {
+            foreach ($ResultArray as $ResultInfo) {
                 $TestedLength = $ResultInfo[0];
                 $ExpectedResult = $ResultInfo[1];
                 $this->assertSame(
                     $ExpectedResult,
-                    Utils::confirmKeyName($TestedKey,$TestedLength)
+                    Utils::confirmKeyName($TestedKey, $TestedLength)
                 );
             }
         }
@@ -72,26 +70,21 @@ class UtilsTest extends TestCase
         );
 
 
+        $InvalidKeyValues = [
+            "We dont like spaces",
+            "We_also_don't_like_apostrophes",
+            "NOT_EVEN_EXCL_MARKS!",
+            "so_do_we_like_commas,no_we_dont",
+        ];
 
-         $InvalidKeyValues = [
-             "We dont like spaces",
-             "We_also_don't_like_apostrophes",
-             "NOT_EVEN_EXCL_MARKS!",
-             "so_do_we_like_commas,no_we_dont",
-         ];
-
-         foreach($InvalidKeyValues as $InvalidKey)
-         {
-             try
-             {
-                 Utils::confirmKeyName($InvalidKey);
-                 throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-             }
-             catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-             {
-                 $this->addToAssertionCount(1);
-             }
-         }
+        foreach ($InvalidKeyValues as $InvalidKey) {
+            try {
+                Utils::confirmKeyName($InvalidKey);
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                $this->addToAssertionCount(1);
+            }
+        }
     }
 
     /**
@@ -104,7 +97,7 @@ class UtilsTest extends TestCase
             "AnyOtherTable.SomeColumn",
         ];
 
-        foreach($CorrectValues as $TestedValue)
+        foreach ($CorrectValues as $TestedValue)
             $this->assertSame(
                 $TestedValue,
                 Utils::confirmForeignKeyTarget($TestedValue)
@@ -118,15 +111,11 @@ class UtilsTest extends TestCase
         ];
 
 
-        foreach($IncorrectValues as $TestedValue)
-        {
-            try
-            {
+        foreach ($IncorrectValues as $TestedValue) {
+            try {
                 Utils::confirmForeignKeyTarget($TestedValue);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -138,15 +127,15 @@ class UtilsTest extends TestCase
     public function testConfirmType()
     {
         $ValidTypes = [
-            "int"=>"int",
-            "longtext"=>"longtext",
-            "varchar(666)"=>"varchar(666)",
-            "decimal(15,5)"=>"decimal(15,5)",
-            "technically_valid"=>"technically_valid",
-            "also_valid(1, 2, 3)"=>"also_valid(1,2,3)" //Spaces are not allowed, but they are automatically removed.
+            "int" => "int",
+            "longtext" => "longtext",
+            "varchar(666)" => "varchar(666)",
+            "decimal(15,5)" => "decimal(15,5)",
+            "technically_valid" => "technically_valid",
+            "also_valid(1, 2, 3)" => "also_valid(1,2,3)" //Spaces are not allowed, but they are automatically removed.
         ];
 
-        foreach($ValidTypes as $TestedType => $ExpectedResult)
+        foreach ($ValidTypes as $TestedType => $ExpectedResult)
             $this->assertSame(
                 $ExpectedResult,
                 Utils::confirmType($TestedType)
@@ -159,15 +148,11 @@ class UtilsTest extends TestCase
             "varchar{666}",
         ];
 
-        foreach($InvalidTypes as $TestedType)
-        {
-            try
-            {
+        foreach ($InvalidTypes as $TestedType) {
+            try {
                 Utils::confirmType($TestedType);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -181,49 +166,17 @@ class UtilsTest extends TestCase
         $defaultOKValues = $this->getDefaultTestedValuesOK();
         $defaultERRValues = $this->getDefaultTestedValuesERR();
 
-        foreach($defaultOKValues as $TestedKey => $ExpectedValue)
+        foreach ($defaultOKValues as $TestedKey => $ExpectedValue)
             $this->assertSame(
                 $ExpectedValue,
                 Utils::confirmColumnName($TestedKey)
             );
 
-        foreach($defaultERRValues as $TestedKey)
-        {
-            try
-            {
+        foreach ($defaultERRValues as $TestedKey) {
+            try {
                 Utils::confirmColumnName($TestedKey);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
-                $this->addToAssertionCount(1);
-            }
-        }
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function testConfirmTableName()
-    {
-        $defaultOKValues = $this->getDefaultTestedValuesOK();
-        $defaultERRValues = $this->getDefaultTestedValuesERR();
-
-        foreach($defaultOKValues as $TestedKey => $ExpectedValue)
-            $this->assertSame(
-                $ExpectedValue,
-                Utils::confirmTableName($TestedKey)
-            );
-
-        foreach($defaultERRValues as $TestedKey)
-        {
-            try
-            {
-                Utils::confirmTableName($TestedKey);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -256,6 +209,29 @@ class UtilsTest extends TestCase
         ];
     }
 
+    /**
+     * @throws Exception
+     */
+    public function testConfirmTableName()
+    {
+        $defaultOKValues = $this->getDefaultTestedValuesOK();
+        $defaultERRValues = $this->getDefaultTestedValuesERR();
+
+        foreach ($defaultOKValues as $TestedKey => $ExpectedValue)
+            $this->assertSame(
+                $ExpectedValue,
+                Utils::confirmTableName($TestedKey)
+            );
+
+        foreach ($defaultERRValues as $TestedKey) {
+            try {
+                Utils::confirmTableName($TestedKey);
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
 
     /**
      * @throws Exception
@@ -266,7 +242,7 @@ class UtilsTest extends TestCase
             "Hello, this is a valid comment."
         ];
 
-        foreach($OKComments as $TestedComment)
+        foreach ($OKComments as $TestedComment)
             $this->assertSame(
                 Utils::confirmComment($TestedComment),
                 $TestedComment
@@ -280,15 +256,11 @@ class UtilsTest extends TestCase
         ];
 
 
-        foreach($InvalidComments as $TestedComment)
-        {
-            try
-            {
+        foreach ($InvalidComments as $TestedComment) {
+            try {
                 Utils::confirmComment($TestedComment);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -304,7 +276,7 @@ class UtilsTest extends TestCase
             "This_is_a_VALID_key_with_AZ_az_and_an_underscore"
         ];
 
-        foreach($ValidKeys as $TestedComment)
+        foreach ($ValidKeys as $TestedComment)
             $this->assertSame(
                 Utils::__testCommentsError($TestedComment),
                 $TestedComment
@@ -316,15 +288,11 @@ class UtilsTest extends TestCase
             "dont_try_comments/*malicious_comment_XD*/i_will_notice"
         ];
 
-        foreach($KeysWithComments as $TestedComment)
-        {
-            try
-            {
+        foreach ($KeysWithComments as $TestedComment) {
+            try {
                 Utils::__testCommentsError($TestedComment);
-                throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-            }
-            catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-            {
+                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }

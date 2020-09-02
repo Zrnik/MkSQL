@@ -56,6 +56,7 @@ class Updater
     }
 
     //region Tables
+
     /**
      * @param string $tableName
      * @param bool $rewrite
@@ -96,31 +97,19 @@ class Updater
      * @param string $tableName
      * @return Table|null
      */
-    public function tableGet(string $tableName) : ?Table
+    public function tableGet(string $tableName): ?Table
     {
-        if(isset($this->tables[$tableName]))
+        if (isset($this->tables[$tableName]))
             return $this->tables[$tableName];
         return null;
     }
     //endregion
 
     /**
-     * @return mixed|null
-     */
-    public function getDriverType()
-    {
-        try {
-            return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
-        } catch (InvalidArgumentException $ex) {
-            return null;
-        }
-    }
-
-    /**
      * @return bool
      * @throws InvalidDriverException
      */
-    public function install() : bool
+    public function install(): bool
     {
         $Success = true;
 
@@ -203,5 +192,17 @@ class Updater
         Metrics::measureTotal(true);
 
         return $Success;
+    }
+
+    /**
+     * @return mixed|null
+     */
+    public function getDriverType()
+    {
+        try {
+            return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
+        } catch (InvalidArgumentException $ex) {
+            return null;
+        }
     }
 }

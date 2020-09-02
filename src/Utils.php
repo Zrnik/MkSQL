@@ -24,6 +24,26 @@ class Utils
         "U", "u", "V", "v", "W", "w", "X", "x", "Y", "y", "Z", "z",
         "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_"
     ];
+    /**
+     * List of banned words in comments & default values!
+     * (As we are using them to parse SHOW CREATE TABLE results)
+     *
+     * @var string[]
+     */
+    private static array $_Forbidden = [
+        "NOT NULL", "DEFAULT", "CREATE TABLE", "CONSTRAINT",
+        "REFERENCES", "CREATE UNIQUE INDEX", "PRIMARY KEY"
+    ];
+
+    /**
+     * YAGNI but testing for peace of mind
+     * @param string $name
+     * @return string
+     */
+    public static function __testCommentsError(string $name)
+    {
+        return static::confirmName($name, ["/", "*", "-"]);
+    }
 
     /**
      * This will confirm if the name is good for use in SQL query.
@@ -48,16 +68,6 @@ class Utils
 
         // "It's a kind of fall-trough" - Freddie
         return $name;
-    }
-
-    /**
-     * YAGNI but testing for peace of mind
-     * @param string $name
-     * @return string
-     */
-    public static function __testCommentsError(string $name)
-    {
-        return static::confirmName($name,["/","*","-"]);
     }
 
     /**
@@ -93,9 +103,8 @@ class Utils
      */
     public static function confirmType(string $type): string
     {
-        return static::confirmName(str_replace(" ","", $type), ["(", ")", ","]);
+        return static::confirmName(str_replace(" ", "", $type), ["(", ")", ","]);
     }
-
 
     /**
      * If the key is too long, we use md5 to make it shorter and trim it if required.
@@ -121,17 +130,16 @@ class Utils
      */
     public static function confirmForeignKeyTarget(string $keyTarget): string
     {
-        $keyTarget = static::confirmName($keyTarget,["."]);
+        $keyTarget = static::confirmName($keyTarget, ["."]);
 
-        if(!Strings::contains($keyTarget,"."))
-            throw new InvalidArgumentException("Invalid foreign key target '".$keyTarget."'. Dot is missing.");
+        if (!Strings::contains($keyTarget, "."))
+            throw new InvalidArgumentException("Invalid foreign key target '" . $keyTarget . "'. Dot is missing.");
 
-        if(substr_count($keyTarget, '.') > 1)
-            throw new InvalidArgumentException("Invalid foreign key target '".$keyTarget."'. Too many dots.");
+        if (substr_count($keyTarget, '.') > 1)
+            throw new InvalidArgumentException("Invalid foreign key target '" . $keyTarget . "'. Too many dots.");
 
         return $keyTarget;
     }
-
 
     /**
      * Comment only allows a-z, A-Z, 0-9, underscore, dot, comma and a space.
@@ -145,23 +153,11 @@ class Utils
      */
     public static function confirmComment(?string $name): ?string
     {
-        if($name === null)
+        if ($name === null)
             return null;
 
-        return static::checkForbiddenWords(static::confirmName($name, [",","."," "]));
+        return static::checkForbiddenWords(static::confirmName($name, [",", ".", " "]));
     }
-
-
-    /**
-     * List of banned words in comments & default values!
-     * (As we are using them to parse SHOW CREATE TABLE results)
-     *
-     * @var string[]
-     */
-    private static array $_Forbidden = [
-        "NOT NULL", "DEFAULT", "CREATE TABLE", "CONSTRAINT",
-        "REFERENCES", "CREATE UNIQUE INDEX", "PRIMARY KEY"
-    ];
 
     /**
      * Fall trough checking for banned words in string.
@@ -172,19 +168,16 @@ class Utils
      */
     public static function checkForbiddenWords($text)
     {
-        foreach(static::$_Forbidden as $ForbiddenWord)
-        {
-            if(Strings::contains(
+        foreach (static::$_Forbidden as $ForbiddenWord) {
+            if (Strings::contains(
                 strtolower($text),
                 strtolower($ForbiddenWord)
             ))
-                throw new \InvalidArgumentException("Forbidden word '".strtolower($ForbiddenWord)."' encountered!");
+                throw new \InvalidArgumentException("Forbidden word '" . strtolower($ForbiddenWord) . "' encountered!");
         }
 
         return $text;
     }
-
-
 
 
 }

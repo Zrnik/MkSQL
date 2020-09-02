@@ -6,6 +6,19 @@ use PDOException;
 
 class PDO extends \PDO
 {
+    /**
+     * @var mixed
+     */
+    private $_expectedQuery = null;
+    /**
+     * @var mixed
+     */
+    private $_expectParams = null;
+    /**
+     * @var mixed
+     */
+    private $_mockResults = null;
+
     public function __construct()
     {
         parent::__construct("sqlite::memory:", null, null, null);
@@ -19,33 +32,21 @@ class PDO extends \PDO
         return parent::getAttribute($attribute);
     }
 
-    /**
-     * @var mixed
-     */
-    private $_expectedQuery = null;
-
     public function expectQuery(string $query)
     {
         $this->_expectedQuery = $query;
     }
 
-    /**
-     * @var mixed
-     */
-    private $_expectParams = null;
     public function expectParams(array $array)
     {
         $this->_expectParams = $array;
     }
 
-    /**
-     * @var mixed
-     */
-    private $_mockResults = null;
     public function mockResult($array)
     {
         $this->_mockResults = $array;
     }
+
     /**
      * @param mixed $statement
      * @param null $options
@@ -53,13 +54,12 @@ class PDO extends \PDO
      */
     public function prepare($statement, $options = NULL)
     {
-        if($this->_expectedQuery !== null && $statement !== $this->_expectedQuery)
-            throw new PDOException("Mock PDO expected statement '".$this->_expectedQuery."' but got '".$statement."'!");
+        if ($this->_expectedQuery !== null && $statement !== $this->_expectedQuery)
+            throw new PDOException("Mock PDO expected statement '" . $this->_expectedQuery . "' but got '" . $statement . "'!");
 
         $pdoStatement = new PDOStatement($this->_expectParams);
 
-        if($this->_mockResults !== null && isset($this->_mockResults[$statement]))
-        {
+        if ($this->_mockResults !== null && isset($this->_mockResults[$statement])) {
             $pdoStatement->prepareResult($this->_mockResults[$statement]);
         }
 

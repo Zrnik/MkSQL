@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 16:56
  */
@@ -39,7 +39,7 @@ class MockSQLMaker_ExistingTable_Second implements IQueryMaker
 
         //Existing!
         $Description->tableExists = true;
- 
+
         // Create Definition
         $updater = new Updater($pdo);
         //Referenced Table
@@ -54,12 +54,12 @@ class MockSQLMaker_ExistingTable_Second implements IQueryMaker
         $Column_Parent = new ColumnDescription();
         $Column_Parent->table = $table;
         $Column_Parent->column = $colParent;
-        $Column_Parent->type =  $Column_Parent->column->getType();
+        $Column_Parent->type = $Column_Parent->column->getType();
 
         $Column_CreateTime = new ColumnDescription();
         $Column_CreateTime->table = $table;
         $Column_CreateTime->column = $colCreate;
-        $Column_CreateTime->type =  $Column_CreateTime->column->getType();
+        $Column_CreateTime->type = $Column_CreateTime->column->getType();
 
         $Description->columns[] = $Column_Parent;
         $Description->columns[] = $Column_CreateTime;

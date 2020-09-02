@@ -1,22 +1,21 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:44
  */
 
 namespace Queries\Makers;
 
-use Mock\MockSQLMaker_ExistingTable_First;
 use Mock\MockSQLMaker_ExistingTable_Second;
 use Mock\MockSQLMaker_NotExistingTable_First;
 use Mock\PDO;
 use PDOException;
+use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\QueryMakerMySQL;
-use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
 use Zrny\MkSQL\Updater;
 
@@ -38,7 +37,7 @@ class QueryMakerMySQLTest extends TestCase
             "SHOW CREATE TABLE tested_not_exist" => new PDOException("Table does not exists!"),
             "SHOW CREATE TABLE known_table" => [
                 "Table" => 'known_table',
-                "Create Table" => 'CREATE TABLE `known_table` (
+                "Create Table" =>  /** @lang */ 'CREATE TABLE `known_table` (
                       `id` int NOT NULL AUTO_INCREMENT,
                       `name` varchar(255) NOT NULL DEFAULT \'undefined\',
                       `price` decimal(13,2) DEFAULT NULL,
@@ -47,7 +46,7 @@ class QueryMakerMySQLTest extends TestCase
             ],
             "SHOW CREATE TABLE sub_table" => [
                 "Table" => 'known_table',
-                "Create Table" =>  /** @lang */ 'CREATE TABLE `sub_table` (
+                "Create Table" => /** @lang */ 'CREATE TABLE `sub_table` (
                   `id` int NOT NULL AUTO_INCREMENT,
                   `parent` int NOT NULL COMMENT \'example comment\',
                   PRIMARY KEY (`id`),
@@ -66,10 +65,10 @@ class QueryMakerMySQLTest extends TestCase
 
         $Table = $updater->tableCreate("known_table");
 
-        $Table->columnCreate("name","varchar(255)")->setNotNull()->setDefault("undefined");
-        $Table->columnCreate("price","decimal(13, 2)");
+        $Table->columnCreate("name", "varchar(255)")->setNotNull()->setDefault("undefined");
+        $Table->columnCreate("price", "decimal(13, 2)");
 
-        $description = QueryMakerMySQL::describeTable($MockPDO,$Table);
+        $description = QueryMakerMySQL::describeTable($MockPDO, $Table);
 
         $this->assertNotNull($description);
 
@@ -122,7 +121,7 @@ class QueryMakerMySQLTest extends TestCase
         $Table = $updater->tableCreate("sub_table");
         $Table->columnCreate("parent")->addForeignKey("known_table.id");
 
-        $description = QueryMakerMySQL::describeTable($MockPDO,$Table);
+        $description = QueryMakerMySQL::describeTable($MockPDO, $Table);
 
 
         $this->assertNotNull($description);
@@ -144,6 +143,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testChangePrimaryKeyQuery()
     {
@@ -177,6 +177,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testCreateTableQuery()
     {
@@ -188,7 +189,7 @@ class QueryMakerMySQLTest extends TestCase
 
         //Create MySQL Table = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
@@ -201,6 +202,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testAlterTableColumnQuery()
     {
@@ -214,7 +216,7 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
@@ -228,6 +230,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testCreateUniqueIndexQuery()
     {
@@ -241,7 +244,7 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
@@ -269,11 +272,11 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
-            /** @lang */"DROP INDEX some_index_we_have_found ON",
+        /** @lang */ "DROP INDEX some_index_we_have_found ON",
             $Queries[0]->getQuery()
         );
     }
@@ -295,11 +298,11 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
-        /** @lang */"ALTER TABLE",
+        /** @lang */ "ALTER TABLE",
             $Queries[0]->getQuery()
         );
 
@@ -309,6 +312,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testCreateForeignKey()
     {
@@ -323,21 +327,21 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
-        /** @lang */"ALTER TABLE",
+        /** @lang */ "ALTER TABLE",
             $Queries[0]->getQuery()
         );
 
         $this->assertStringContainsString(
-        /** @lang */"FOREIGN KEY",
+        /** @lang */ "FOREIGN KEY",
             $Queries[0]->getQuery()
         );
 
         $this->assertStringContainsString(
-        /** @lang */"REFERENCES table (column)",
+        /** @lang */ "REFERENCES table (column)",
             $Queries[0]->getQuery()
         );
 
@@ -346,6 +350,7 @@ class QueryMakerMySQLTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testRemoveForeignKey()
     {
@@ -360,16 +365,16 @@ class QueryMakerMySQLTest extends TestCase
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
-            1,$Queries
+            1, $Queries
         );
 
         $this->assertStringContainsString(
-        /** @lang */"ALTER TABLE",
+        /** @lang */ "ALTER TABLE",
             $Queries[0]->getQuery()
         );
 
         $this->assertStringContainsString(
-        /** @lang */"DROP FOREIGN KEY "."some_key_we_found_before",
+        /** @lang */ "DROP FOREIGN KEY " . "some_key_we_found_before",
             $Queries[0]->getQuery()
         );
     }
@@ -384,8 +389,8 @@ class QueryMakerMySQLTest extends TestCase
             "int(3310)" => "int",
         ];
 
-        foreach($SameTypes as $t1 => $t2)
-            $this->assertTrue(QueryMakerMySQL::compareType($t1,$t2));
+        foreach ($SameTypes as $t1 => $t2)
+            $this->assertTrue(QueryMakerMySQL::compareType($t1, $t2));
 
         $NotSameTypes = [
             "int" => "string",
@@ -393,20 +398,20 @@ class QueryMakerMySQLTest extends TestCase
             "text" => "varchar(255)"
         ];
 
-        foreach($NotSameTypes as $t1 => $t2)
-            $this->assertNotTrue(QueryMakerMySQL::compareType($t1,$t2));
+        foreach ($NotSameTypes as $t1 => $t2)
+            $this->assertNotTrue(QueryMakerMySQL::compareType($t1, $t2));
     }
 
 
     public function testCompareComment()
     {
         $this->assertTrue(QueryMakerMySQL::compareComment(null, null));
-        $this->assertTrue(QueryMakerMySQL::compareComment( "foo", "foo"));
+        $this->assertTrue(QueryMakerMySQL::compareComment("foo", "foo"));
         $this->assertTrue(QueryMakerMySQL::compareComment("bar", "bar"));
         $this->assertTrue(QueryMakerMySQL::compareComment("baz", "baz"));
 
         $this->assertNotTrue(QueryMakerMySQL::compareComment(null, "foo"));
-        $this->assertNotTrue(QueryMakerMySQL::compareComment( "foo", "bar"));
+        $this->assertNotTrue(QueryMakerMySQL::compareComment("foo", "bar"));
         $this->assertNotTrue(QueryMakerMySQL::compareComment("bar", "baz"));
         $this->assertNotTrue(QueryMakerMySQL::compareComment("baz", null));
     }

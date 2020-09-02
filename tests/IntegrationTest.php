@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 02.09.2020 13:52
  */
@@ -26,16 +26,16 @@ class IntegrationTest extends TestCase
     public function testIntegration()
     {
         // MySQL Integration:
-        // $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1","travis","");
-
-        // $this->processTest($MySQL_PDO);
-
-        // SQLite Integration:
-        $MySQL_PDO = new PDO("sqlite::memory:");
-        // memory is enough, but for visual data:
-        $MySQL_PDO = new PDO('sqlite:mksql_test.sqlite');
+        $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1", "travis", "");
 
         $this->processTest($MySQL_PDO);
+
+        // SQLite Integration:
+        $SQLite_PDO = new PDO("sqlite::memory:");
+        // memory is enough, but for visual data:
+        //$SQLite_PDO = new PDO('sqlite:mksql_test.sqlite');
+
+        $this->processTest($SQLite_PDO);
     }
 
     /**
@@ -50,10 +50,10 @@ class IntegrationTest extends TestCase
         $Updater = new Updater($pdo);
         $this->addToAssertionCount(1);
 
-        echo PHP_EOL."-- START ------------------------".PHP_EOL;
+        echo PHP_EOL . "-- START ------------------------" . PHP_EOL;
 
         $this->assertNotNull($Updater->getDriverType());
-        echo "Processing Test with: ". DriverType::getName($Updater->getDriverType()).PHP_EOL;
+        echo "Processing Test with: " . DriverType::getName($Updater->getDriverType()) . PHP_EOL;
 
         $this->dropAll($pdo);
 
@@ -62,7 +62,6 @@ class IntegrationTest extends TestCase
         // #####################################
         // ### SUB TESTS #######################
         // #####################################
-
 
         // #1. Changes in PrimaryKey name
         $this->subTestPrimaryKeyNameChange($Updater);
@@ -79,15 +78,10 @@ class IntegrationTest extends TestCase
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
 
-        echo PHP_EOL."-- DONE -------------------------".PHP_EOL;
+        echo PHP_EOL . "-- DONE -------------------------" . PHP_EOL;
     }
 
-    public function executeBeforeFirstTest()
-    {
-        die("EXECUTE BEFORE FIRST TEST");
-    }
-
-    private function dropAll(PDO $pdo) : void
+    private function dropAll(PDO $pdo): void
     {
         //Must be in reverse order because of foreign key constraints
         $tables = [
@@ -102,12 +96,10 @@ class IntegrationTest extends TestCase
             //Temp tables created by SQLite
         ];
 
-        foreach($tables as $table_name)
-        {
-            $pdo->exec("DROP TABLE IF EXISTS ".$table_name." ");
+        foreach ($tables as $table_name) {
+            $pdo->exec("DROP TABLE IF EXISTS " . $table_name . " ");
         }
     }
-
 
     /**
      * @param Updater $Updater
@@ -117,12 +109,12 @@ class IntegrationTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    private function installDefault(Updater $Updater) : bool
+    private function installDefault(Updater $Updater): bool
     {
         //Table Accounts only with Login:
         $Accounts = $Updater->tableCreate("accounts");
 
-        $Accounts->columnCreate("login","varchar(60)")
+        $Accounts->columnCreate("login", "varchar(60)")
             ->setUnique()
             ->setNotNull();
 
@@ -132,8 +124,7 @@ class IntegrationTest extends TestCase
 
         $Sessions->columnCreate("token", "varchar(64)")
             ->setUnique()
-            ->setNotNull()
-        ;
+            ->setNotNull();
 
         $Sessions->columnCreate("account")
             ->addForeignKey("accounts.id");
@@ -142,7 +133,6 @@ class IntegrationTest extends TestCase
 
         $LastAction->columnCreate("session")
             ->addForeignKey("sessions.id");
-
 
         $LastAction->columnCreate("action_time");
 
@@ -162,6 +152,10 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestTypeChange(Updater $Updater)
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setType("varchar(10)");
@@ -175,6 +169,10 @@ class IntegrationTest extends TestCase
 
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestNotNull(Updater $Updater)
     {
         $Updater->tableGet("accounts")->columnGet("login")->setNotNull(false);
@@ -184,6 +182,10 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestDefaultValue(Updater $Updater)
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(time());
@@ -193,6 +195,10 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestComment(Updater $Updater)
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setComment("A tested column");
@@ -205,6 +211,10 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestForeignKeys(Updater $Updater)
     {
         $Updater->tableGet("sessions")->columnGet("token")->addForeignKey("accounts.login");
@@ -215,6 +225,10 @@ class IntegrationTest extends TestCase
 
     }
 
+    /**
+     * @param Updater $Updater
+     * @throws InvalidDriverException
+     */
     private function subTestUniqueIndexes(Updater $Updater)
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
@@ -225,6 +239,10 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
     }
 
+    public function executeBeforeFirstTest()
+    {
+        die("EXECUTE BEFORE FIRST TEST");
+    }
 
 
 }

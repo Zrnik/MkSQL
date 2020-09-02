@@ -1,25 +1,20 @@
 <?php declare(strict_types=1);
 
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:47
  */
 
 
+use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Exceptions\InvalidDriverException;
 use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Table;
 use Zrny\MkSQL\Updater;
-use PHPUnit\Framework\TestCase;
 
 class UpdaterTest extends TestCase
 {
-    private function createPDO() : \Mock\PDO
-    {
-        return new \Mock\PDO();
-    }
-
     /**
      * @throws InvalidDriverException
      */
@@ -31,6 +26,11 @@ class UpdaterTest extends TestCase
 
         //Expected no exceptions
         $this->addToAssertionCount(1);
+    }
+
+    private function createPDO(): \Mock\PDO
+    {
+        return new \Mock\PDO();
     }
 
     /**
@@ -59,13 +59,10 @@ class UpdaterTest extends TestCase
         $Updater->tableAdd($Table);
         $this->addToAssertionCount(1); //Created (because no exception)
 
-        try
-        {
+        try {
             $Updater->tableAdd($Table);
-            throw new Exception("Expected exception ". TableDefinitionExists::class." not thrown!");
-        }
-        catch(TableDefinitionExists $_)
-        {
+            throw new Exception("Expected exception " . TableDefinitionExists::class . " not thrown!");
+        } catch (TableDefinitionExists $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -80,17 +77,14 @@ class UpdaterTest extends TestCase
         $Updater = new Updater($this->createPDO());
 
         //No problem with adding table now
-        $Table = $Updater->tableCreate("someTable");
+        $Updater->tableCreate("someTable");
         $this->addToAssertionCount(1); //Created (because no exception)
 
         //Now it exists, it should throw an exception
-        try
-        {
-            $Table = $Updater->tableCreate("someTable");
-            throw new Exception("Expected exception ". TableDefinitionExists::class." not thrown!");
-        }
-        catch(TableDefinitionExists $_)
-        {
+        try {
+            $Updater->tableCreate("someTable");
+            throw new Exception("Expected exception " . TableDefinitionExists::class . " not thrown!");
+        } catch (TableDefinitionExists $_) {
             $this->addToAssertionCount(1);
         }
 

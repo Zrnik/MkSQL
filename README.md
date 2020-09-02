@@ -36,10 +36,10 @@ Tested with:
 
 - [❌ PgSQL](https://www.postgresql.org) (*one day... or another...*)
 
-No other drivers are planned to be implemented, **change my mind**!
+No other drivers will be implemented, **change my mind**!
 
 # Usage
-
+ 
 - Please notice that every table will get **id** column as
  **primary auto increment** key by **default**, so we don't 
  need to define them. This behavior cannot be changed, you 

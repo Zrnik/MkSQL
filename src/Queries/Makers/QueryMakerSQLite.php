@@ -32,7 +32,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         try {
 
-            $Statement = $pdo->prepare("SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'");
+            $Statement = $pdo->prepare(/** @lang text */"SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'");
             $Statement->execute();
             $SQLiteTableData = $Statement->fetchAll(PDO::FETCH_ASSOC);
 
@@ -69,11 +69,9 @@ class QueryMakerSQLite implements IQueryMaker
                         $parts = explode(", ", $queryToParse);
 
                         //Find Primary Key Name:
-                        foreach($parts as $part)
-                        {
-                            if(Strings::contains(strtolower($part), "primary key"))
-                            {
-                                list($primaryKey) = explode(" ",Strings::normalize($part));
+                        foreach ($parts as $part) {
+                            if (Strings::contains(strtolower($part), "primary key")) {
+                                list($primaryKey) = explode(" ", Strings::normalize($part));
                                 $primaryKey = Strings::normalize($primaryKey);
                                 $Desc->primaryKeyName = $primaryKey;
                             }
@@ -115,6 +113,7 @@ class QueryMakerSQLite implements IQueryMaker
                                         list($BeforeDefault, $DefaultPart)
                                             = explode("default '", $part);
 
+                                    unset($BeforeDefault);
 
                                     $defaultValue = "";
                                     $defaultParts = explode("'", $DefaultPart);
@@ -213,23 +212,7 @@ class QueryMakerSQLite implements IQueryMaker
             $table,
             new Column("not_needed"),
             $oldTableDescription,
-            null,[$table->getPrimaryKeyName() => $oldKey]);
-    }
-
-    /**
-     * @param Table $table
-     * @param TableDescription|null $oldTableDescription
-     * @return Query[]|null
-     */
-    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
-    {
-        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_".$table->getPrimaryKeyName()."_pk");
-
-        return [
-            (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (".$table->getPrimaryKeyName()." integer constraint " . $primaryKeyName . " primary key autoincrement);")
-                ->setReason("Table '" . $table->getName() . "' not found.")
-        ];
+            null, [$table->getPrimaryKeyName() => $oldKey]);
     }
 
     /**
@@ -244,7 +227,7 @@ class QueryMakerSQLite implements IQueryMaker
     {
         $alterTableQueryList = [];
 
-        if ($_notNeededColumn->handled)
+        if ($_notNeededColumn->column_handled)
             return [];
 
         $temporaryName = Utils::confirmTableName($table->getName() . "_mksql_tmp");
@@ -271,6 +254,7 @@ class QueryMakerSQLite implements IQueryMaker
 
                 $alterTableQueryList[] = $columnQuery;
             }
+            $column->column_handled = true;
         }
 
         $keyInBothArrays = [$table->getPrimaryKeyName()];
@@ -289,17 +273,16 @@ class QueryMakerSQLite implements IQueryMaker
 
         //Implementation of $swapColumnNames
         $originalList = [];
-        foreach($keyInBothArrays as $oldColName)
-        {
+        foreach ($keyInBothArrays as $oldColName) {
             $insertCol = $oldColName;
 
-            if(isset($swapPrimaryKeyName[$insertCol]))
+            if (isset($swapPrimaryKeyName[$insertCol]))
                 $insertCol = $swapPrimaryKeyName[$insertCol];
 
             $originalList[] = $insertCol;
         }
 
-        $selectList = implode(", ",$originalList);
+        $selectList = implode(", ", $originalList);
 
 
         $InsertIntoQuery->setQuery("INSERT INTO " . $temporaryName . "(" . $columnList . ") SELECT " . $selectList . " FROM " . $table->getName());
@@ -339,6 +322,21 @@ class QueryMakerSQLite implements IQueryMaker
         return $alterTableQueryList;
     }
 
+    /**
+     * @param Table $table
+     * @param TableDescription|null $oldTableDescription
+     * @return Query[]|null
+     */
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
+    {
+        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_" . $table->getPrimaryKeyName() . "_pk");
+
+        return [
+            (new Query($table, null))
+                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " integer constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setReason("Table '" . $table->getName() . "' not found.")
+        ];
+    }
 
     /**
      * @param Table $table
@@ -348,10 +346,10 @@ class QueryMakerSQLite implements IQueryMaker
      * @param bool $isForTemporaryTable
      * @return Query[]|null
      */
-    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription,  bool $isForTemporaryTable = false): ?array
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, bool $isForTemporaryTable = false): ?array
     {
 
-        if (!$isForTemporaryTable && $column->handled)
+        if (!$isForTemporaryTable && $column->column_handled)
             return [];
 
         $CreateSQL = 'ALTER TABLE ' . $table->getName() . ' ';
@@ -398,7 +396,12 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
-        //I haven't found true answer, some say that SQLite keys
+        if ($column->unique_index_handled)
+            return [];
+
+        $column->unique_index_handled = true;
+
+        // I haven't found true answer, some say that SQLite keys
         // are limited by SQLITE_MAX_SQL_LENGTH (default 1 Mil.)
         // and (hardcoded?) maximum of 1 073 741 824
         //
@@ -413,7 +416,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         return [
             (new Query($table, $column))
-                ->setQuery('CREATE UNIQUE INDEX ' . $newKey . ' on ' . $table->getName() . ' (' . $column->getName() . ');')
+                ->setQuery('CREATE UNIQUE INDEX ' . $newKey . ' ON ' . $table->getName() . ' (' . $column->getName() . ');')
                 ->setReason("Unique index on column '" . $table->getName() . "." . $column->getName() . "' not found.")
         ];
     }
@@ -428,6 +431,7 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
+
         return [
             (new Query($table, $column))
                 ->setQuery('DROP INDEX ' . $uniqueKeyName . ';')

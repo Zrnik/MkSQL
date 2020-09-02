@@ -56,10 +56,4 @@ class ColumnDescription
      * @var string
      */
     public string $type = '';
-
-    /**
-     * @var array
-     * @internal
-     */
-    public array $_parameters = [];
 }

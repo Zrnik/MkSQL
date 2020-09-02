@@ -1,17 +1,17 @@
 <?php declare(strict_types=1);
 
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:45
  */
 
 
+use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrny\MkSQL\Table;
-use PHPUnit\Framework\TestCase;
 
 class TableTest extends TestCase
 {
@@ -25,43 +25,31 @@ class TableTest extends TestCase
         new Table("This_is_Fine_150");
         $this->addToAssertionCount(1); //Its OK
 
-        try
-        {
+        try {
             new Table("no spaces");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
+        try {
             new Table("no_special_characters!");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
+        try {
             new Table("no_special_characters?");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
+        try {
             new Table("no.dots");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -76,51 +64,38 @@ class TableTest extends TestCase
     public function testColumnCreate()
     {
         $TestedTable = new Table("testedTable");
-        $Column = $TestedTable->columnCreate("testedColumn");
-        $Column = $TestedTable->columnCreate("anotherColumn");
+        $TestedTable->columnCreate("testedColumn");
+        $TestedTable->columnCreate("anotherColumn");
         $this->addToAssertionCount(1);
 
 
-        try
-        {
-            $Column = $TestedTable->columnCreate("invalid.column.name");
-            throw new Exception("Expected exception ".\Zrny\MkSQL\Exceptions\InvalidArgumentException::class." not thrown!");
-        }
-        catch(\Zrny\MkSQL\Exceptions\InvalidArgumentException $_)
-        {
+        try {
+            $TestedTable->columnCreate("invalid.column.name");
+            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
 
-
-        try
-        {
-            $Column = $TestedTable->columnCreate("id");
-            throw new Exception("Expected exception ". PrimaryKeyAutomaticException::class." not thrown!");
-        }
-        catch(PrimaryKeyAutomaticException $_)
-        {
+        try {
+            $TestedTable->columnCreate("id");
+            throw new Exception("Expected exception " . PrimaryKeyAutomaticException::class . " not thrown!");
+        } catch (PrimaryKeyAutomaticException $_) {
             $this->addToAssertionCount(1);
         }
 
 
-        try
-        {
-            $Column = $TestedTable->columnCreate("testedColumn");
-            throw new Exception("Expected exception ". ColumnDefinitionExists::class." not thrown!");
-        }
-        catch(ColumnDefinitionExists $_)
-        {
+        try {
+            $TestedTable->columnCreate("testedColumn");
+            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
+        } catch (ColumnDefinitionExists $_) {
             $this->addToAssertionCount(1);
         }
 
-        try
-        {
-            $Column = $TestedTable->columnCreate("anotherColumn");
-            throw new Exception("Expected exception ". ColumnDefinitionExists::class." not thrown!");
-        }
-        catch(ColumnDefinitionExists $_)
-        {
+        try {
+            $TestedTable->columnCreate("anotherColumn");
+            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
+        } catch (ColumnDefinitionExists $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -133,8 +108,8 @@ class TableTest extends TestCase
     public function testColumnGet()
     {
         $TestedTable = new Table("testedTable");
-        $Column = $TestedTable->columnCreate("testedColumn");
-        $Column = $TestedTable->columnCreate("anotherColumn");
+        $TestedTable->columnCreate("testedColumn");
+        $TestedTable->columnCreate("anotherColumn");
 
         $this->assertNotNull($TestedTable->columnGet("testedColumn"));
         $this->assertNotNull($TestedTable->columnGet("anotherColumn"));
@@ -149,7 +124,7 @@ class TableTest extends TestCase
     public function testColumnList()
     {
         $TestedTable = new Table("testedTable");
-        $Column = $TestedTable->columnCreate("testedColumn");
+        $TestedTable->columnCreate("testedColumn");
 
         $this->assertArrayHasKey(
             "testedColumn",
@@ -161,7 +136,7 @@ class TableTest extends TestCase
             $TestedTable->columnList()
         );
 
-        $Column = $TestedTable->columnCreate("anotherColumn");
+        $TestedTable->columnCreate("anotherColumn");
 
         $this->assertArrayHasKey(
             "testedColumn",
@@ -179,7 +154,7 @@ class TableTest extends TestCase
 
     public function testPrimaryKeyName()
     {
-        //Private property wraper
+        //Private property wrapper
         $TestedTable = new Table("testedTable");
         $this->assertSame(
             "id",
@@ -238,13 +213,10 @@ class TableTest extends TestCase
         );
 
         //cannot add twice :)
-        try
-        {
+        try {
             $Table->columnAdd($ColumnToAdd);
-            throw new Exception("Expected exception ". ColumnDefinitionExists::class." not thrown!");
-        }
-        catch(ColumnDefinitionExists $_)
-        {
+            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
+        } catch (ColumnDefinitionExists $_) {
             $this->addToAssertionCount(1);
         }
 

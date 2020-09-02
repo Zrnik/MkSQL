@@ -1,17 +1,18 @@
 <?php declare(strict_types=1);
 
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:45
  */
 
 
 use Mock\MockSQLMaker_ExistingTable_First;
-use Zrny\MkSQL\Column;
 use PHPUnit\Framework\TestCase;
+use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Table;
 use Zrny\MkSQL\Updater;
 
@@ -22,24 +23,24 @@ class ColumnTest extends TestCase
      */
     public function testConstructor()
     {
-        $column = new Column("tested");
+        new Column("tested");
         $this->addToAssertionCount(1);
 
-        $column = new Column("tested", "text");
+        new Column("tested", "text");
         $this->addToAssertionCount(1);
 
-        $column = new Column("tested", "something(10, 20, 30)");
+        new Column("tested", "something(10, 20, 30)");
         $this->addToAssertionCount(1);
 
         try {
-            $column = new Column("tested.table", "text");
+            new Column("tested.table", "text");
             throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
         } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
-            $column = new Column("tested", "text.value");
+            new Column("tested", "text.value");
             throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
         } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
@@ -68,7 +69,7 @@ class ColumnTest extends TestCase
     {
         $updater = new Updater(new \Mock\PDO());
 
-        $accounts = $updater->tableCreate("accounts");
+        $updater->tableCreate("accounts");
         $sessions = $updater->tableCreate("sessions")
             ->columnCreate("account");
 
@@ -327,6 +328,7 @@ class ColumnTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testInstall()
     {

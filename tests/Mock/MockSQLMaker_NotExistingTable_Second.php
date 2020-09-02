@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 16:56
  */
@@ -13,6 +13,7 @@ use PDO;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Queries\Makers\IQueryMaker;
 use Zrny\MkSQL\Queries\Tables\ColumnDescription;
 use Zrny\MkSQL\Queries\Tables\TableDescription;
@@ -28,6 +29,7 @@ class MockSQLMaker_NotExistingTable_Second implements IQueryMaker
      * @return TableDescription|null
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {

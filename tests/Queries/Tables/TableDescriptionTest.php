@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 8:47
  */
@@ -12,6 +12,7 @@ use Mock\PDO;
 use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrny\MkSQL\Exceptions\TableDefinitionExists;
 use Zrny\MkSQL\Table;
 
 class TableDescriptionTest extends TestCase
@@ -19,6 +20,7 @@ class TableDescriptionTest extends TestCase
     /**
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function testColumn()
     {
@@ -31,7 +33,7 @@ class TableDescriptionTest extends TestCase
             "desc",
         ];
 
-        foreach($existingColumns as $colName)
+        foreach ($existingColumns as $colName)
             $this->assertNotNull($tableDescription->columnGet($colName));
 
         $nonExistingColumns = [
@@ -39,7 +41,7 @@ class TableDescriptionTest extends TestCase
             "hello_world_column",
         ];
 
-        foreach($nonExistingColumns as $colName)
+        foreach ($nonExistingColumns as $colName)
             $this->assertNull($tableDescription->columnGet($colName));
     }
 

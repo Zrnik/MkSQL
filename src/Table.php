@@ -43,28 +43,8 @@ class Table
      */
     public function __construct(string $tableName)
     {
-        $this->tableName =  Utils::confirmTableName($tableName);
+        $this->tableName = Utils::confirmTableName($tableName);
     }
-
-    /**
-     * @param string $newPrimaryKeyName
-     * @return $this
-     */
-    public function setPrimaryKeyName(string $newPrimaryKeyName) : Table
-    {
-        $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPrimaryKeyName() : string
-    {
-        return $this->primaryKeyName;
-    }
-
-    //region Parent
 
     /**
      * Ends defining of table if using
@@ -85,24 +65,7 @@ class Table
         $this->parent = $parent;
     }
 
-    //endregion
-
-    //region Getters
-
-    /**
-     * Returns name of the table.
-     * The result is already checked and corrected in constructor.
-     *
-     * @return string|null
-     */
-    public function getName(): string
-    {
-        return $this->tableName;
-    }
-
-    //endregion
-
-    //region Columns
+    //region Parent
 
     /**
      * @param string $columnName
@@ -112,7 +75,7 @@ class Table
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    public function columnCreate(string $columnName, ?string $columnType = "int", bool $rewrite = false) : Column
+    public function columnCreate(string $columnName, ?string $columnType = "int", bool $rewrite = false): Column
     {
         $column = new Column($columnName, $columnType);
         return $this->columnAdd($column, $rewrite);
@@ -126,21 +89,58 @@ class Table
      * @throws PrimaryKeyAutomaticException
      * @throws InvalidArgumentException
      */
-    public function columnAdd(Column $column, bool $rewrite = false) : Column
+    public function columnAdd(Column $column, bool $rewrite = false): Column
     {
-        if($column->getName() === "id")
-            throw new PrimaryKeyAutomaticException("Primary, auto incrementing key 'id' is created automatically.");
+        if ($column->getName() === $this->getPrimaryKeyName())
+            throw new PrimaryKeyAutomaticException("Primary, auto incrementing key '" . $this->getPrimaryKeyName() . "' is created automatically.");
 
-        if(!$rewrite && isset($this->columns[$column->getName()]))
-            throw new ColumnDefinitionExists("Column '".$column->getName()."' already defined in table '".$this->getName()."'.");
+        if (!$rewrite && isset($this->columns[$column->getName()]))
+            throw new ColumnDefinitionExists("Column '" . $column->getName() . "' already defined in table '" . $this->getName() . "'.");
 
-        if($column->getName() == $this->getName())
-            throw new InvalidArgumentException("Column name '".$column->getName()."' cannot be same as table name '".$this->getName()."'.");
+        if ($column->getName() == $this->getName())
+            throw new InvalidArgumentException("Column name '" . $column->getName() . "' cannot be same as table name '" . $this->getName() . "'.");
 
         $this->columns[$column->getName()] = $column;
         $column->setParent($this);
 
         return $column;
+    }
+
+    //endregion
+
+    //region Getters
+
+    /**
+     * @return string
+     */
+    public function getPrimaryKeyName(): string
+    {
+        return $this->primaryKeyName;
+    }
+
+    //endregion
+
+    //region Columns
+
+    /**
+     * @param string $newPrimaryKeyName
+     * @return $this
+     */
+    public function setPrimaryKeyName(string $newPrimaryKeyName): Table
+    {
+        $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
+        return $this;
+    }
+
+    /**
+     * Returns name of the table.
+     * The result is already checked and corrected in constructor.
+     *
+     * @return string|null
+     */
+    public function getName(): string
+    {
+        return $this->tableName;
     }
 
     /**
@@ -155,9 +155,9 @@ class Table
      * @param string $columnName
      * @return Column|null
      */
-    public function columnGet(string $columnName) : ?Column
+    public function columnGet(string $columnName): ?Column
     {
-        if(isset($this->columns[$columnName]))
+        if (isset($this->columns[$columnName]))
             return $this->columns[$columnName];
 
         return null;
@@ -177,11 +177,9 @@ class Table
         if (!$desc->tableExists)
             $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
 
-        if($desc->tableExists)
-        {
+        if ($desc->tableExists) {
             //echo "FoundKey: ".$desc->primaryKeyName." required: ".$this->getPrimaryKeyName().PHP_EOL;
-            if($desc->primaryKeyName !== $this->getPrimaryKeyName())
-            {
+            if ($desc->primaryKeyName !== $this->getPrimaryKeyName()) {
                 $Commands = array_merge($Commands, $desc->queryMakerClass::changePrimaryKeyQuery(
                     $desc->primaryKeyName,
                     $this, $desc
@@ -189,8 +187,12 @@ class Table
             }
         }
 
+
         foreach ($this->columns as $column) {
-            $column->handled = false;
+            $column->column_handled = false;
+        }
+
+        foreach ($this->columns as $column) {
             $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));
             Metrics::logStructure($this, $column);
         }

@@ -17,6 +17,14 @@ class Query
 
     //region Settings Properties
     /**
+     * @var bool
+     */
+    public bool $executed = false;
+    /**
+     * @var string|null
+     */
+    public ?string $errorText = null;
+    /**
      * @var string
      */
     private string $Query = '';
@@ -28,6 +36,9 @@ class Query
      * @var Table
      */
     private Table $referencedTable;
+    //endregion
+
+    //region Result Properties
     /**
      * @var Column|null
      */
@@ -36,18 +47,6 @@ class Query
      * @var string
      */
     private string $reason = '';
-    //endregion
-
-    //region Result Properties
-    /**
-     * @var bool
-     */
-    public bool $executed = false;
-
-    /**
-     * @var string|null
-     */
-    public ?string $errorText = null;
     //endregion
 
     /**
@@ -65,7 +64,7 @@ class Query
      * @param PDO $pdo
      * @return bool
      */
-    public function execute(PDO $pdo) : bool
+    public function execute(PDO $pdo): bool
     {
         $this->executed = true;
         return $pdo->prepare($this->Query)->execute($this->Parameters);
@@ -74,10 +73,18 @@ class Query
     //region Sql, Reason & Result
 
     /**
+     * @return string
+     */
+    public function getQuery(): string
+    {
+        return $this->Query;
+    }
+
+    /**
      * @param string $sql
      * @return $this
      */
-    public function setQuery(string $sql) : Query
+    public function setQuery(string $sql): Query
     {
         $this->Query = $sql;
         return $this;
@@ -86,33 +93,25 @@ class Query
     /**
      * @return string
      */
-    public function getQuery() : string
+    public function getReason(): string
     {
-        return $this->Query;
+        return $this->reason;
     }
 
     /**
      * @param string $reason
      * @return $this
      */
-    public function setReason(string $reason = "") : Query
+    public function setReason(string $reason = ""): Query
     {
         $this->reason = $reason;
         return $this;
     }
 
     /**
-     * @return string
-     */
-    public function getReason() : string
-    {
-        return $this->reason;
-    }
-
-    /**
      * @param PDOException $pdoException
      */
-    public function setError(PDOException $pdoException) : void
+    public function setError(PDOException $pdoException): void
     {
         $this->errorText = $pdoException->getMessage();
     }
@@ -125,7 +124,7 @@ class Query
      * @param mixed $value
      * @return $this
      */
-    public function paramAdd($value) : Query
+    public function paramAdd($value): Query
     {
         $this->Parameters[] = $value;
         return $this;
@@ -134,7 +133,7 @@ class Query
     /**
      * @return array
      */
-    public function params() : array
+    public function params(): array
     {
         return $this->Parameters;
     }
@@ -146,7 +145,7 @@ class Query
     /**
      * @return Table
      */
-    public function getTable() : Table
+    public function getTable(): Table
     {
         return $this->referencedTable;
     }
@@ -154,7 +153,7 @@ class Query
     /**
      * @return Column|null
      */
-    public function getColumn() : ?Column
+    public function getColumn(): ?Column
     {
         return $this->referencedColumn;
     }

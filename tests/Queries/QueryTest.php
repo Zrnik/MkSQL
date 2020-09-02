@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 15:47
  */
@@ -9,9 +9,9 @@ namespace Queries;
 
 use Mock\PDO;
 use PDOException;
+use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Column;
 use Zrny\MkSQL\Queries\Query;
-use PHPUnit\Framework\TestCase;
 use Zrny\MkSQL\Table;
 
 class QueryTest extends TestCase
@@ -20,7 +20,7 @@ class QueryTest extends TestCase
     public function testReason()
     {
         //Reason is wrapper for private property...
-        $query = new Query(new Table("tested"),null);
+        $query = new Query(new Table("tested"), null);
 
         //Default is empty
         $this->assertEmpty($query->getReason());
@@ -44,7 +44,7 @@ class QueryTest extends TestCase
 
     public function testError()
     {
-        $query = new Query(new Table("tested"),null);
+        $query = new Query(new Table("tested"), null);
 
         $this->assertNull($query->errorText);
 
@@ -58,14 +58,14 @@ class QueryTest extends TestCase
 
     public function testGetTable()
     {
-        $query = new Query(new Table("tested"),null);
+        $query = new Query(new Table("tested"), null);
 
         $this->assertSame(
             "tested",
             $query->getTable()->getName()
         );
 
-        $query = new Query(new Table("different_one"),null);
+        $query = new Query(new Table("different_one"), null);
 
         $this->assertSame(
             "different_one",
@@ -75,18 +75,18 @@ class QueryTest extends TestCase
 
     public function testGetColumn()
     {
-        $query = new Query(new Table("tested"),null);
+        $query = new Query(new Table("tested"), null);
 
         $this->assertNull($query->getColumn());
 
-        $query = new Query(new Table("tested"),new Column("tested"));
+        $query = new Query(new Table("tested"), new Column("tested"));
 
         $this->assertSame(
             "tested",
             $query->getColumn()->getName()
         );
 
-        $query = new Query(new Table("tested"),new Column("different_one"));
+        $query = new Query(new Table("tested"), new Column("different_one"));
 
         $this->assertSame(
             "different_one",
@@ -95,17 +95,16 @@ class QueryTest extends TestCase
     }
 
 
-
     public function testExecute()
     {
-        $query = new Query(new Table("tested"),null);
+        $query = new Query(new Table("tested"), null);
 
         $MockPDO = new PDO();
 
-        $MockPDO->expectQuery(/** @lang */"SELECT * FROM random_table WHERE id = ?");
+        $MockPDO->expectQuery(/** @lang */ "SELECT * FROM random_table WHERE id = ?");
         $MockPDO->expectParams([10]);
 
-        $query->setQuery(/** @lang */"SELECT * FROM random_table WHERE id = ?");
+        $query->setQuery(/** @lang */ "SELECT * FROM random_table WHERE id = ?");
         $query->paramAdd(10); //id
 
         $query->execute($MockPDO);
@@ -113,10 +112,9 @@ class QueryTest extends TestCase
     }
 
 
-
     public function testQuery()
     {
-        $query = new Query(new Table("tested"),new Column("tested"));
+        $query = new Query(new Table("tested"), new Column("tested"));
         $this->assertEmpty($query->getQuery());
 
         $query->setQuery("SOME QUERY FROM test");
@@ -139,7 +137,7 @@ class QueryTest extends TestCase
 
     public function testParams()
     {
-        $query = new Query(new Table("tested"),new Column("tested"));
+        $query = new Query(new Table("tested"), new Column("tested"));
 
         $this->assertSame(
             [],

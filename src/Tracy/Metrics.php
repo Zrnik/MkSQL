@@ -18,27 +18,6 @@ class Metrics
      * @var float|int
      */
     public static float $_measurementTotal = 0;
-
-    /**
-     * @var float|int
-     */
-    private static float $_measurementTotalBegin = 0;
-
-    /**
-     * @param false $finished
-     */
-    public static function measureTotal($finished = false)
-    {
-        if($finished)
-        {
-            static::$_measurementTotal += microtime(true) - static::$_measurementTotalBegin;
-        }
-        else
-        {
-            static::$_measurementTotalBegin = microtime(true);
-        }
-    }
-
     /**
      * @var float|int
      */
@@ -46,55 +25,75 @@ class Metrics
     /**
      * @var float|int
      */
+    public static float $_measurementQueryPreparing = 0;
+    /**
+     * @var array
+     */
+    public static array $_measurementTables = [];
+    /**
+     * @var float|int
+     */
+    private static float $_measurementTotalBegin = 0;
+    /**
+     * @var float|int
+     */
     private static float $_measurementQueryExecutingBegin = 0;
+    /**
+     * @var float|int
+     */
+    private static float $_measurementQueryPreparingBegin = 0;
+    /**
+     * @var array
+     */
+    private static array $_measurementTablesBegins = [];
+    /**
+     * @var array
+     */
+    private static array $_TableCalls = [];
+    /**
+     * @var Query[]
+     */
+    private static array $_Queries = [];
+    /**
+     * @var array
+     */
+    private static array $_Structure = [];
+
+    /**
+     * @param false $finished
+     */
+    public static function measureTotal($finished = false)
+    {
+        if ($finished) {
+            static::$_measurementTotal += microtime(true) - static::$_measurementTotalBegin;
+        } else {
+            static::$_measurementTotalBegin = microtime(true);
+        }
+    }
 
     /**
      * @param false $finished
      */
     public static function measureQueryExecuting($finished = false)
     {
-        if($finished)
-        {
+        if ($finished) {
             static::$_measurementQueryExecuting += microtime(true) - static::$_measurementQueryExecutingBegin;
-        }
-        else
-        {
+        } else {
             static::$_measurementQueryExecutingBegin = microtime(true);
         }
     }
-
-    /**
-     * @var float|int
-     */
-    public static float $_measurementQueryPreparing = 0;
-    /**
-     * @var float|int
-     */
-    private static float $_measurementQueryPreparingBegin = 0;
 
     /**
      * @param bool $finished
      */
     public static function measureQueryPreparing(bool $finished = false)
     {
-        if($finished)
-        {
+        if ($finished) {
             static::$_measurementQueryPreparing += microtime(true) - static::$_measurementQueryPreparingBegin;
-        }
-        else
-        {
+        } else {
             static::$_measurementQueryPreparingBegin = microtime(true);
         }
     }
-
-    /**
-     * @var array
-     */
-    public static array $_measurementTables = [];
-    /**
-     * @var array
-     */
-    private static array $_measurementTablesBegins = [];
 
     /**
      * @param string $TableName
@@ -103,38 +102,30 @@ class Metrics
      */
     public static function measureTable(string $TableName, string $Action, $finished = false)
     {
-        if(!isset(static::$_measurementTables[$TableName]))
+        if (!isset(static::$_measurementTables[$TableName]))
             static::$_measurementTables[$TableName] = [];
-        if(!isset(static::$_measurementTables[$TableName][$Action]))
+        if (!isset(static::$_measurementTables[$TableName][$Action]))
             static::$_measurementTables[$TableName][$Action] = 0;
-        if(!isset(static::$_measurementTablesBegins[$TableName]))
+        if (!isset(static::$_measurementTablesBegins[$TableName]))
             static::$_measurementTablesBegins[$TableName] = [];
-        if(!isset(static::$_measurementTablesBegins[$TableName][$Action]))
+        if (!isset(static::$_measurementTablesBegins[$TableName][$Action]))
             static::$_measurementTablesBegins[$TableName][$Action] = 0;
 
-        if($finished)
-        {
+        if ($finished) {
             static::$_measurementTables[$TableName][$Action] +=
                 microtime(true) -
                 static::$_measurementTablesBegins[$TableName][$Action];
-        }
-        else
-        {
+        } else {
             static::$_measurementTablesBegins[$TableName][$Action] = microtime(true);
         }
     }
 
     /**
-     * @var array
-     */
-    private static array $_TableCalls = [];
-
-    /**
      * @param string $tableName
      */
-    public static function logTableInstallCalls(string $tableName) : void
+    public static function logTableInstallCalls(string $tableName): void
     {
-        if(!isset(static::$_TableCalls[$tableName]))
+        if (!isset(static::$_TableCalls[$tableName]))
             static::$_TableCalls[$tableName] = 0;
         static::$_TableCalls[$tableName]++;
     }
@@ -145,15 +136,11 @@ class Metrics
      */
     public static function getTableCallCount(string $tableName)
     {
-        if(!isset(static::$_TableCalls[$tableName]))
+        if (!isset(static::$_TableCalls[$tableName]))
             static::$_TableCalls[$tableName] = 0;
         return static::$_TableCalls[$tableName];
     }
 
-    /**
-     * @var Query[]
-     */
-    private static array $_Queries = [];
     public static function logQueries(array $Queries)
     {
         static::$_Queries = array_merge(static::$_Queries, $Queries);
@@ -162,16 +149,10 @@ class Metrics
     /**
      * @return Query[]
      */
-    public static function getQueries() : array
+    public static function getQueries(): array
     {
         return static::$_Queries;
     }
-
-
-    /**
-     * @var array
-     */
-    private static array $_Structure = [];
 
     /**
      * @param Table $table
@@ -179,10 +160,10 @@ class Metrics
      */
     public static function logStructure(Table $table, Column $column)
     {
-        if(!isset(static::$_Structure[$table->getName()]))
+        if (!isset(static::$_Structure[$table->getName()]))
             static::$_Structure[$table->getName()] = [];
 
-        if(!isset(static::$_Structure[$table->getName()][$column->getName()]))
+        if (!isset(static::$_Structure[$table->getName()][$column->getName()]))
             static::$_Structure[$table->getName()][$column->getName()] = $column;
     }
 

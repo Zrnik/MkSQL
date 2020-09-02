@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 /*
- * Zrník.eu | MkSQL  
+ * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.08.2020 16:56
  */
@@ -44,8 +44,8 @@ class MockSQLMaker_NotExistingTable_First implements IQueryMaker
         // Create Definition
         $updater = new Updater($pdo);
         $table = $updater->tableCreate("not_existing_1");
-        $table->columnCreate("name","varchar(255)")->setUnique()->setNotNull();
-        $table->columnCreate("desc","text");
+        $table->columnCreate("name", "varchar(255)")->setUnique()->setNotNull();
+        $table->columnCreate("desc", "text");
         $Description->table = $table;
 
         return $Description;

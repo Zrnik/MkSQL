@@ -1,9 +1,8 @@
 <phpunit bootstrap="tests/Bootstrap.php">
 
     <extensions>
-        <extension class="\Hooks\IntegrationErrorReport" />
+        <extension class="\Hooks\IntegrationErrorReport"/>
     </extensions>
-
 
 
     <testsuites>

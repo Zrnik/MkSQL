@@ -38,21 +38,15 @@ class TableDescription
     public Table $table;
 
     /**
-     * @var array
-     * @internal
-     */
-    public array $_parameters = [];
-
-    /**
      * @param string $getName
      * @return ColumnDescription|null
      */
-    public function columnGet(string $getName) : ?ColumnDescription
+    public function columnGet(string $getName): ?ColumnDescription
     {
         $desc = null;
 
-        foreach($this->columns as $column)
-            if($column->column->getName() === $getName)
+        foreach ($this->columns as $column)
+            if ($column->column->getName() === $getName)
                 return $column;
 
         return null;

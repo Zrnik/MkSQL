@@ -38,13 +38,12 @@ class QueryMakerMySQL implements IQueryMaker
             $DescriptionData = explode("\n", $result);
 
             //Find Primary Key Name:
-            foreach($DescriptionData as $DescriptionRow)
-            {
-                if(Strings::contains($DescriptionRow, "PRIMARY KEY"))
-                {
-                    list($trash, $keyPart) = explode("(",$DescriptionRow);
-                    list($keyPart) = explode(")",$keyPart);
-                    $keyPart = Strings::normalize(str_replace("`","",$keyPart));
+            foreach ($DescriptionData as $DescriptionRow) {
+                if (Strings::contains($DescriptionRow, "PRIMARY KEY")) {
+                    [$trash, $keyPart] = explode("(", $DescriptionRow);
+                    unset($trash); // Make PhpStorm stop screaming...
+                    [$keyPart] = explode(")", $keyPart);
+                    $keyPart = Strings::normalize(str_replace("`", "", $keyPart));
                     $Desc->primaryKeyName = $keyPart;
                 }
             }
@@ -105,7 +104,8 @@ class QueryMakerMySQL implements IQueryMaker
 
                     // - Default Value
                     if (Strings::contains($col_desc, "DEFAULT '")) {
-                        list($trash, $default_part) = explode("DEFAULT '", $col_desc);
+                        list($_trash, $default_part) = explode("DEFAULT '", $col_desc);
+                        unset($_trash);
                         $RestOfDefault = explode("'", $default_part);
 
                         $Index = 0;
@@ -127,11 +127,13 @@ class QueryMakerMySQL implements IQueryMaker
 
                     // - Comment
                     if (Strings::contains($col_desc, "COMMENT '")) {
-                        list($trash, $comment_part) = explode("COMMENT '", $col_desc);
+                        list($_throwAway, $comment_part) = explode("COMMENT '", $col_desc);
                         $RestOfComments = explode("'", $comment_part);
 
                         $Index = 0;
                         $Comment = $RestOfComments[$Index];
+
+                        unset($_throwAway);
 
                         //it ends with backslash, that means it was real apostrophe that was escaped!
                         while (Strings::endsWith($Comment, "\\") && isset($RestOfComments[$Index + 1])) {
@@ -164,11 +166,11 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
     {
-         return [
-             (new Query($table, null))
-                ->setQuery("ALTER TABLE ".$table->getName()." CHANGE ".$oldKey." ".$table->getPrimaryKeyName()." int NOT NULL AUTO_INCREMENT;")
-                ->setReason("Primary key '".$table->getPrimaryKeyName()."' required but '".$oldKey."' found.")
-         ];
+        return [
+            (new Query($table, null))
+                ->setQuery("ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " int NOT NULL AUTO_INCREMENT;")
+                ->setReason("Primary key '" . $table->getPrimaryKeyName() . "' required but '" . $oldKey . "' found.")
+        ];
     }
 
     /**
@@ -180,9 +182,9 @@ class QueryMakerMySQL implements IQueryMaker
     {
         $CreateTableQuery = (new Query($table, null))
             ->setQuery(
-                "CREATE TABLE ".
+                "CREATE TABLE " .
                 $table->getName()
-                . " (".$table->getPrimaryKeyName()." int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
+                . " (" . $table->getPrimaryKeyName() . " int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
             )
             ->setReason("Table '" . $table->getName() . "' not found.");
 
@@ -289,11 +291,10 @@ class QueryMakerMySQL implements IQueryMaker
         $Queries = [];
 
         //var_dump($columnDescription->foreignKeys);
-        foreach($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName)
-        {
+        foreach ($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
-            foreach($DropQueries as $DropQuery)
-                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[".$uniqueKeyName."]'".PHP_EOL.$DropQuery->getReason());
+            foreach ($DropQueries as $DropQuery)
+                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueKeyName . "]'" . PHP_EOL . $DropQuery->getReason());
 
             $Queries = array_merge($Queries, $DropQueries);
         }
@@ -303,17 +304,33 @@ class QueryMakerMySQL implements IQueryMaker
             ->setReason("There is unexpected unique index '" . $uniqueKeyName . "' on '"
                 . $table->getName() . "." . $column->getName() . "'.");
 
-        foreach($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName)
-        {
+        foreach ($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
 
-            foreach($CreateQueries as $CreateQuery)
-                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[".$uniqueKeyName."]'".PHP_EOL.$CreateQuery->getReason());
+            foreach ($CreateQueries as $CreateQuery)
+                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueKeyName . "]'" . PHP_EOL . $CreateQuery->getReason());
 
             $Queries = array_merge($Queries, $CreateQueries);
         }
 
         return $Queries;
+    }
+
+    /**
+     * @param Table $table
+     * @param Column $column
+     * @param string $ForeignKeyName
+     * @param TableDescription|null $oldTableDescription
+     * @param ColumnDescription|null $columnDescription
+     * @return Query[]|null
+     */
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    {
+        return [
+            (new Query($table, $column))
+                ->setQuery("ALTER TABLE " . $table->getName() . " DROP FOREIGN KEY " . $ForeignKeyName . ";")
+                ->setReason("Unexpected foreign key '" . $ForeignKeyName . "' found for column '" . $column->getName() . "'.")
+        ];
     }
 
     /**
@@ -340,23 +357,6 @@ class QueryMakerMySQL implements IQueryMaker
                 ->setQuery('ALTER TABLE ' . $table->getName() . ' ADD CONSTRAINT ' . $foreignKeyName . '
                              FOREIGN KEY (' . $column->getName() . ') REFERENCES ' . $targetTable . ' (' . $targetColumn . ');')
                 ->setReason("Foreign key on '" . $table->getName() . "." . $column->getName() . "' referencing '" . $RefPointerString . "' not found.")
-        ];
-    }
-
-    /**
-     * @param Table $table
-     * @param Column $column
-     * @param string $ForeignKeyName
-     * @param TableDescription|null $oldTableDescription
-     * @param ColumnDescription|null $columnDescription
-     * @return Query[]|null
-     */
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
-    {
-        return [
-            (new Query($table, $column))
-                ->setQuery("ALTER TABLE " . $table->getName() . " DROP FOREIGN KEY " . $ForeignKeyName . ";")
-                ->setReason("Unexpected foreign key '" . $ForeignKeyName . "' found for column '" . $column->getName() . "'.")
         ];
     }
 
