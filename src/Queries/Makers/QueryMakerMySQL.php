@@ -95,7 +95,7 @@ class QueryMakerMySQL implements IQueryMaker
 
                     //Need:
                     // - Type
-                    $ColDesc->type = explode(" ", $col_desc)[1];
+                    $ColDesc->type = Strings::trim(explode(" ", $col_desc)[1],",");
 
                     // - NOT NULL
                     $ColDesc->notNull = strpos($col_desc, "NOT NULL") !== false;
