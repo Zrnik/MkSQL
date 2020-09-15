@@ -102,22 +102,25 @@ class Column
     /**
      * Add foreign key on column
      * @param string $foreignKey
+     * @param bool $isUpdatedWithThisUpdater
      * @return Column
-     * @throws InvalidArgumentException
      */
-    public function addForeignKey(string $foreignKey): Column
+    public function addForeignKey(string $foreignKey, bool $isUpdatedWithThisUpdater = true): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
 
         list($_refTable, $_refColumn) = explode(".", $foreignKey);
 
-        $referencedTable = $this->endColumn()->endTable()->tableGet($_refTable);
-        if ($referencedTable === null)
-            throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '" . $_refTable . "' but that table is not defined!");
+        if($isUpdatedWithThisUpdater)
+        {
+            $referencedTable = $this->endColumn()->endTable()->tableGet($_refTable);
+            if ($referencedTable === null)
+                throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '" . $_refTable . "' but that table is not defined!");
 
-        $referencedColumn = $referencedTable->columnGet($_refColumn);
-        if ($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
-            throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '" . $_refColumn . "' in table '" . $_refTable . "' but that column is not defined!");
+            $referencedColumn = $referencedTable->columnGet($_refColumn);
+            if ($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
+                throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '" . $_refColumn . "' in table '" . $_refTable . "' but that column is not defined!");
+        }
 
         if (
             $_refTable === $this->endColumn()->getName()
