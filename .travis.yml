@@ -1,0 +1,13 @@
+language: php
+
+php:
+  - '7.4'
+
+services:
+  - mysql
+
+before_install:
+  - mysql -e 'CREATE DATABASE mksql_test;'
+
+install:
+  - travis_retry composer install --no-progress --prefer-dist
