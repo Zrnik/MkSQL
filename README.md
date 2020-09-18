@@ -108,7 +108,7 @@ Add this to your bootstrap file:
 ```php
 use \Zrnik\MkSQL\Tracy\Panel;
 Tracy\Debugger::getBar()->addPanel(new Panel());
-````
+```
 
 Or, if you are using [Nette Framework](https://nette.org/en/), 
 register it in your configuration file:
