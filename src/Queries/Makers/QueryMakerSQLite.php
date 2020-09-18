@@ -5,17 +5,17 @@
  * Date: 06.08.2020 7:45
  */
 
-namespace Zrny\MkSQL\Queries\Makers;
+namespace Zrnik\MkSQL\Queries\Makers;
 
 use Exception;
 use Nette\Utils\Strings;
 use PDO;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Queries\Tables\ColumnDescription;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
-use Zrny\MkSQL\Table;
-use Zrny\MkSQL\Utils;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Utils;
 
 class QueryMakerSQLite implements IQueryMaker
 {

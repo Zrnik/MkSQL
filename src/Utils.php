@@ -6,10 +6,10 @@
  */
 
 
-namespace Zrny\MkSQL;
+namespace Zrnik\MkSQL;
 
 use Nette\Utils\Strings;
-use Zrny\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 
 class Utils
 {

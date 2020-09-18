@@ -10,9 +10,9 @@ namespace Queries;
 use Mock\PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Table;
 
 class QueryTest extends TestCase
 {

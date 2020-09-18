@@ -1,6 +1,6 @@
 <?php
 
-namespace Zrny\MkSQL\Exceptions;
+namespace Zrnik\MkSQL\Exceptions;
 
 use Exception;
 

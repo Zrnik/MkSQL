@@ -9,12 +9,12 @@
 
 use Mock\MockSQLMaker_ExistingTable_First;
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Table;
-use Zrny\MkSQL\Updater;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 class ColumnTest extends TestCase
 {
@@ -34,15 +34,15 @@ class ColumnTest extends TestCase
 
         try {
             new Column("tested.table", "text");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             new Column("tested", "text.value");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -89,39 +89,39 @@ class ColumnTest extends TestCase
 
         try {
             $sessions->addForeignKey("double.dot.error");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             $sessions->addForeignKey("no_dot_error");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             //Already Defined Error
             $sessions->addForeignKey("accounts.id");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             //Column account_id is not defined in accounts table
             $sessions->addForeignKey("accounts.account_id");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             //Table user is not defined in accounts table
             $sessions->addForeignKey("user.id");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -157,15 +157,15 @@ class ColumnTest extends TestCase
         // only  A-Z a-z 0-9 underscore comma space allowed!
         try {
             $column->setComment("It works!");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             $column->setComment("Really?");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
     }
@@ -199,8 +199,8 @@ class ColumnTest extends TestCase
         //something invalid in type:
         try {
             new Column("hello", "world.invalid");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -323,6 +323,25 @@ class ColumnTest extends TestCase
             "RequiredAsParent",
             $table->columnCreate("new_auto_created_column")->endColumn()->getName()
         );
+
+
+        $table2 = new Table("RequiredAsParent2");
+
+        $columnToRewriteParent = new Column("tested3");
+
+        $table->columnAdd($columnToRewriteParent);
+
+        //Here i expect a logic exception!
+        try {
+            $table2->columnAdd($columnToRewriteParent);
+            throw new Exception("Expected exception " . LogicException::class . " not thrown!");
+        } catch (LogicException $_) {
+            $this->addToAssertionCount(1);
+        }
+
+        // Cloning is OK, should not throw error!
+        $table2->columnAdd(clone $columnToRewriteParent);
+        $this->addToAssertionCount(1);
     }
 
     /**
@@ -339,11 +358,10 @@ class ColumnTest extends TestCase
         //Should not fail.
         $QueriesToExecute = $column->install($desc, $desc->columnGet("name"));
 
-        //Mock SQLMakers are (and should) not create any queries!
+        //Mock SQLMakers should not create any queries!
         $this->assertSame(
             [],
             $QueriesToExecute
         );
     }
-
 }

@@ -6,15 +6,15 @@
  */
 
 
-namespace Zrny\MkSQL\Tracy;
+namespace Zrnik\MkSQL\Tracy;
 
 use Tracy\Debugger;
 use Tracy\IBarPanel;
-use Zrny\MkSQL\Column;
+use Zrnik\MkSQL\Column;
 
 /**
  * This will do but it REALLY NEEDS an update!
- * @package Zrny\MkSQL\Nette
+ * @package Zrnik\MkSQL\Nette
  */
 class Panel implements IBarPanel
 {

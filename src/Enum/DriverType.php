@@ -5,9 +5,9 @@
  * Date: 31.07.2020 10:03
  */
 
-namespace Zrny\MkSQL\Enum;
+namespace Zrnik\MkSQL\Enum;
 
-use Zrny\Base\Enum;
+use Zrnik\Base\Enum;
 
 class DriverType extends Enum
 {

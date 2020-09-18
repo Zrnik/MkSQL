@@ -1,41 +1,29 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 7:54
  */
 
-namespace Zrny\MkSQL;
+namespace Zrnik\MkSQL;
 
 use InvalidArgumentException;
 use PDO;
 use PDOException;
-use Zrny\MkSQL\Enum\DriverType;
-use Zrny\MkSQL\Exceptions\InvalidDriverException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Queries\Makers\IQueryMaker;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
-use Zrny\MkSQL\Tracy\Metrics;
+use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Tracy\Metrics;
 
 /**
- * @package Zrny\MkSQL
+ * @package Zrnik\MkSQL
  */
 class Updater
 {
-    //region Properties
-
-    /**
-     * @var Table[]
-     */
-    private array $tables = [];
-
-    /**
-     * @var PDO
-     */
     private PDO $pdo;
-
-    //endregion
 
     /**
      * Updater constructor.
@@ -56,6 +44,9 @@ class Updater
     }
 
     //region Tables
+
+    /** @var Table[] */
+    private array $tables = [];
 
     /**
      * @param string $tableName
@@ -133,11 +124,11 @@ class Updater
         $driverName = DriverType::getName($this->getDriverType());
 
         /** @var IQueryMaker $QueryMakerClass */
-        $QueryMakerClass = "\\Zrny\\MkSQL\\Queries\\Makers\\QueryMaker" . $driverName;
+        $QueryMakerClass = "\\Zrnik\\MkSQL\\Queries\\Makers\\QueryMaker" . $driverName;
 
         if (!class_exists($QueryMakerClass))
             throw new InvalidDriverException(
-                "Invalid driver '" . $driverName . "' for package 'Zrny\\MkSQL' class 'Updater'. 
+                "Invalid driver '" . $driverName . "' for package 'Zrnik\\MkSQL' class 'Updater'. 
                 Allowed drivers: " . implode(", ", DriverType::getNames(false)));
 
         //endregion
@@ -203,6 +194,40 @@ class Updater
             return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
         } catch (InvalidArgumentException $ex) {
             return null;
+        }
+    }
+
+
+    /**
+     * Finds all columns referencing FOREIGN KEY of
+     * given table's old primary key and replace it
+     * with new primary key.
+     *
+     * Used by Table::setPrimaryKeyName()
+     *
+     * @param Table $table
+     * @param string $oldPrimaryKeyName
+     * @internal
+     */
+    public function updateForeignKeys(Table $table, string $oldPrimaryKeyName): void
+    {
+        $keyToRemove = $table->getName() . "." . $oldPrimaryKeyName;
+        $keyToAdd = $table->getName() . "." . $table->getPrimaryKeyName();
+
+        foreach ($this->tableList() as $Table) {
+            foreach ($Table->columnList() as $Column) {
+                $found = false;
+                foreach ($Column->getForeignKeys() as $foreignKeyTarget) {
+                    if ($foreignKeyTarget === $keyToRemove) {
+                        $found = true;
+                    }
+                }
+
+                if ($found) {
+                    $Column->dropForeignKey($keyToRemove);
+                    $Column->addForeignKey($keyToAdd);
+                }
+            }
         }
     }
 }

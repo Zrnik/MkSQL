@@ -8,10 +8,10 @@
 
 
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Table;
 
 class TableTest extends TestCase
 {
@@ -27,29 +27,29 @@ class TableTest extends TestCase
 
         try {
             new Table("no spaces");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             new Table("no_special_characters!");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             new Table("no_special_characters?");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
         try {
             new Table("no.dots");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 
@@ -71,8 +71,8 @@ class TableTest extends TestCase
 
         try {
             $TestedTable->columnCreate("invalid.column.name");
-            throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
             $this->addToAssertionCount(1);
         }
 

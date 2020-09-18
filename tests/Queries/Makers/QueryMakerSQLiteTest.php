@@ -10,12 +10,12 @@ namespace Queries\Makers;
 use Mock\MockSQLMaker_NotExistingTable_First;
 use Mock\PDO;
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Queries\Makers\QueryMakerSQLite;
-use Zrny\MkSQL\Table;
-use Zrny\MkSQL\Updater;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Queries\Makers\QueryMakerSQLite;
+use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 class QueryMakerSQLiteTest extends TestCase
 {

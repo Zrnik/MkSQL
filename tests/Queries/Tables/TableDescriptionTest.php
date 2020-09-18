@@ -10,10 +10,10 @@ namespace Queries\Tables;
 use Mock\MockSQLMaker_ExistingTable_First;
 use Mock\PDO;
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Table;
 
 class TableDescriptionTest extends TestCase
 {

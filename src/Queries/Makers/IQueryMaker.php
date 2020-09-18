@@ -6,14 +6,14 @@
  */
 
 
-namespace Zrny\MkSQL\Queries\Makers;
+namespace Zrnik\MkSQL\Queries\Makers;
 
 use PDO;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Queries\Tables\ColumnDescription;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Table;
 
 interface IQueryMaker
 {

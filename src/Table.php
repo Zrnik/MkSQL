@@ -1,42 +1,21 @@
 <?php declare(strict_types=1);
-
 /*
  * Zrník.eu | MkSQL
  * User: Programátor
  * Date: 31.07.2020 9:37
  */
 
-namespace Zrny\MkSQL;
+namespace Zrnik\MkSQL;
 
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\InvalidArgumentException;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
-use Zrny\MkSQL\Tracy\Metrics;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Tracy\Metrics;
 
 class Table
 {
-    /**
-     * @var Updater|null
-     */
-    private ?Updater $parent = null;
-
-    /**
-     * @var string
-     */
-    private string $tableName;
-
-    /**
-     * @var string
-     */
-    private string $primaryKeyName = "id";
-
-    /**
-     * @var Column[]
-     */
-    private array $columns = [];
-
     /**
      * Table constructor.
      * @param string $tableName
@@ -46,26 +25,103 @@ class Table
         $this->tableName = Utils::confirmTableName($tableName);
     }
 
-    /**
-     * Ends defining of table if using
-     * the fluent way of creating the tables.
-     *
-     * @return Updater
-     */
-    public function endTable(): Updater
-    {
-        return $this->parent;
-    }
+    //region Parent
 
     /**
+     * @var Updater|null
+     */
+    private ?Updater $parent = null;
+
+    /**
+     * Sets a parent updater for this table,
+     * used internally from 'Updater' class.
+     *
      * @param Updater $parent
+     * @internal
      */
     public function setParent(Updater $parent)
     {
         $this->parent = $parent;
     }
 
-    //region Parent
+    /**
+     * Returns a parent 'Updater'.
+     *
+     * @internal
+     */
+    public function getParent(): ?Updater
+    {
+        return $this->parent;
+    }
+
+    /**
+     * Ends defining of table if using
+     * the fluent way of creating the tables.
+     *
+     * It's alias of 'getParent'
+     *
+     * @return Updater
+     */
+    public function endTable(): Updater
+    {
+        return $this->getParent();
+    }
+    //endregion
+
+    //region Name
+    private string $tableName;
+
+    /**
+     * Returns name of the table.
+     * The result is already checked and corrected in constructor.
+     *
+     * @return string|null
+     */
+    public function getName(): string
+    {
+        return $this->tableName;
+    }
+    //endregion
+
+    //region Primary Key
+    private string $primaryKeyName = "id";
+
+    /**
+     * Returns a primary key name
+     */
+    public function getPrimaryKeyName(): string
+    {
+        return $this->primaryKeyName;
+    }
+
+    /**
+     * @param string $newPrimaryKeyName
+     * @return $this
+     */
+    public function setPrimaryKeyName(string $newPrimaryKeyName): Table
+    {
+        $oldPrimaryKeyName = $this->primaryKeyName;
+        $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
+
+        // If i have parent a parent Updater, i need to find all references to this table
+        // and replace foreign keys to still point to this table...
+        //
+        // its mainly for integration test...
+
+        $parent = $this->getParent();
+
+        if($parent !== null)
+            $parent->updateForeignKeys($this, $oldPrimaryKeyName);
+
+        return $this;
+    }
+    //endregion
+
+    //region Columns
+    /**
+     * @var Column[]
+     */
+    private array $columns = [];
 
     /**
      * @param string $columnName
@@ -100,47 +156,13 @@ class Table
         if ($column->getName() == $this->getName())
             throw new InvalidArgumentException("Column name '" . $column->getName() . "' cannot be same as table name '" . $this->getName() . "'.");
 
-        $this->columns[$column->getName()] = $column;
         $column->setParent($this);
 
+        // setParent can fail, we dont want to add the
+        // column when that happen, so we need to have it below!
+        $this->columns[$column->getName()] = $column;
+
         return $column;
-    }
-
-    //endregion
-
-    //region Getters
-
-    /**
-     * @return string
-     */
-    public function getPrimaryKeyName(): string
-    {
-        return $this->primaryKeyName;
-    }
-
-    //endregion
-
-    //region Columns
-
-    /**
-     * @param string $newPrimaryKeyName
-     * @return $this
-     */
-    public function setPrimaryKeyName(string $newPrimaryKeyName): Table
-    {
-        $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
-        return $this;
-    }
-
-    /**
-     * Returns name of the table.
-     * The result is already checked and corrected in constructor.
-     *
-     * @return string|null
-     */
-    public function getName(): string
-    {
-        return $this->tableName;
     }
 
     /**
@@ -162,7 +184,6 @@ class Table
 
         return null;
     }
-
     //endregion
 
     //region Install
@@ -178,7 +199,6 @@ class Table
             $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
 
         if ($desc->tableExists) {
-            //echo "FoundKey: ".$desc->primaryKeyName." required: ".$this->getPrimaryKeyName().PHP_EOL;
             if ($desc->primaryKeyName !== $this->getPrimaryKeyName()) {
                 $Commands = array_merge($Commands, $desc->queryMakerClass::changePrimaryKeyQuery(
                     $desc->primaryKeyName,

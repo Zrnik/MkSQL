@@ -10,15 +10,15 @@ namespace Mock;
 
 
 use PDO;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Queries\Makers\IQueryMaker;
-use Zrny\MkSQL\Queries\Tables\ColumnDescription;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
-use Zrny\MkSQL\Table;
-use Zrny\MkSQL\Updater;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
+use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 class MockSQLMaker_ExistingTable_First implements IQueryMaker
 {

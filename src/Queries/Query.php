@@ -5,12 +5,12 @@
  * Date: 06.08.2020 7:41
  */
 
-namespace Zrny\MkSQL\Queries;
+namespace Zrnik\MkSQL\Queries;
 
 use PDO;
 use PDOException;
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Table;
 
 class Query
 {

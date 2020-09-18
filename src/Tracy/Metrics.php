@@ -5,12 +5,11 @@
  * Date: 06.08.2020 8:05
  */
 
+namespace Zrnik\MkSQL\Tracy;
 
-namespace Zrny\MkSQL\Tracy;
-
-use Zrny\MkSQL\Column;
-use Zrny\MkSQL\Queries\Query;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Table;
 
 class Metrics
 {

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 /*
  * Zrník.eu | MkSQL
  * User: Programátor
@@ -6,98 +6,258 @@
  */
 
 
-namespace Zrny\MkSQL;
+namespace Zrnik\MkSQL;
 
-use Zrny\MkSQL\Exceptions\InvalidArgumentException;
-use Zrny\MkSQL\Queries\Tables\ColumnDescription;
-use Zrny\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
+use Zrnik\MkSQL\Queries\Tables\TableDescription;
 
 class Column
 {
-    /**
-     * @var string[]
-     */
-    private static array $_AllowedDefaultValues = [
-        "boolean",
-        "integer",
-        "double", // float
-        "string",
-        "NULL",
-    ];
-    /**
-     * @var bool
-     * @internal
-     */
-    public bool $column_handled = false;
-    /**
-     * @var bool
-     * @internal
-     */
-    public bool $unique_index_handled = false;
-    /**
-     * @var string
-     */
-    private string $type;
 
-    /**
-     * @var string
-     */
-    private string $name;
-    /**
-     * @var Table|null
-     */
-    private ?Table $parent = null;
-
-
-    //region Parent
-    /**
-     * @var bool
-     */
-    private bool $unique = false;
-    /**
-     * @var bool
-     */
-    private bool $NotNull = false;
-
-    //endregion
-
-    //region Getters
-    /**
-     * @var mixed|null
-     */
-    private $default = null;
-    /**
-     * @var string[]
-     */
-    private array $foreignKeys = [];
-    /**
-     * @var string|null
-     */
-    private ?string $comment = null;
-
-
-    //endregion
-
-    //region Unique
-
-    /**
-     * Column constructor.
-     * @param string $columnName
-     * @param string $columnType
-     */
     public function __construct(string $columnName, string $columnType = "int")
     {
         $this->name = Utils::confirmColumnName($columnName);
         $this->setType($columnType);
     }
 
+    //region Helping Properties
+
+    // TODO: Read Below:
+    // This should be something like $this->props[] because its only used by SQLite.
+    // Altering column in SQLite requires creating a temp table, move data, remove
+    // real table, and then rename the temp name to real name.
+    //
+    // If it alters one column, it actually alters all of them, so we don't need to do it
+    // again and this region's variables are preventing it in 'Zrnik\MkSQL\Queries\Makers\QueryMakerSQLite'.
+
     /**
-     * @param Table $parent
+     * @internal
      */
-    public function setParent(Table $parent)
+    public bool $column_handled = false;
+    /**
+     * @internal
+     */
+    public bool $unique_index_handled = false;
+    //endregion
+
+    //region Parent
+    private ?Table $parent = null;
+
+    /**
+     * Sets a parent table.
+     *
+     * @param Table $parent
+     * @internal
+     */
+    public function setParent(Table $parent): void
     {
+        if($parent === null)
+            throw new \LogicException(
+                "Parent cannot be null!"
+            );
+
+        if ($this->parent !== null)
+            throw new \LogicException(
+                "Column '" . $this->getName() . "' already has a parent '" . $this->getParent()->getName() . "', consider cloning!"
+            );
+
         $this->parent = $parent;
     }
+
+    /**
+     * Returns a table that contains this column.
+     */
+    public function getParent(): ?Table
+    {
+        return $this->parent;
+    }
+
+    /**
+     * Ends defining of column if using
+     * the fluent way of creating the tables.
+     *
+     * It's alias of 'getParent()' method.
+     */
+    public function endColumn(): ?Table
+    {
+        return $this->getParent();
+    }
+    //endregion
+
+    //region Column Name
+    private string $name;
+
+    /**
+     * Returns a name of the column.
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    //endregion
+
+    //region Type
+    private string $type;
+
+    /**
+     * Returns a type of the column.
+     */
+    public function getType(): string
+    {
+        return $this->type;
+    }
+
+    /**
+     * Returns column type.
+     * @param string $columnType
+     * @return Column
+     */
+    public function setType(string $columnType): Column
+    {
+        $this->type = Utils::confirmType($columnType);
+        return $this;
+    }
+    //endregion
+
+    //region NotNull
+    private bool $NotNull = false;
+
+    /**
+     * Set if column should be 'NOT NULL' or 'NULL'
+     * @param bool $notNull
+     * @return Column
+     */
+    public function setNotNull(bool $notNull = true): Column
+    {
+        $this->NotNull = $notNull;
+        return $this;
+    }
+
+    /**
+     * Is column not null?
+     * @return bool
+     */
+    public function getNotNull(): bool
+    {
+        return $this->NotNull;
+    }
+    //endregion
+
+    //region Default Value
+    /**
+     * @var mixed|null
+     */
+    private $default = null;
+
+    /**
+     * Allowed types of default values.
+     *
+     * @var string[]
+     */
+    private static array $_AllowedDefaultValues = [
+        "boolean", "integer",
+        "double", // float
+        "string", "NULL"
+    ];
+
+    /**
+     * Set or unset (with null) default value of column.
+     * @param mixed|null $defaultValue
+     * @return $this
+     */
+    public function setDefault($defaultValue = null): Column
+    {
+        $type = gettype($defaultValue);
+
+        if (!in_array($type, static::$_AllowedDefaultValues))
+            throw new InvalidArgumentException("Comment must be one of '" .
+                implode(", ", static::$_AllowedDefaultValues) . "'. Got '" . $type . "' instead!");
+
+        if ($type === "string")
+            $defaultValue = Utils::checkForbiddenWords($defaultValue);
+
+        $this->default = $defaultValue;
+        return $this;
+    }
+
+    /**
+     * Gets a default value.
+     *
+     * @return mixed|null
+     */
+    public function getDefault()
+    {
+        return $this->default;
+    }
+    //endregion
+
+    //region Column Comment
+    /**
+     * @var string|null
+     */
+    private ?string $comment = null;
+
+    /**
+     * Returns string that was set as a comment.
+     * @return string|null
+     */
+    public function getComment(): ?string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * Set or unset comment string for column
+     *
+     * Use null for no comment
+     * Empty argument is also null
+     *
+     * @param string|null $commentString
+     * @return $this
+     */
+    public function setComment(?string $commentString = null): Column
+    {
+        $this->comment = Utils::confirmComment($commentString);
+        return $this;
+    }
+    //endregion
+
+    //region Unique Index
+    private bool $unique = false;
+
+    /**
+     * Is column unique?
+     * @return bool
+     */
+    public function getUnique(): bool
+    {
+        return $this->unique;
+    }
+
+    /**
+     * Sets column to be unique or not
+     * @param bool $Unique
+     * @return $this
+     */
+    public function setUnique(bool $Unique = true): Column
+    {
+        //Unique must be NotNull?
+        if ($Unique)
+            $this->setNotNull(true);
+
+        $this->unique = $Unique;
+
+        return $this;
+    }
+    //endregion
+
+    //region Foreign Keys
+    /**
+     * @var string[]
+     */
+    private array $foreignKeys = [];
 
     /**
      * Add foreign key on column
@@ -111,9 +271,8 @@ class Column
 
         list($_refTable, $_refColumn) = explode(".", $foreignKey);
 
-        if($isUpdatedWithThisUpdater)
-        {
-            $referencedTable = $this->endColumn()->endTable()->tableGet($_refTable);
+        if ($isUpdatedWithThisUpdater) {
+            $referencedTable = $this->getParent()->endTable()->tableGet($_refTable);
             if ($referencedTable === null)
                 throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '" . $_refTable . "' but that table is not defined!");
 
@@ -123,7 +282,7 @@ class Column
         }
 
         if (
-            $_refTable === $this->endColumn()->getName()
+            $_refTable === $this->getParent()->getName()
             && $_refColumn === $this->getName()
         )
             throw new InvalidArgumentException("Foreign key of column '" . $foreignKey . "' cannot point to itself!");
@@ -134,29 +293,6 @@ class Column
         $this->foreignKeys[] = $foreignKey;
 
         return $this;
-    }
-    //endregion
-
-    //region NOT NULL
-
-    /**
-     * Ends defining of column if using
-     * the fluent way of creating the tables.
-     *
-     * @return Table|null
-     */
-    public function endColumn(): ?Table
-    {
-        return $this->parent;
-    }
-
-    /**
-     * Returns column name.
-     * @return string
-     */
-    public function getName(): string
-    {
-        return $this->name;
     }
 
     /**
@@ -170,14 +306,25 @@ class Column
         }
         return $this;
     }
-    //endregion
-
-    //region Default Value
 
     /**
+     * @return string[]
+     */
+    public function getForeignKeys(): array
+    {
+        return $this->foreignKeys;
+    }
+    //endregion
+
+    //region INSTALLATION
+    /**
+     * Method for installing a column
+     *
      * @param TableDescription $tableDescription
      * @param ColumnDescription|null $columnDescription
      * @return array
+     * @internal
+     *
      */
     public function install(TableDescription $tableDescription, ?ColumnDescription $columnDescription): array
     {
@@ -252,133 +399,16 @@ class Column
         }
         return $Commands;
     }
-
-    /**
-     * @return string[]
-     */
-    public function getForeignKeys(): array
-    {
-        return $this->foreignKeys;
-    }
-
-    /**
-     * Is column unique?
-     * @return bool
-     */
-    public function getUnique(): bool
-    {
-        return $this->unique;
-    }
-
-    /**
-     * Sets column to be unique or not
-     * @param bool $Unique
-     * @return $this
-     */
-    public function setUnique(bool $Unique = true): Column
-    {
-        //Unique must be NotNull
-        if ($Unique)
-            $this->setNotNull(true);
-
-        $this->unique = $Unique;
-
-        return $this;
-    }
     //endregion
 
-    //region Foreign Keys
-
+    //region Handle Cloning
     /**
-     * Returns column type.
-     * @return string
+     * As the cloning is required to put one column to more tables,
+     * we need to remove the parent before the act of cloning!
      */
-    public function getType(): string
+    public function __clone()
     {
-        return $this->type;
-    }
-
-    /**
-     * Returns column type.
-     * @param string $columnType
-     * @return Column
-     */
-    public function setType(string $columnType): Column
-    {
-        $this->type = Utils::confirmType($columnType);
-        return $this;
-    }
-
-    /**
-     * Is column NOT NULL?
-     * @return bool
-     */
-    public function getNotNull(): bool
-    {
-        return $this->NotNull;
-    }
-
-    /**
-     * Sets column to be NOT NULL or can be NULL
-     * @param bool $notNull
-     * @return $this
-     */
-    public function setNotNull(bool $notNull = true): Column
-    {
-        $this->NotNull = $notNull;
-        return $this;
+        $this->parent = null;
     }
     //endregion
-
-    //region Comment
-
-    /**
-     * Returns string that was set as a comment.
-     * @return string|null
-     */
-    public function getComment(): ?string
-    {
-        return $this->comment;
-    }
-
-    /**
-     * Set or unset (with null) comment string for column
-     * @param string|null $commentString
-     * @return $this
-     */
-    public function setComment(?string $commentString = null): Column
-    {
-        $this->comment = Utils::confirmComment($commentString);
-        return $this;
-    }
-
-    /**
-     * @return mixed|null
-     */
-    public function getDefault()
-    {
-        return $this->default;
-    }
-
-    //endregion
-
-    /**
-     * Set or unset (with null) default value of column.
-     * @param mixed|null $defaultValue
-     * @return $this
-     */
-    public function setDefault($defaultValue = null): Column
-    {
-        $type = gettype($defaultValue);
-
-        if (!in_array($type, static::$_AllowedDefaultValues))
-            throw new InvalidArgumentException("Comment must be '" .
-                implode(", ", static::$_AllowedDefaultValues) . "'. Got '" . $type . "' instead!");
-
-        if ($type === "string")
-            $defaultValue = Utils::checkForbiddenWords($defaultValue);
-
-        $this->default = $defaultValue;
-        return $this;
-    }
 }

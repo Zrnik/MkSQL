@@ -8,7 +8,7 @@
 
 
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Utils;
+use Zrnik\MkSQL\Utils;
 
 class UtilsTest extends TestCase
 {
@@ -80,8 +80,8 @@ class UtilsTest extends TestCase
         foreach ($InvalidKeyValues as $InvalidKey) {
             try {
                 Utils::confirmKeyName($InvalidKey);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -114,8 +114,8 @@ class UtilsTest extends TestCase
         foreach ($IncorrectValues as $TestedValue) {
             try {
                 Utils::confirmForeignKeyTarget($TestedValue);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -151,8 +151,8 @@ class UtilsTest extends TestCase
         foreach ($InvalidTypes as $TestedType) {
             try {
                 Utils::confirmType($TestedType);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -175,8 +175,8 @@ class UtilsTest extends TestCase
         foreach ($defaultERRValues as $TestedKey) {
             try {
                 Utils::confirmColumnName($TestedKey);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -226,8 +226,8 @@ class UtilsTest extends TestCase
         foreach ($defaultERRValues as $TestedKey) {
             try {
                 Utils::confirmTableName($TestedKey);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -259,8 +259,8 @@ class UtilsTest extends TestCase
         foreach ($InvalidComments as $TestedComment) {
             try {
                 Utils::confirmComment($TestedComment);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }
@@ -291,8 +291,8 @@ class UtilsTest extends TestCase
         foreach ($KeysWithComments as $TestedComment) {
             try {
                 Utils::__testCommentsError($TestedComment);
-                throw new Exception("Expected exception " . \Zrny\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-            } catch (\Zrny\MkSQL\Exceptions\InvalidArgumentException $_) {
+                throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
+            } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);
             }
         }

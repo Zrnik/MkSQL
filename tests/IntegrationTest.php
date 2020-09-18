@@ -7,12 +7,12 @@
  */
 
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Enum\DriverType;
-use Zrny\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrny\MkSQL\Exceptions\InvalidDriverException;
-use Zrny\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Updater;
+use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Updater;
 
 class IntegrationTest extends TestCase
 {
@@ -65,16 +65,22 @@ class IntegrationTest extends TestCase
 
         // #1. Changes in PrimaryKey name
         $this->subTestPrimaryKeyNameChange($Updater);
+
         // #2. Changed Type
         $this->subTestTypeChange($Updater);
+
         // #3. Changed NotNull
         $this->subTestNotNull($Updater);
+
         // #4. Changed Default Value
         $this->subTestDefaultValue($Updater);
+
         // #5. Changed Comment
         $this->subTestComment($Updater);
+
         // #6. Changes in ForeignKeys
         $this->subTestForeignKeys($Updater);
+
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
 
@@ -112,13 +118,13 @@ class IntegrationTest extends TestCase
     private function installDefault(Updater $Updater): bool
     {
         //Table Accounts only with Login:
-        $Accounts = $Updater->tableCreate("accounts");
+        $Accounts = $Updater->tableCreate("accounts")->setPrimaryKeyName("account_id");
 
         $Accounts->columnCreate("login", "varchar(60)")
             ->setUnique()
             ->setNotNull();
 
-        //Table Sessions with foreign key account pointing to accounts.id
+        //Table Sessions with foreign key account pointing to accounts.account_id
 
         $Sessions = $Updater->tableCreate("sessions");
 
@@ -127,7 +133,7 @@ class IntegrationTest extends TestCase
             ->setNotNull();
 
         $Sessions->columnCreate("account")
-            ->addForeignKey("accounts.id");
+            ->addForeignKey("accounts.account_id");
 
         $LastAction = $Updater->tableCreate("last_action");
 
@@ -135,6 +141,11 @@ class IntegrationTest extends TestCase
             ->addForeignKey("sessions.id");
 
         $LastAction->columnCreate("action_time");
+
+        $TokenColumn = new \Zrnik\MkSQL\Column("cloned_token", "varchar(100)");
+        $Accounts->columnAdd(clone $TokenColumn);
+        $Sessions->columnAdd(clone $TokenColumn);
+        $LastAction->columnAdd(clone $TokenColumn);
 
         return $Updater->install();
     }

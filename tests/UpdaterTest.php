@@ -8,10 +8,10 @@
 
 
 use PHPUnit\Framework\TestCase;
-use Zrny\MkSQL\Exceptions\InvalidDriverException;
-use Zrny\MkSQL\Exceptions\TableDefinitionExists;
-use Zrny\MkSQL\Table;
-use Zrny\MkSQL\Updater;
+use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 class UpdaterTest extends TestCase
 {

@@ -5,10 +5,10 @@
  * Date: 06.08.2020 7:55
  */
 
-namespace Zrny\MkSQL\Queries\Tables;
+namespace Zrnik\MkSQL\Queries\Tables;
 
-use Zrny\MkSQL\Queries\Makers\IQueryMaker;
-use Zrny\MkSQL\Table;
+use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
+use Zrnik\MkSQL\Table;
 
 class TableDescription
 {

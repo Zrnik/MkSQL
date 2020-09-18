@@ -1,7 +1,7 @@
 {
-  "name": "zrny/mksql",
-  "description": "MkSQL is an SQL table updater. It allows you to define table structure in code instead of fiddling with Adminer (or PHPMyAdmin).",
-  "version": "0.5.1",
+  "name": "zrnik/mksql",
+  "description": "",
+  "version": "0.6.0",
   "minimum-stability": "stable",
   "type": "library",
   "keywords": [
@@ -16,25 +16,25 @@
   "authors": [
     {
       "name": "Štěpán Zrník",
-      "email": "stepan.zrnik@gmail.com",
+      "email": "stepan@zrnik.eu",
       "homepage": "https://stepan.zrnik.eu/"
     }
   ],
   "require": {
     "php": ">=7.4",
     "ext-pdo": "*",
+    "nette/utils": "^3.0",
     "ext-iconv": "*",
     "ext-intl": "*",
-    "nette/utils": "^3.0",
-    "zrny/enum": "^1.0"
+    "zrnik/enum": "^1"
   },
   "require-dev": {
-    "tracy/tracy": "2.7.5",
+    "tracy/tracy": "^2.7",
     "phpunit/phpunit": "^9"
   },
   "autoload": {
     "psr-4": {
-      "Zrny\\MkSQL\\": "src/",
+      "Zrnik\\MkSQL\\": "src/",
       "Mock\\": "tests/Mock/"
     }
   }
