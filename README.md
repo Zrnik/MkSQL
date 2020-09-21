@@ -2,7 +2,7 @@
 ![GitHub](https://img.shields.io/github/license/zrnik/mksql)
 ![Packagist Downloads](https://img.shields.io/packagist/dm/zrnik/mksql)
 ![Travis (.com)](https://travis-ci.com/Zrnik/MkSQL.svg?branch=master)
-![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql) 
+![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql)  
 
 **MkSQL** is a tool for keeping your tables up to date with PHP code. 
 You can use it in your project or as a database preparation in 
@@ -35,7 +35,6 @@ Documentation index is in [docs/index.md](docs/index.md)
 `composer require zrny/mksql`
 
 #### Supported Drivers: 
-
 
 - [✅ MySQL](https://www.mysql.com)
 

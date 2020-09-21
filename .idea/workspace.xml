@@ -2,48 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="08d593cd-95b9-4305-95e7-3db1ec318b2a" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/dataSources.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/index.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/docs/usage.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/MkSQL.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/MkSQL.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/phpunit.xml" beforeDir="false" afterPath="$PROJECT_DIR$/phpunit.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Column.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Column.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Enum/DriverType.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Enum/DriverType.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Exceptions/ColumnDefinitionExists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Exceptions/ColumnDefinitionExists.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Exceptions/InvalidArgumentException.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Exceptions/InvalidArgumentException.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Exceptions/InvalidDriverException.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Exceptions/InvalidDriverException.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Exceptions/PrimaryKeyAutomaticException.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Exceptions/PrimaryKeyAutomaticException.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Exceptions/TableDefinitionExists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Exceptions/TableDefinitionExists.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Makers/IQueryMaker.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Makers/IQueryMaker.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Makers/QueryMakerMySQL.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Makers/QueryMakerMySQL.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Makers/QueryMakerSQLite.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Makers/QueryMakerSQLite.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Query.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Query.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Tables/ColumnDescription.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Tables/ColumnDescription.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Queries/Tables/TableDescription.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Queries/Tables/TableDescription.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Table.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Table.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Tracy/Metrics.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Tracy/Metrics.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Tracy/Panel.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Tracy/Panel.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Updater.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Updater.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Utils.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Utils.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/ColumnTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/ColumnTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Hooks/IntegrationErrorReport.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Hooks/IntegrationErrorReport.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/IntegrationTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/IntegrationTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_ExistingTable_First.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_ExistingTable_First.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_ExistingTable_Second.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_ExistingTable_Second.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_NotExistingTable_First.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_NotExistingTable_First.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_NotExistingTable_Second.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Mock/MockSQLMaker_NotExistingTable_Second.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Queries/Makers/QueryMakerMySQLTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Queries/Makers/QueryMakerMySQLTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Queries/Makers/QueryMakerSQLiteTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Queries/Makers/QueryMakerSQLiteTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Queries/QueryTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Queries/QueryTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/Queries/Tables/TableDescriptionTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/Queries/Tables/TableDescriptionTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/TableTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/TableTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/UpdaterTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/UpdaterTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/UtilsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/UtilsTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -70,6 +30,7 @@
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RunManager">
@@ -87,12 +48,32 @@
       <option name="presentableId" value="Default" />
       <updated>1600369474890</updated>
       <workItem from="1600369475915" duration="668000" />
-      <workItem from="1600410896242" duration="17814000" />
+      <workItem from="1600410896242" duration="19214000" />
     </task>
+    <task id="LOCAL-00001" summary="Cleanup &amp; Re-Namespace">
+      <created>1600429364500</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1600429364500</updated>
+    </task>
+    <task id="LOCAL-00002" summary="readme typo">
+      <created>1600429475118</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1600429475118</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Cleanup &amp; Re-Namespace" />
+    <MESSAGE value="readme typo" />
+    <option name="LAST_COMMIT_MESSAGE" value="readme typo" />
   </component>
   <component name="WindowStateProjectService">
     <state x="583" y="316" key="#Composer" timestamp="1600369705679">
@@ -107,14 +88,22 @@
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="740" y="451" key="#com.jetbrains.php.lang.intentions.PhpImportClassDialog#/0.0.1920.1050@0.0.1920.1050" timestamp="1600413666730" />
-    <state x="523" y="112" key="CommitChangelistDialog2" timestamp="1600429244073">
+    <state x="523" y="112" key="CommitChangelistDialog2" timestamp="1600429474539">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
-    <state x="523" y="112" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1600429244073" />
+    <state x="523" y="112" key="CommitChangelistDialog2/0.0.1920.1050@0.0.1920.1050" timestamp="1600429474539" />
     <state x="764" y="448" key="NewPhpFileDialog" timestamp="1600419708003">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="764" y="448" key="NewPhpFileDialog/0.0.1920.1050@0.0.1920.1050" timestamp="1600419708003" />
+    <state x="491" y="170" key="SettingsEditor" timestamp="1600429621667">
+      <screen x="0" y="0" width="1920" height="1050" />
+    </state>
+    <state x="491" y="170" key="SettingsEditor/0.0.1920.1050@0.0.1920.1050" timestamp="1600429621667" />
+    <state x="552" y="257" key="Vcs.Push.Dialog.v2" timestamp="1600429626623">
+      <screen x="0" y="0" width="1920" height="1050" />
+    </state>
+    <state x="552" y="257" key="Vcs.Push.Dialog.v2/0.0.1920.1050@0.0.1920.1050" timestamp="1600429626623" />
     <state x="853" y="419" width="372" height="238" key="com.intellij.database.actions.DdlActions$DeleteProvider2$1" timestamp="1600427459309">
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
