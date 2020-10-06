@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="08d593cd-95b9-4305-95e7-3db1ec318b2a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-    </list>
+    <list default="true" id="08d593cd-95b9-4305-95e7-3db1ec318b2a" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -49,6 +46,7 @@
       <updated>1600369474890</updated>
       <workItem from="1600369475915" duration="668000" />
       <workItem from="1600410896242" duration="19214000" />
+      <workItem from="1601146076892" duration="154000" />
     </task>
     <task id="LOCAL-00001" summary="Cleanup &amp; Re-Namespace">
       <created>1600429364500</created>
@@ -116,5 +114,9 @@
       <screen x="0" y="0" width="1920" height="1050" />
     </state>
     <state x="616" y="243" key="run.anything.popup/0.0.1920.1050@0.0.1920.1050" timestamp="1600411089232" />
+    <state x="63" y="-1" key="search.everywhere.popup" timestamp="1601146151348">
+      <screen x="0" y="0" width="800" height="570" />
+    </state>
+    <state x="63" y="-1" key="search.everywhere.popup/0.0.800.570@0.0.800.570" timestamp="1601146151348" />
   </component>
 </project>

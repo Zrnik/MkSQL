@@ -265,6 +265,8 @@ class Column
      * @param bool $isUpdatedWithThisUpdater
      * @return Column
      */
+    //TODO: Allow defining of 'ON DELETE'/'ON UPDATE' behavior , see:
+    //      https://www.techonthenet.com/sql_server/foreign_keys/foreign_delete.php
     public function addForeignKey(string $foreignKey, bool $isUpdatedWithThisUpdater = true): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
@@ -280,12 +282,6 @@ class Column
             if ($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
                 throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '" . $_refColumn . "' in table '" . $_refTable . "' but that column is not defined!");
         }
-
-        if (
-            $_refTable === $this->getParent()->getName()
-            && $_refColumn === $this->getName()
-        )
-            throw new InvalidArgumentException("Foreign key of column '" . $foreignKey . "' cannot point to itself!");
 
         if (in_array($foreignKey, $this->foreignKeys))
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
