@@ -7,6 +7,7 @@
  */
 
 use PHPUnit\Framework\TestCase;
+use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
@@ -26,9 +27,9 @@ class IntegrationTest extends TestCase
     public function testIntegration()
     {
         // MySQL Integration:
-        $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1", "travis", "");
+          $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1", "travis", "");
 
-        $this->processTest($MySQL_PDO);
+          $this->processTest($MySQL_PDO);
 
         // SQLite Integration:
         $SQLite_PDO = new PDO("sqlite::memory:");
@@ -50,14 +51,17 @@ class IntegrationTest extends TestCase
         $Updater = new Updater($pdo);
         $this->addToAssertionCount(1);
 
-        echo PHP_EOL . "-- START ------------------------" . PHP_EOL;
+        echo PHP_EOL . "Testing \""
+            . DriverType::getName($Updater->getDriverType()) .
+            "\" Driver:" . PHP_EOL . "[";
 
         $this->assertNotNull($Updater->getDriverType());
-        echo "Processing Test with: " . DriverType::getName($Updater->getDriverType()) . PHP_EOL;
+        //echo "Processing Test with: " .  . PHP_EOL;
 
         $this->dropAll($pdo);
 
         $this->assertTrue($this->installDefault($Updater));
+        $this->dot();
 
         // #####################################
         // ### SUB TESTS #######################
@@ -84,7 +88,7 @@ class IntegrationTest extends TestCase
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
 
-        echo PHP_EOL . "-- DONE -------------------------" . PHP_EOL;
+        echo "]" . PHP_EOL . "Complete!";
     }
 
     private function dropAll(PDO $pdo): void
@@ -142,7 +146,7 @@ class IntegrationTest extends TestCase
 
         $LastAction->columnCreate("action_time");
 
-        $TokenColumn = new \Zrnik\MkSQL\Column("cloned_token", "varchar(100)");
+        $TokenColumn = new Column("cloned_token", "varchar(100)");
         $Accounts->columnAdd(clone $TokenColumn);
         $Sessions->columnAdd(clone $TokenColumn);
         $LastAction->columnAdd(clone $TokenColumn);
@@ -158,9 +162,11 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("accounts")->setPrimaryKeyName("new_id");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("accounts")->setPrimaryKeyName("id");
         $this->assertTrue($Updater->install());
+        $this->dot();
     }
 
     /**
@@ -171,12 +177,15 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setType("varchar(10)");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("last_action")->columnGet("action_time")->setType("char(15)");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("last_action")->columnGet("action_time")->setType("int");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
     }
 
@@ -188,9 +197,11 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("accounts")->columnGet("login")->setNotNull(false);
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("accounts")->columnGet("login")->setNotNull();
         $this->assertTrue($Updater->install());
+        $this->dot();
     }
 
     /**
@@ -201,9 +212,11 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(time());
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(strtotime("-3 days"));
         $this->assertTrue($Updater->install());
+        $this->dot();
     }
 
     /**
@@ -214,12 +227,15 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setComment("A tested column");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("last_action")->columnGet("action_time")->setComment(null);
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("last_action")->columnGet("action_time")->setComment("Integration Tested Column");
         $this->assertTrue($Updater->install());
+        $this->dot();
     }
 
     /**
@@ -230,9 +246,11 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("sessions")->columnGet("token")->addForeignKey("accounts.login");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
         $Updater->tableGet("sessions")->columnGet("token")->dropForeignKey("accounts.login");
         $this->assertTrue($Updater->install());
+        $this->dot();
 
     }
 
@@ -244,16 +262,19 @@ class IntegrationTest extends TestCase
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
         $this->assertTrue($Updater->install());
+        $this->dot();
         $Updater->tableGet("last_action")->columnGet("action_time")->setUnique(false);
         $this->assertTrue($Updater->install());
+        $this->dot();
         $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
         $this->assertTrue($Updater->install());
+        $this->dot();
     }
 
-    public function executeBeforeFirstTest()
+
+    private function dot()
     {
-        die("EXECUTE BEFORE FIRST TEST");
+        echo ".";
     }
-
 
 }

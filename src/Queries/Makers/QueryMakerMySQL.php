@@ -13,9 +13,11 @@ use PDO;
 use PDOException;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\QueryInfo;
 use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Utils;
 
 class QueryMakerMySQL implements IQueryMaker
@@ -25,14 +27,24 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
+        $QueryInfo = new QueryInfo;
+        $QueryInfo->executionSpeed = microtime(true);
+        $QueryInfo->referencedTable = $table;
+
         $Desc = new TableDescription();
         $Desc->queryMakerClass = __CLASS__;
         $Desc->table = $table;
 
         try {
-            $Statement = $pdo->prepare("SHOW CREATE TABLE " . $table->getName());
+            $QueryInfo->querySql = "SHOW CREATE TABLE " . $table->getName();
+            $Statement = $pdo->prepare($QueryInfo->querySql);
+
+            $QueryInfo->isExecuted = true;
             $Statement->execute();
+
             $result = $Statement->fetch(PDO::FETCH_ASSOC)["Create Table"];
+            $QueryInfo->isSuccess = true;
+
             $Desc->tableExists = true;
 
             $DescriptionData = explode("\n", $result);
@@ -53,7 +65,6 @@ class QueryMakerMySQL implements IQueryMaker
                 $ColDesc->table = $table;
                 $ColDesc->column = $column;
 
-
                 /** @var string|null $col_desc */
                 $col_desc = null;
                 $unique_index_key = null;
@@ -61,7 +72,6 @@ class QueryMakerMySQL implements IQueryMaker
                 //region Find Column Descriptions
                 foreach ($DescriptionData as $DescriptionLine) {
                     $DescriptionLine = trim($DescriptionLine);
-
 
                     if (Strings::startsWith($DescriptionLine, "`" . $column->getName() . "`"))
                         $col_desc = $DescriptionLine;
@@ -146,14 +156,17 @@ class QueryMakerMySQL implements IQueryMaker
                         $ColDesc->comment = null;
                     }
                 }
-
                 $Desc->columns[] = $ColDesc;
             }
 
 
         } catch (PDOException $pdoEx) {
+            $QueryInfo->isSuccess = false;
             $Desc->tableExists = false;
         }
+
+        $QueryInfo->executionSpeed = microtime(true) - $QueryInfo->executionSpeed;
+        Measure::reportQueryDescription($QueryInfo);
 
         return $Desc;
     }

@@ -12,7 +12,8 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
-use Zrnik\MkSQL\Tracy\Metrics;
+use Zrnik\MkSQL\Tracy\Measure;
+
 
 class Table
 {
@@ -193,6 +194,7 @@ class Table
      */
     public function install(TableDescription $desc): array
     {
+
         $Commands = [];
 
         if (!$desc->tableExists)
@@ -207,14 +209,17 @@ class Table
             }
         }
 
-
         foreach ($this->columns as $column) {
             $column->column_handled = false;
         }
 
+        Measure::reportStructureTable($this);
         foreach ($this->columns as $column) {
+
+            //je to kvuli vypisu columnu kdyz sou 2 na stejnou tbauliu a maj rozdilne columny...
+            Measure::reportStructureColumn($this, $column);
+
             $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));
-            Metrics::logStructure($this, $column);
         }
 
         return $Commands;

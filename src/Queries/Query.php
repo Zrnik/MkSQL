@@ -12,6 +12,10 @@ use PDOException;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Table;
 
+/**
+ * Class Query
+ * @package Zrnik\MkSQL\Queries
+ */
 class Query
 {
 
@@ -48,6 +52,8 @@ class Query
      */
     private string $reason = '';
     //endregion
+
+    public float $speed = 0;
 
     /**
      * Query constructor.

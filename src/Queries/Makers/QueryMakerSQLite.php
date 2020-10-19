@@ -12,9 +12,11 @@ use Nette\Utils\Strings;
 use PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Queries\Query;
+use Zrnik\MkSQL\Queries\QueryInfo;
 use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Utils;
 
 class QueryMakerSQLite implements IQueryMaker
@@ -26,15 +28,24 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
+        $QueryInfo = new QueryInfo;
+        $QueryInfo->executionSpeed = microtime(true);
+        $QueryInfo->referencedTable = $table;
+
         $Desc = new TableDescription();
         $Desc->queryMakerClass = __CLASS__;
         $Desc->table = $table;
 
         try {
+            $QueryInfo->querySql = /** @lang text */"SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'";
 
-            $Statement = $pdo->prepare(/** @lang text */"SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'");
+            $Statement = $pdo->prepare($QueryInfo->querySql);
+
+            $QueryInfo->isExecuted = true;
             $Statement->execute();
+
             $SQLiteTableData = $Statement->fetchAll(PDO::FETCH_ASSOC);
+            $QueryInfo->isSuccess = true;
 
             if (count($SQLiteTableData) === 0) {
                 throw new Exception("Table does not exist!");
@@ -191,10 +202,15 @@ class QueryMakerSQLite implements IQueryMaker
 
                 $Desc->columns[] = $ColDesc;
             }
-        } catch (Exception $ex) {
-
+        } catch (Exception $ex)
+        {
+            $QueryInfo->isSuccess = false;
             $Desc->tableExists = false;
         }
+
+
+        $QueryInfo->executionSpeed = microtime(true) - $QueryInfo->executionSpeed;
+        Measure::reportQueryDescription($QueryInfo);
 
         return $Desc;
     }

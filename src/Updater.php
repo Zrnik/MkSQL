@@ -16,7 +16,7 @@ use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
-use Zrnik\MkSQL\Tracy\Metrics;
+use Zrnik\MkSQL\Tracy\Measure;
 
 /**
  * @package Zrnik\MkSQL
@@ -104,20 +104,17 @@ class Updater
     {
         $Success = true;
 
-        Metrics::measureTotal();
+        $timer_total = microtime(true);
 
-        //region Query[] Preparing
-        Metrics::measureQueryPreparing();
 
-        //region Query Array
+        /** @var ?IQueryMaker $QueryMakerClass */
+        $QueryMakerClass = null;
+
+        //region DriverCheck
         /**
-         * @var Query[] $QueryCommands
+         * We need a correct driver and
+         * IQueryMaker class for it!
          */
-        $QueryCommands = [];
-        //endregion
-
-        //region Driver Type & Query Maker Class
-
         if ($this->getDriverType() === null)
             throw new InvalidDriverException("Driver type is 'NULL'!");
 
@@ -133,54 +130,95 @@ class Updater
 
         //endregion
 
-        foreach ($this->tables as $table) {
+        /**
+         * @var Query[] $QueryCommands
+         */
+        $QueryCommands = [];
 
-            //region Describe Table
-            Metrics::measureTable($table->getName(), "describing");
-            Metrics::logTableInstallCalls($table->getName());
+        foreach ($this->tables as $table)
+        {
+
+            $table_speed_prepare = microtime(true);
 
             /**
+             * This will create a description of the table, now we want to generate queries:
              * @var TableDescription $TableDescription
              */
             $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
-            Metrics::measureTable($table->getName(), "describing", true);
-            //endregion
+            Measure::logTableSpeed(
+                $table->getName(),
+                Measure::TABLE_SPEED_DESCRIBE ,
+                microtime(true) - $table_speed_prepare
+            );
 
-            //region Query Generating
-            Metrics::measureTable($table->getName(), "sql-generating");
+            $table_speed_generate = microtime(true);
 
+            /**
+             * Create Queries:
+             */
             $QueryCommands = array_merge($QueryCommands, $table->install($TableDescription));
 
-            Metrics::measureTable($table->getName(), "sql-generating", true);
-            //endregion
+            Measure::logTableSpeed(
+                $table->getName(),
+                Measure::TABLE_SPEED_GENERATE ,
+                microtime(true) - $table_speed_generate
+            );
 
         }
-
-        Metrics::measureQueryPreparing(true);
-        //endregion
 
         //region Query[] Executing
-        Metrics::measureQueryExecuting();
 
-        if (count($QueryCommands) > 0) {
-            Metrics::logQueries($QueryCommands);
 
+        $query_executing_speed_total = microtime(true);
+
+
+        $stopped = false;
+        if (count($QueryCommands) > 0)
+        {
+
+            /**
+             * @var $QueryCommand Query
+             */
             foreach ($QueryCommands as $QueryCommand) {
-                try {
-                    $QueryCommand->execute($this->pdo);
-                } catch (PDOException $pdoEx) {
-                    $Success = false;
-                    $QueryCommand->setError($pdoEx);
-                    break;
+
+                $queryExecuteSpeed = microtime(true);
+
+                if($stopped)
+                {
+                    $QueryCommand->executed = false;
                 }
+                else
+                {
+                    $QueryCommand->executed = true;
+                    try {
+                        $QueryCommand->execute($this->pdo);
+                    } catch (PDOException $pdoEx) {
+
+                        $stopped = true;
+                        $Success = false;
+                        $QueryCommand->setError($pdoEx);
+                    }
+                }
+
+
+                $queryExecuteSpeed =
+                    microtime(true) - $queryExecuteSpeed;
+
+                $QueryCommand->speed = $queryExecuteSpeed;
+
+                Measure::logTableSpeed(
+                    $QueryCommand->getTable()->getName(),
+                    Measure::TABLE_SPEED_EXECUTE,
+                    $queryExecuteSpeed
+                );
+
+                Measure::reportQueryModification($QueryCommand);
             }
+
         }
 
-        Metrics::measureQueryExecuting(true);
-        //endregion
-
-        Metrics::measureTotal(true);
+        Measure::reportTotalSpeed(microtime(true) - $timer_total);
 
         return $Success;
     }
@@ -191,9 +229,20 @@ class Updater
     public function getDriverType()
     {
         try {
-            return DriverType::getValue($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME), false);
+
+            $driver =  DriverType::getValue(
+                $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+                false
+            );
+
+            Measure::$Driver = $driver;
+
+            return $driver;
+
         } catch (InvalidArgumentException $ex) {
+
             return null;
+
         }
     }
 

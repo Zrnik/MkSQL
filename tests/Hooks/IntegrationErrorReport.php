@@ -10,7 +10,7 @@ namespace Hooks;
 
 
 use PHPUnit\Runner\AfterLastTestHook;
-use Zrnik\MkSQL\Tracy\Metrics;
+use Zrnik\MkSQL\Tracy\Measure;
 
 final class IntegrationErrorReport implements AfterLastTestHook
 {
@@ -18,48 +18,35 @@ final class IntegrationErrorReport implements AfterLastTestHook
     {
         $isError = false;
 
-        $errors = [];
-
-        foreach (Metrics::getQueries() as $query) {
-            $errors[] = $query;
+        foreach (Measure::getQueryModification() as $query) {
             if ($query->errorText !== null) {
                 $isError = true;
                 break;
             }
         }
 
-        if (count(Metrics::getQueries()) > 0) {
+        if (count(Measure::getQueryModification()) > 0) {
+            echo PHP_EOL.PHP_EOL;
+            if(!$isError)
+            {
+                echo 'MkSQL Report: Executed '.count(Measure::getQueryModification())." queries without error.";
+            }
+            else
+            {
+                echo 'MkSQL Report: ERRORS! See details below:';
+                echo PHP_EOL.PHP_EOL;
+                foreach (Measure::getQueryModification() as $query) {
+                    if($query->errorText === null)
+                        continue;
 
-            if ($isError) {
-                echo PHP_EOL . "-----------------------------------" . PHP_EOL;
-                echo "--- Errors in QUERY EXECUTING!  ---" . PHP_EOL;
-                echo "-----------------------------------" . PHP_EOL;
-                echo PHP_EOL;
-                foreach ($errors as $error) {
-                    echo "Query: " . $error->getQuery() . PHP_EOL;
-                    echo "Reason: " . $error->getReason() . PHP_EOL;
-                    if ($error->errorText !== null) {
-                        echo PHP_EOL;
-                        echo " - " . $error->errorText;
-                    }
-                    echo PHP_EOL;
-                    //echo PHP_EOL;
-                }
-                echo "-----------------------------------" . PHP_EOL;
-                echo "-----------------------------------" . PHP_EOL;
-                echo "-----------------------------------" . PHP_EOL;
-            } else {
-                echo PHP_EOL . "-----------------------------------" . PHP_EOL;
-                echo "-------- EXECUTED QUERIES !  " . PHP_EOL;
-                foreach (Metrics::getQueries() as $query) {
                     echo "Query: " . $query->getQuery();
                     echo PHP_EOL;
                     echo " - " . $query->getReason();
                     echo PHP_EOL;
+                    echo "ERROR: " . $query->errorText;
+                    echo PHP_EOL;
                     echo PHP_EOL;
                 }
-                echo "-----------------------------------" . PHP_EOL;
-                echo "-----------------------------------" . PHP_EOL;
             }
         }
     }
