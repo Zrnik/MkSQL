@@ -7,19 +7,15 @@
 
 namespace Zrnik\MkSQL\Tracy;
 
-use Exception;
 use Nette\Utils\Html;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Table;
 
 /**
- * I have rewritten it, and it the same bullshit it was before.
- *
- * TODO: Rewrite it AGAIN!
- *
  * @package Zrnik\MkSQL\Nette
  */
 class Panel implements IBarPanel
@@ -29,6 +25,7 @@ class Panel implements IBarPanel
     const RESULT_UP2DATE = 0;
     const RESULT_CHANGES = 1;
     const RESULT_ERROR = 2;
+    const RESULT_UNINITIALIZED = 3;
 
     const ICON = 0;
     const COLOR = 1;
@@ -51,10 +48,15 @@ class Panel implements IBarPanel
                 self::ICON => $this->loadSvg("database-error.svg"),
                 self::COLOR => 'red'
             ],
+
+            self::RESULT_UNINITIALIZED => [
+                self::ICON => $this->loadSvg("database-checkmark.svg"),
+                self::COLOR => 'navy'
+            ],
         ];
 
         if (!isset($_IconStyle[$style]))
-            throw new Exception("Invalid result!");
+            throw new InvalidArgumentException("Invalid icon style!");
 
         return $_IconStyle[$style];
     }
@@ -114,41 +116,62 @@ class Panel implements IBarPanel
         if ($data[self::HAS_ERROR])
             $imgStyle = self::RESULT_ERROR;
 
+        if (Measure::$Driver === null)
+            $imgStyle = self::RESULT_UNINITIALIZED;
+
         $style = $this->getIconStyle($imgStyle);
 
-        return Html::el("span", [
+        $PanelElement = Html::el("span", [
             "title" => "MkSQL Panel",
             "style" => "fill: " . $style[self::COLOR],
-        ])
-            ->addHtml($style[self::ICON])
-            ->addHtml(
-                Html::el("span", ["class" => "tracy-label"])
-                    ->addText(static::convertToMs(Measure::getTotalSpeed()))
-                    ->addText(" ms")
-                    ->addText(" / ")
-                    ->addText(Measure::queryCountModification())
-            );
+        ]);
+
+        $PanelElement->addHtml($style[self::ICON]);
+        $ContentElement = $PanelElement->addHtml(
+            Html::el("span", ["class" => "tracy-label"])
+        );
+
+        if (Measure::$Driver !== null) {
+            $ContentElement->addText(static::convertToMs(Measure::getTotalSpeed()));
+            $ContentElement->addText(" ms");
+            $ContentElement->addText(" / ");
+            $ContentElement->addText(Measure::queryCountModification());
+        }
+
+        return $PanelElement;
     }
 
-    private function headerElement()
+    private function headerElement(bool $success = true)
     {
-        return
-            Html::el("h1")
-                ->addText("MkSQL")
-                ->addHtml(
-                    Html::el("span")
-                        ->style("float", "right")
-                        ->style("font-size", "12px")
-                        ->style("padding-right", "8px")
-                        ->addText(static::convertToMs(Measure::getTotalSpeed()))
-                        ->addText(" ms")
-                        ->addText(" / ")
-                        ->addText(Measure::queryCountModification())
-                );
+        $elem = Html::el("h1")
+            ->style("width", "100%");
+        $elem->addText("MkSQL");
+
+        $topRight =  Html::el("span")
+            ->style("float", "right")
+            ->style("font-size", "12px")
+            ->style("margin-right", "8px")
+        ;
+
+        if ($success) {
+            $topRight
+                ->addText(static::convertToMs(Measure::getTotalSpeed()))
+                ->addText(" ms")
+                ->addText(" / ")
+                ->addText(Measure::queryCountModification());
+        } else {
+            $topRight->addText("uninitialized");
+        }
+
+        $elem->addHtml(
+            $topRight
+        );
+        return $elem;
     }
 
     private function subPanelSpeed()
     {
+
         return Html::el("table")
             /**
              * Row: Driver
@@ -797,8 +820,7 @@ class Panel implements IBarPanel
             );
 
 
-            if($query->errorText !== null)
-            {
+            if ($query->errorText !== null) {
 
                 $table->addHtml(
                     Html::el("tr", [
@@ -814,9 +836,6 @@ class Panel implements IBarPanel
 
                 );
             }
-
-
-
 
 
             $execSpeedTotal += $query->speed;
@@ -879,6 +898,19 @@ class Panel implements IBarPanel
      */
     function getPanel()
     {
+
+        if (Measure::$Driver === null) {
+
+            $UninitializedHTML = Html::el("div", ["class" => "tracy-inner"]);
+            $Inner = $UninitializedHTML->addHtml(Html::el("div", ["class" => "tracy-inner-container"]));
+
+            $Inner->addHtml(
+                $this->headerElement(false)
+            );
+
+            return $UninitializedHTML;
+        }
+
         $panelSpeed = microtime(true);
 
         $panelContent = Html::el("");
