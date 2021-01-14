@@ -48,19 +48,20 @@ class PDO extends \PDO
     }
 
     /**
-     * @param mixed $statement
+     * @param mixed $query
      * @param null $options
      * @return bool|\PDOStatement
      */
-    public function prepare($statement, $options = NULL)
+    public function prepare($query, $options = NULL)
     {
-        if ($this->_expectedQuery !== null && $statement !== $this->_expectedQuery)
-            throw new PDOException("Mock PDO expected statement '" . $this->_expectedQuery . "' but got '" . $statement . "'!");
+
+        if ($this->_expectedQuery !== null && $query !== $this->_expectedQuery)
+            throw new PDOException("Mock PDO expected statement '" . $this->_expectedQuery . "' but got '" . $query . "'!");
 
         $pdoStatement = new PDOStatement($this->_expectParams);
 
-        if ($this->_mockResults !== null && isset($this->_mockResults[$statement])) {
-            $pdoStatement->prepareResult($this->_mockResults[$statement]);
+        if ($this->_mockResults !== null && isset($this->_mockResults[$query])) {
+            $pdoStatement->prepareResult($this->_mockResults[$query]);
         }
 
         return $pdoStatement;

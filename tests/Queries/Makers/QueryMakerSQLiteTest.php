@@ -134,8 +134,6 @@ class QueryMakerSQLiteTest extends TestCase
 
         $this->assertTrue($description->tableExists);
 
-        //var_dump($description->columnGet("parent"));
-
         $this->assertSame("int", $description->columnGet("parent")->type);
 
         $this->assertSame([

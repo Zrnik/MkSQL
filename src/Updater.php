@@ -13,10 +13,12 @@ use PDOException;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Tracy\Measure;
+use Zrnik\MkSQL\Utilities\Installable;
 
 /**
  * @package Zrnik\MkSQL
@@ -24,6 +26,11 @@ use Zrnik\MkSQL\Tracy\Measure;
 class Updater
 {
     private PDO $pdo;
+
+    /**
+     * @internal
+     */
+    public ?string $installable = null;
 
     /**
      * Updater constructor.
@@ -102,6 +109,15 @@ class Updater
      */
     public function install(): bool
     {
+        if($this->installable !== null)
+            throw new UnexpectedCall(
+                sprintf(
+                    "Please, do not call '\$updater->install()' inside a '%s::install()' method, as its already handled by '%s'!",
+                    $this->installable,
+                    Installable::class
+                )
+            );
+
         $Success = true;
 
         $timer_total = microtime(true);

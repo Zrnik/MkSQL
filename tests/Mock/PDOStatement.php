@@ -38,14 +38,8 @@ class PDOStatement extends \PDOStatement
         $this->_mockResult = $result;
     }
 
-    /**
-     * @param null $how
-     * @param null $class_name
-     * @param null $ctor_args
-     * @return array|mixed|null
-     * @throws Throwable
-     */
-    public function fetchAll($how = NULL, $class_name = NULL, $ctor_args = NULL)
+
+    public function fetchAll($mode = PDO::FETCH_BOTH, ...$args)
     {
         return $this->fetch();
     }
@@ -57,7 +51,7 @@ class PDOStatement extends \PDOStatement
      * @return mixed|null
      * @throws Throwable
      */
-    public function fetch($fetch_style = null, $cursor_orientation = PDO::FETCH_ORI_NEXT, $cursor_offset = 0)
+    public function fetch($fetch_style = null, $cursor_orientation = PDO::FETCH_ORI_NEXT, $cursor_offset = 0): mixed
     {
         if ($this->_mockResult !== null) {
             if (is_object($this->_mockResult) && $this->_mockResult instanceof Throwable) {

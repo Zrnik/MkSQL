@@ -1,5 +1,4 @@
 /.phpunit.result.cache
 /.idea/
-/composer.lock
 /vendor/
 /docs/example.php
