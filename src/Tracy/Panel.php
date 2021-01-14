@@ -115,7 +115,7 @@ class Panel implements IBarPanel
     /**
      * @inheritDoc
      */
-    function getTab()
+    function getTab(): ?string
     {
         $data = $this->getResult();
 
@@ -149,7 +149,7 @@ class Panel implements IBarPanel
             $ContentElement->addText(Measure::queryCountModification());
         }
 
-        return $PanelElement;
+        return $PanelElement->render();
     }
 
     /**
@@ -925,7 +925,7 @@ class Panel implements IBarPanel
     /**
      * @inheritDoc
      */
-    function getPanel()
+    function getPanel(): ?string
     {
 
         if (Measure::$Driver === null) {
@@ -972,7 +972,7 @@ class Panel implements IBarPanel
         );
 
 
-        return $panelContent;
+        return $panelContent->render();
 
     }
 
