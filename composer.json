@@ -44,5 +44,10 @@
       "Zrnik\\MkSQL\\": "src/",
       "Mock\\": "tests/Mock/"
     }
+  },
+  "extra": {
+    "cleaner-ignore": {
+      "zrnik/mksql": true
+    }
   }
 }
