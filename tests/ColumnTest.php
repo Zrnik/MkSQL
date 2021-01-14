@@ -21,7 +21,7 @@ class ColumnTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConstructor()
+    public function testConstructor(): void
     {
         new Column("tested");
         $this->addToAssertionCount(1);
@@ -47,7 +47,7 @@ class ColumnTest extends TestCase
         }
     }
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $tested1 = new Column("tested_column_1");
         $this->assertSame(
@@ -65,7 +65,7 @@ class ColumnTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testForeignKeys()
+    public function testForeignKeys(): void
     {
         $updater = new Updater(new \Mock\PDO());
 
@@ -129,7 +129,7 @@ class ColumnTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testComments()
+    public function testComments(): void
     {
         $column = new Column("tested");
 
@@ -174,7 +174,7 @@ class ColumnTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testTypes()
+    public function testTypes(): void
     {
         //default type is INT!
         $this->assertSame(
@@ -206,7 +206,7 @@ class ColumnTest extends TestCase
 
     }
 
-    public function testNotNull()
+    public function testNotNull(): void
     {
         //Only wraps public property...
         $tested = new Column("tested");
@@ -223,7 +223,7 @@ class ColumnTest extends TestCase
         $this->assertTrue($tested->getNotNull());
     }
 
-    public function testGetUnique()
+    public function testGetUnique(): void
     {
         //Only wraps public property...
         $tested = new Column("tested");
@@ -241,7 +241,7 @@ class ColumnTest extends TestCase
     }
 
 
-    public function testDefault()
+    public function testDefault(): void
     {
         $column = new Column("tested");
 
@@ -292,7 +292,7 @@ class ColumnTest extends TestCase
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    public function testSetParent()
+    public function testSetParent(): void
     {
         $table = new Table("RequiredAsParent");
         $column = new Column("tested");
@@ -304,7 +304,7 @@ class ColumnTest extends TestCase
 
         $this->assertSame(
             "RequiredAsParent",
-            $column->endColumn()->getName()
+            $column->endColumn()?->getName()
         );
 
 
@@ -315,13 +315,13 @@ class ColumnTest extends TestCase
         $table->columnAdd($column);
         $this->assertSame(
             "RequiredAsParent",
-            $column->endColumn()->getName()
+            $column->endColumn()?->getName()
         );
 
         //and created column is automatically parented too
         $this->assertSame(
             "RequiredAsParent",
-            $table->columnCreate("new_auto_created_column")->endColumn()->getName()
+            $table->columnCreate("new_auto_created_column")->endColumn()?->getName()
         );
 
 
@@ -349,11 +349,11 @@ class ColumnTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testInstall()
+    public function testInstall(): void
     {
         //Get Mocked QueryMaker TableDefinition with prepared Tables:
         $desc = MockSQLMaker_ExistingTable_First::describeTable(new \Mock\PDO(), new Table("null"));
-        $column = $desc->table->columnGet("name");
+        $column = $desc?->table->columnGet("name");
 
         //Should not fail.
         $QueriesToExecute = $column->install($desc, $desc->columnGet("name"));

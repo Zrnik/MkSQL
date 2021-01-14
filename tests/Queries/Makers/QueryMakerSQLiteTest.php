@@ -25,7 +25,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testDescribeTable()
+    public function testDescribeTable(): void
     {
         $MockPDO = new PDO();
         $MockPDO->mockResult([
@@ -68,6 +68,10 @@ class QueryMakerSQLiteTest extends TestCase
         $description = QueryMakerSQLite::describeTable($MockPDO, new Table("tested_not_exist"));
 
         $this->assertNotNull($description);
+
+        if($description === null)
+            return;
+
         $this->assertNotTrue($description->tableExists);
 
         $Table = $updater->tableCreate("known_table");
@@ -152,7 +156,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testChangePrimaryKeyQuery()
+    public function testChangePrimaryKeyQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::changePrimaryKeyQuery(
@@ -172,7 +176,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateTableQuery()
+    public function testCreateTableQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::createTableQuery($Desc->table, $Desc);
@@ -188,7 +192,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testAlterTableColumnQuery()
+    public function testAlterTableColumnQuery(): void
     {
 
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
@@ -266,7 +270,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateUniqueIndexQuery()
+    public function testCreateUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::createUniqueIndexQuery(
@@ -294,7 +298,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testRemoveUniqueIndexQuery()
+    public function testRemoveUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::removeUniqueIndexQuery(
@@ -321,7 +325,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateTableColumnQuery()
+    public function testCreateTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::createTableColumnQuery(
@@ -352,7 +356,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateForeignKey()
+    public function testCreateForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::createForeignKey(
@@ -374,7 +378,7 @@ class QueryMakerSQLiteTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testRemoveForeignKey()
+    public function testRemoveForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerSQLite::removeForeignKey(
@@ -392,7 +396,7 @@ class QueryMakerSQLiteTest extends TestCase
     }
 
 
-    public function testCompareType()
+    public function testCompareType(): void
     {
         $SameTypes = [
             "InTeGeR" => "integer",
@@ -417,7 +421,7 @@ class QueryMakerSQLiteTest extends TestCase
             $this->assertNotTrue(QueryMakerSQLite::compareType($t1, $t2));
     }
 
-    public function testCompareComment()
+    public function testCompareComment(): void
     {
         $LiterallyAnything = [
             "yep" => "yep",

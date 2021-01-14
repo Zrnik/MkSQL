@@ -9,6 +9,7 @@
 namespace Zrnik\MkSQL\Tracy;
 
 
+use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Query;
@@ -23,14 +24,15 @@ class Measure
     //endregion
 
     //region Total Speed
+
     private static float $_totalSpeed = 0;
 
-    public static function reportTotalSpeed(float $microTime)
+    public static function reportTotalSpeed(float $microTime): void
     {
         static::$_totalSpeed += $microTime;
     }
 
-    public static function getTotalSpeed()
+    public static function getTotalSpeed(): float
     {
         return static::$_totalSpeed;
     }
@@ -42,6 +44,9 @@ class Measure
     const TABLE_SPEED_GENERATE = 2;
     const TABLE_SPEED_EXECUTE = 3;
 
+    /**
+     * @var array<array<float>>
+     */
     private static array $_tableSpeeds = [];
 
 
@@ -122,17 +127,17 @@ class Measure
     /**
      * @return Query[]
      */
-    public static function getQueryModification()
+    public static function getQueryModification(): array
     {
         return static::$_ModificationQueries;
     }
 
-    public static function reportQueryDescription(QueryInfo $query)
+    public static function reportQueryDescription(QueryInfo $query): void
     {
         static::$_DescriptionQueries[] = $query;
     }
 
-    public static function reportQueryModification(Query $query)
+    public static function reportQueryModification(Query $query): void
     {
         static::$_ModificationQueries[] = $query;
     }
@@ -217,16 +222,30 @@ class Measure
 
     //region Structure
 
+    /**
+     * @var array<array>
+     */
     private static array $_Tables = [];
+
+    /**
+     * @var array<array>
+     */
     private static array $_Columns = [];
 
-    public static function structureTableList()
+    /**
+     * @return array<array>
+     */
+    public static function structureTableList(): array
     {
         return static::$_Tables;
     }
 
 
-    public static function structureColumnList(string $tableName)
+    /**
+     * @param string $tableName
+     * @return array<array>
+     */
+    public static function structureColumnList(string $tableName): array
     {
         if (!isset(static::$_Columns[$tableName])) {
             return [];
@@ -234,7 +253,10 @@ class Measure
         return static::$_Columns[$tableName];
     }
 
-    public static function reportStructureTable(Table $table)
+    /**
+     * @param Table $table
+     */
+    public static function reportStructureTable(Table $table): void
     {
         if (!isset(static::$_Tables[$table->getName()]))
             static::$_Tables[$table->getName()] = [
@@ -246,7 +268,11 @@ class Measure
         static::$_Tables[$table->getName()]["objects"][] = $table;
     }
 
-    public static function reportStructureColumn(Table $table, Column $column)
+    /**
+     * @param Table $table
+     * @param Column $column
+     */
+    public static function reportStructureColumn(Table $table, Column $column): void
     {
         if (!isset(static::$_Columns[$table->getName()]))
             static::$_Columns[$table->getName()] = [];
@@ -257,11 +283,11 @@ class Measure
         static::$_Columns[$table->getName()][$column->getName()] = $column;
     }
 
+    #[Pure]
     public static function structureTableCount(): int
     {
         return count(static::$_Tables);
     }
-
 
     /**
      * Returns a count of tabled for ONE or ALL tables if $tableName is null!

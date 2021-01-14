@@ -33,7 +33,7 @@ class Query
      */
     private string $Query = '';
     /**
-     * @var array
+     * @var array<mixed>
      */
     private array $Parameters = [];
     /**
@@ -137,7 +137,7 @@ class Query
     }
 
     /**
-     * @return array
+     * @return array<mixed>
      */
     public function params(): array
     {

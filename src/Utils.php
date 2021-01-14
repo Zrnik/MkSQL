@@ -50,7 +50,7 @@ class Utils
      * We are (against all rules) concatenating strings when making queries.
      *
      * @param string $name
-     * @param array $AdditionalAllowed
+     * @param string[] $AdditionalAllowed
      * @return string
      * @throws InvalidArgumentException
      */
@@ -163,10 +163,10 @@ class Utils
      * Fall trough checking for banned words in string.
      * Case Insensitive
      *
-     * @param $text
-     * @return mixed
+     * @param string $text
+     * @return string
      */
-    public static function checkForbiddenWords($text)
+    public static function checkForbiddenWords(string $text): string
     {
         foreach (static::$_Forbidden as $ForbiddenWord) {
             if (Strings::contains(

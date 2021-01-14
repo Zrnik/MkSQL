@@ -17,7 +17,7 @@ use Zrnik\MkSQL\Table;
 class QueryTest extends TestCase
 {
 
-    public function testReason()
+    public function testReason(): void
     {
         //Reason is wrapper for private property...
         $query = new Query(new Table("tested"), null);
@@ -42,7 +42,7 @@ class QueryTest extends TestCase
         $this->assertEmpty($query->getReason());
     }
 
-    public function testError()
+    public function testError(): void
     {
         $query = new Query(new Table("tested"), null);
 
@@ -56,7 +56,7 @@ class QueryTest extends TestCase
         );
     }
 
-    public function testGetTable()
+    public function testGetTable(): void
     {
         $query = new Query(new Table("tested"), null);
 
@@ -73,7 +73,7 @@ class QueryTest extends TestCase
         );
     }
 
-    public function testGetColumn()
+    public function testGetColumn(): void
     {
         $query = new Query(new Table("tested"), null);
 
@@ -83,19 +83,19 @@ class QueryTest extends TestCase
 
         $this->assertSame(
             "tested",
-            $query->getColumn()->getName()
+            $query->getColumn()?->getName()
         );
 
         $query = new Query(new Table("tested"), new Column("different_one"));
 
         $this->assertSame(
             "different_one",
-            $query->getColumn()->getName()
+            $query->getColumn()?->getName()
         );
     }
 
 
-    public function testExecute()
+    public function testExecute(): void
     {
         $query = new Query(new Table("tested"), null);
 
@@ -112,7 +112,7 @@ class QueryTest extends TestCase
     }
 
 
-    public function testQuery()
+    public function testQuery(): void
     {
         $query = new Query(new Table("tested"), new Column("tested"));
         $this->assertEmpty($query->getQuery());
@@ -135,7 +135,7 @@ class QueryTest extends TestCase
     }
 
 
-    public function testParams()
+    public function testParams(): void
     {
         $query = new Query(new Table("tested"), new Column("tested"));
 

@@ -24,7 +24,7 @@ class IntegrationTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testIntegration()
+    public function testIntegration(): void
     {
         // MySQL Integration:
           $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1", "travis", "");
@@ -158,7 +158,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestPrimaryKeyNameChange(Updater $Updater)
+    private function subTestPrimaryKeyNameChange(Updater $Updater): void
     {
         $Updater->tableGet("accounts")->setPrimaryKeyName("new_id");
         $this->assertTrue($Updater->install());
@@ -173,7 +173,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestTypeChange(Updater $Updater)
+    private function subTestTypeChange(Updater $Updater): void
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setType("varchar(10)");
         $this->assertTrue($Updater->install());
@@ -193,7 +193,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestNotNull(Updater $Updater)
+    private function subTestNotNull(Updater $Updater): void
     {
         $Updater->tableGet("accounts")->columnGet("login")->setNotNull(false);
         $this->assertTrue($Updater->install());
@@ -208,7 +208,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestDefaultValue(Updater $Updater)
+    private function subTestDefaultValue(Updater $Updater): void
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(time());
         $this->assertTrue($Updater->install());
@@ -223,7 +223,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestComment(Updater $Updater)
+    private function subTestComment(Updater $Updater): void
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setComment("A tested column");
         $this->assertTrue($Updater->install());
@@ -242,7 +242,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestForeignKeys(Updater $Updater)
+    private function subTestForeignKeys(Updater $Updater): void
     {
         $Updater->tableGet("sessions")->columnGet("token")->addForeignKey("accounts.login");
         $this->assertTrue($Updater->install());
@@ -258,7 +258,7 @@ class IntegrationTest extends TestCase
      * @param Updater $Updater
      * @throws InvalidDriverException
      */
-    private function subTestUniqueIndexes(Updater $Updater)
+    private function subTestUniqueIndexes(Updater $Updater): void
     {
         $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
         $this->assertTrue($Updater->install());
@@ -272,7 +272,7 @@ class IntegrationTest extends TestCase
     }
 
 
-    private function dot()
+    private function dot(): void
     {
         echo ".";
     }

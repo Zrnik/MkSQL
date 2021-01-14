@@ -19,7 +19,7 @@ class TableTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConstructor()
+    public function testConstructor(): void
     {
         new Table("something");
         new Table("This_is_Fine_150");
@@ -61,7 +61,7 @@ class TableTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws Exception
      */
-    public function testColumnCreate()
+    public function testColumnCreate(): void
     {
         $TestedTable = new Table("testedTable");
         $TestedTable->columnCreate("testedColumn");
@@ -105,7 +105,7 @@ class TableTest extends TestCase
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    public function testColumnGet()
+    public function testColumnGet(): void
     {
         $TestedTable = new Table("testedTable");
         $TestedTable->columnCreate("testedColumn");
@@ -121,7 +121,7 @@ class TableTest extends TestCase
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      */
-    public function testColumnList()
+    public function testColumnList(): void
     {
         $TestedTable = new Table("testedTable");
         $TestedTable->columnCreate("testedColumn");
@@ -152,7 +152,7 @@ class TableTest extends TestCase
         $this->assertIsObject($TestedTable->columnList()["anotherColumn"]);
     }
 
-    public function testPrimaryKeyName()
+    public function testPrimaryKeyName(): void
     {
         //Private property wrapper
         $TestedTable = new Table("testedTable");
@@ -170,7 +170,7 @@ class TableTest extends TestCase
     }
 
 
-    public function testGetName()
+    public function testGetName(): void
     {
         $Table = new Table("NameThisTableDefinitelyHas");
         $this->assertSame(
@@ -190,7 +190,7 @@ class TableTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws Exception
      */
-    public function testColumnAdd()
+    public function testColumnAdd(): void
     {
         $Table = new Table("testedTable");
         $ColumnToAdd = new Column("existing_column");
@@ -199,9 +199,13 @@ class TableTest extends TestCase
         $this->addToAssertionCount(1);
 
         //Parent should be set!
+
+        $col = $ColumnToAdd->endColumn();
+        $this->assertNotNull($col);
+
         $this->assertSame(
             "testedTable",
-            $ColumnToAdd->endColumn()->getName()
+            $col !== null ? $col->getName() : ''
         );
 
         $this->assertNotNull(

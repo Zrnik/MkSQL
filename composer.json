@@ -28,10 +28,11 @@
     "phpunit:integration": "phpunit --testsuite integration"
   },
   "require": {
-    "php": ">=7.4",
+    "php": ">=8.0",
     "ext-pdo": "*",
     "nette/utils": "^3.0",
-    "zrnik/enum": "^1"
+    "zrnik/enum": "^1",
+    "jetbrains/phpstorm-attributes": "^1.0"
   },
   "require-dev": {
     "tracy/tracy": "^2.7",

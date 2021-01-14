@@ -30,7 +30,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testDescribeTable()
+    public function testDescribeTable(): void
     {
         $MockPDO = new PDO();
         $MockPDO->mockResult([
@@ -145,7 +145,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testChangePrimaryKeyQuery()
+    public function testChangePrimaryKeyQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::changePrimaryKeyQuery(
@@ -179,7 +179,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateTableQuery()
+    public function testCreateTableQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::createTableQuery(
@@ -204,7 +204,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testAlterTableColumnQuery()
+    public function testAlterTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::alterTableColumnQuery(
@@ -232,7 +232,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateUniqueIndexQuery()
+    public function testCreateUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::createUniqueIndexQuery(
@@ -258,7 +258,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testRemoveUniqueIndexQuery()
+    public function testRemoveUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_ExistingTable_Second::describeTable(new PDO(), new Table(""));
 
@@ -286,7 +286,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateTableColumnQuery()
+    public function testCreateTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::createTableColumnQuery(
@@ -314,7 +314,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testCreateForeignKey()
+    public function testCreateForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::createForeignKey(
@@ -352,7 +352,7 @@ class QueryMakerMySQLTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testRemoveForeignKey()
+    public function testRemoveForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
         $Queries = QueryMakerMySQL::removeForeignKey(
@@ -380,7 +380,7 @@ class QueryMakerMySQLTest extends TestCase
     }
 
 
-    public function testCompareType()
+    public function testCompareType(): void
     {
         $SameTypes = [
             "InTeGeR" => "integer",
@@ -403,7 +403,7 @@ class QueryMakerMySQLTest extends TestCase
     }
 
 
-    public function testCompareComment()
+    public function testCompareComment(): void
     {
         $this->assertTrue(QueryMakerMySQL::compareComment(null, null));
         $this->assertTrue(QueryMakerMySQL::compareComment("foo", "foo"));

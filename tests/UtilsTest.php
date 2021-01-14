@@ -15,7 +15,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmKeyName()
+    public function testConfirmKeyName(): void
     {
         /* *
          *
@@ -90,7 +90,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmForeignKeyTarget()
+    public function testConfirmForeignKeyTarget(): void
     {
         $CorrectValues = [
             "table_name.column_name",
@@ -124,7 +124,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmType()
+    public function testConfirmType(): void
     {
         $ValidTypes = [
             "int" => "int",
@@ -161,7 +161,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmColumnName()
+    public function testConfirmColumnName(): void
     {
         $defaultOKValues = $this->getDefaultTestedValuesOK();
         $defaultERRValues = $this->getDefaultTestedValuesERR();
@@ -184,8 +184,9 @@ class UtilsTest extends TestCase
 
     /**
      * [Tested Key] => Expected Result
+     * @return array<string>
      */
-    private function getDefaultTestedValuesOK()
+    private function getDefaultTestedValuesOK(): array
     {
         return [
             "hello_world" => "hello_world",
@@ -199,8 +200,9 @@ class UtilsTest extends TestCase
 
     /**
      * InvalidKey[]
+     * @return string[]
      */
-    private function getDefaultTestedValuesERR()
+    private function getDefaultTestedValuesERR(): array
     {
         return [
             "No spaces",
@@ -212,7 +214,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmTableName()
+    public function testConfirmTableName(): void
     {
         $defaultOKValues = $this->getDefaultTestedValuesOK();
         $defaultERRValues = $this->getDefaultTestedValuesERR();
@@ -236,7 +238,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testConfirmComment()
+    public function testConfirmComment(): void
     {
         $OKComments = [
             "Hello, this is a valid comment."
@@ -270,7 +272,7 @@ class UtilsTest extends TestCase
     /**
      * @throws Exception
      */
-    public function testCommentsException()
+    public function testCommentsException(): void
     {
         $ValidKeys = [
             "This_is_a_VALID_key_with_AZ_az_and_an_underscore"

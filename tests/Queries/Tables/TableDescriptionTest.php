@@ -22,7 +22,7 @@ class TableDescriptionTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    public function testColumn()
+    public function testColumn(): void
     {
         //Mock some description:
 
@@ -34,7 +34,7 @@ class TableDescriptionTest extends TestCase
         ];
 
         foreach ($existingColumns as $colName)
-            $this->assertNotNull($tableDescription->columnGet($colName));
+            $this->assertNotNull($tableDescription?->columnGet($colName));
 
         $nonExistingColumns = [
             "column_that_doesnt_exists",
@@ -42,7 +42,7 @@ class TableDescriptionTest extends TestCase
         ];
 
         foreach ($nonExistingColumns as $colName)
-            $this->assertNull($tableDescription->columnGet($colName));
+            $this->assertNull($tableDescription?->columnGet($colName));
     }
 
 }

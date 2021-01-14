@@ -18,7 +18,7 @@ class UpdaterTest extends TestCase
     /**
      * @throws InvalidDriverException
      */
-    public function testInstall()
+    public function testInstall(): void
     {
 
         $Updater = new Updater($this->createPDO());
@@ -36,7 +36,7 @@ class UpdaterTest extends TestCase
     /**
      * @throws TableDefinitionExists
      */
-    public function testTableGet()
+    public function testTableGet(): void
     {
         $Updater = new Updater($this->createPDO());
         $Updater->tableCreate("someTable");
@@ -50,7 +50,7 @@ class UpdaterTest extends TestCase
      * @throws TableDefinitionExists
      * @throws Exception
      */
-    public function testTableAdd()
+    public function testTableAdd(): void
     {
         $Updater = new Updater($this->createPDO());
 
@@ -72,7 +72,7 @@ class UpdaterTest extends TestCase
      * @throws TableDefinitionExists
      * @throws Exception
      */
-    public function testTableCreate()
+    public function testTableCreate(): void
     {
         $Updater = new Updater($this->createPDO());
 
@@ -95,7 +95,7 @@ class UpdaterTest extends TestCase
     /**
      * @throws TableDefinitionExists
      */
-    public function testTableList()
+    public function testTableList(): void
     {
         $Updater = new Updater($this->createPDO());
 

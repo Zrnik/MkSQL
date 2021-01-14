@@ -7,6 +7,7 @@
 
 namespace Zrnik\MkSQL;
 
+use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
@@ -40,7 +41,7 @@ class Table
      * @param Updater $parent
      * @internal
      */
-    public function setParent(Updater $parent)
+    public function setParent(Updater $parent): void
     {
         $this->parent = $parent;
     }
@@ -61,9 +62,10 @@ class Table
      *
      * It's alias of 'getParent'
      *
-     * @return Updater
+     * @return ?Updater
      */
-    public function endTable(): Updater
+    #[Pure]
+    public function endTable(): ?Updater
     {
         return $this->getParent();
     }
@@ -78,7 +80,7 @@ class Table
      *
      * @return string|null
      */
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->tableName;
     }
@@ -198,14 +200,14 @@ class Table
         $Commands = [];
 
         if (!$desc->tableExists)
-            $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc));
+            $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc)??[]);
 
         if ($desc->tableExists) {
             if ($desc->primaryKeyName !== $this->getPrimaryKeyName()) {
                 $Commands = array_merge($Commands, $desc->queryMakerClass::changePrimaryKeyQuery(
                     $desc->primaryKeyName,
                     $this, $desc
-                ));
+                )??[]);
             }
         }
 

@@ -293,37 +293,37 @@ class QueryMakerMySQL implements IQueryMaker
     /**
      * @param Table $table
      * @param Column $column
-     * @param string $uniqueKeyName
+     * @param string $uniqueIndex
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return array|null
+     * @return array<mixed>|null
      */
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
         //Remove Foreign Keys and then add them back after the index was removed!
         $Queries = [];
 
         //var_dump($columnDescription->foreignKeys);
-        foreach ($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
+        foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
             foreach ($DropQueries as $DropQuery)
-                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueKeyName . "]'" . PHP_EOL . $DropQuery->getReason());
+                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
 
             $Queries = array_merge($Queries, $DropQueries);
         }
 
         $Queries[] = (new Query($table, $column))
-            ->setQuery('DROP INDEX ' . $uniqueKeyName . ' ON ' . $table->getName() . ';')
-            ->setReason("There is unexpected unique index '" . $uniqueKeyName . "' on '"
+            ->setQuery('DROP INDEX ' . $uniqueIndex . ' ON ' . $table->getName() . ';')
+            ->setReason("There is unexpected unique index '" . $uniqueIndex . "' on '"
                 . $table->getName() . "." . $column->getName() . "'.");
 
-        foreach ($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
+        foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
 
             foreach ($CreateQueries as $CreateQuery)
-                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueKeyName . "]'" . PHP_EOL . $CreateQuery->getReason());
+                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
 
-            $Queries = array_merge($Queries, $CreateQueries);
+            $Queries = array_merge($Queries, $CreateQueries??[]);
         }
 
         return $Queries;
@@ -335,9 +335,9 @@ class QueryMakerMySQL implements IQueryMaker
      * @param string $ForeignKeyName
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return Query[]|null
+     * @return Query[]
      */
-    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function removeForeignKey(Table $table, Column $column, string $ForeignKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
         return [
             (new Query($table, $column))
@@ -352,9 +352,9 @@ class QueryMakerMySQL implements IQueryMaker
      * @param string $RefPointerString
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return Query[]|null
+     * @return Query[]
      */
-    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
         $pointerString = Utils::confirmForeignKeyTarget($RefPointerString);
         // $pointerString has exactly one dot or the exception was already thrown!

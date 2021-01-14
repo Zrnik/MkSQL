@@ -47,7 +47,7 @@ class QueryMakerSQLite implements IQueryMaker
             $SQLiteTableData = $Statement->fetchAll(PDO::FETCH_ASSOC);
             $QueryInfo->isSuccess = true;
 
-            if (count($SQLiteTableData) === 0) {
+            if ($SQLiteTableData === false || count($SQLiteTableData) === 0) {
                 throw new Exception("Table does not exist!");
             }
 
@@ -62,6 +62,9 @@ class QueryMakerSQLite implements IQueryMaker
 
                 foreach ($SQLiteTableData as $PartRow) {
 
+                    /**
+                     * @var string $sql
+                     */
                     $sql = str_replace("\r", " ", $PartRow["sql"]);
                     $sql = str_replace("\n", " ", $sql);
                     $sql = str_replace("CREATE TABLE \"" . $table->getName() . "\"", "CREATE TABLE " . $table->getName(), $sql);
@@ -233,23 +236,23 @@ class QueryMakerSQLite implements IQueryMaker
 
     /**
      * @param Table $table
-     * @param Column $_notNeededColumn
+     * @param Column $column
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @param array $swapPrimaryKeyName
+     * @param array<string> $swapPrimaryKeyName
      * @return Query[]|null
      */
-    public static function alterTableColumnQuery(Table $table, Column $_notNeededColumn, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, $swapPrimaryKeyName = []): ?array
+    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, $swapPrimaryKeyName = []): ?array
     {
         $alterTableQueryList = [];
 
-        if ($_notNeededColumn->column_handled)
+        if ($column->column_handled)
             return [];
 
         $temporaryName = Utils::confirmTableName($table->getName() . "_mksql_tmp");
 
         $createTableQuery = static::createTableQuery($table, $oldTableDescription)[0];
-        $createTableQuery->setReason("Alteration required for table '" . $table->getName() . "." . $_notNeededColumn->getName() . "'.");
+        $createTableQuery->setReason("Alteration required for table '" . $table->getName() . "." . $column->getName() . "'.");
         $createTableQuery->setQuery(str_replace(
             "CREATE TABLE " . $table->getName() . " (",
             "CREATE TABLE " . $temporaryName . " (",
@@ -275,7 +278,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         $keyInBothArrays = [$table->getPrimaryKeyName()];
         foreach ($MoveColumns as $columnName) {
-            foreach ($oldTableDescription->columns as $columnDescription) {
+            foreach ($oldTableDescription?->columns as $columnDescription) {
                 if ($columnDescription->column->getName() === $columnName) {
                     $keyInBothArrays[] = $columnName;
                     break;
@@ -285,7 +288,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         $columnList = implode(", ", $keyInBothArrays);
 
-        $InsertIntoQuery = new Query($table, $_notNeededColumn);
+        $InsertIntoQuery = new Query($table, $column);
 
         //Implementation of $swapColumnNames
         $originalList = [];
@@ -305,13 +308,13 @@ class QueryMakerSQLite implements IQueryMaker
         $InsertIntoQuery->setReason("Altering Table '" . $temporaryName . "' created, moving data...");
         $alterTableQueryList[] = $InsertIntoQuery;
 
-        $DropOldTable = new Query($table, $_notNeededColumn);
+        $DropOldTable = new Query($table, $column);
         $DropOldTable->setQuery("DROP TABLE " . $table->getName());
         $DropOldTable->setReason("Altering Table '" . $temporaryName . "' data moved, dropping original table '" . $table->getName() . "'...");
         $alterTableQueryList[] = $DropOldTable;
 
 
-        $RenameTable = new Query($table, $_notNeededColumn);
+        $RenameTable = new Query($table, $column);
         $RenameTable->setQuery("ALTER TABLE " . $temporaryName . " RENAME TO " . $table->getName());
         $RenameTable->setReason("Original Table '" . $table->getName() . "' dropped, renaming table '" . $temporaryName . "'...");
         $alterTableQueryList[] = $RenameTable;
@@ -341,9 +344,9 @@ class QueryMakerSQLite implements IQueryMaker
     /**
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
-     * @return Query[]|null
+     * @return Query[]
      */
-    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): ?array
+    public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): array
     {
         $primaryKeyName = Utils::confirmKeyName($table->getName() . "_" . $table->getPrimaryKeyName() . "_pk");
 
@@ -360,9 +363,9 @@ class QueryMakerSQLite implements IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @param bool $isForTemporaryTable
-     * @return Query[]|null
+     * @return Query[]
      */
-    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, bool $isForTemporaryTable = false): ?array
+    public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, bool $isForTemporaryTable = false): array
     {
 
         if (!$isForTemporaryTable && $column->column_handled)
@@ -408,9 +411,9 @@ class QueryMakerSQLite implements IQueryMaker
      * @param Column $column
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return Query[]|null
+     * @return Query[]
      */
-    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
         if ($column->unique_index_handled)
             return [];
@@ -440,17 +443,17 @@ class QueryMakerSQLite implements IQueryMaker
     /**
      * @param Table $table
      * @param Column $column
-     * @param string $uniqueKeyName
+     * @param string $uniqueIndex
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
      */
-    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueKeyName, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
+    public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
 
         return [
             (new Query($table, $column))
-                ->setQuery('DROP INDEX ' . $uniqueKeyName . ';')
+                ->setQuery('DROP INDEX ' . $uniqueIndex . ';')
                 ->setReason("Unique index on column '" . $table->getName() . "." . $column->getName() . "' not defined.")
         ];
     }

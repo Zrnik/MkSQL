@@ -18,7 +18,11 @@ use Zrnik\MkSQL\Updater;
 
 abstract class Installable
 {
+    /**
+     * @var string[]
+     */
     private static array $_repositoriesInstalled = [];
+
     private PDO $pdo;
 
     /**

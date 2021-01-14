@@ -57,7 +57,7 @@ interface IQueryMaker
      * @param Table $table
      * @param Column $column
      * @param TableDescription|null $oldTableDescription
-     * @param ColumnDescription|null $columnDescription
+     * @param ColumnDescription $columnDescription
      * @return Query[]|null
      */
     public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ColumnDescription $columnDescription): ?array;

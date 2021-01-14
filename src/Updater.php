@@ -139,7 +139,12 @@ class Updater
         /** @var IQueryMaker $QueryMakerClass */
         $QueryMakerClass = "\\Zrnik\\MkSQL\\Queries\\Makers\\QueryMaker" . $driverName;
 
-        if (!class_exists($QueryMakerClass))
+        /**
+         * @var string $QueryMakerClassCheck
+         */
+        $QueryMakerClassCheck = $QueryMakerClass;
+
+        if (!class_exists($QueryMakerClassCheck))
             throw new InvalidDriverException(
                 "Invalid driver '" . $driverName . "' for package 'Zrnik\\MkSQL' class 'Updater'. 
                 Allowed drivers: " . implode(", ", DriverType::getNames(false)));
@@ -163,7 +168,7 @@ class Updater
             $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
             Measure::logTableSpeed(
-                $table->getName(),
+                $table->getName()??'unknown table',
                 Measure::TABLE_SPEED_DESCRIBE ,
                 microtime(true) - $table_speed_prepare
             );
@@ -176,7 +181,7 @@ class Updater
             $QueryCommands = array_merge($QueryCommands, $table->install($TableDescription));
 
             Measure::logTableSpeed(
-                $table->getName(),
+                $table->getName()??'unknown table',
                 Measure::TABLE_SPEED_GENERATE ,
                 microtime(true) - $table_speed_generate
             );
@@ -194,7 +199,7 @@ class Updater
         {
 
             /**
-             * @var $QueryCommand Query
+             * @var Query $QueryCommand
              */
             foreach ($QueryCommands as $QueryCommand) {
 
@@ -224,7 +229,7 @@ class Updater
                 $QueryCommand->speed = $queryExecuteSpeed;
 
                 Measure::logTableSpeed(
-                    $QueryCommand->getTable()->getName(),
+                    $QueryCommand->getTable()->getName()??'unknown table',
                     Measure::TABLE_SPEED_EXECUTE,
                     $queryExecuteSpeed
                 );

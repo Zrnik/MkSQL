@@ -16,6 +16,8 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Table;
 
 /**
+ * This is still a mess...
+ *
  * @package Zrnik\MkSQL\Nette
  */
 class Panel implements IBarPanel
@@ -30,8 +32,11 @@ class Panel implements IBarPanel
     const ICON = 0;
     const COLOR = 1;
 
-
-    private function getIconStyle(int $style)
+    /**
+     * @param int $style
+     * @return array<mixed>
+     */
+    private function getIconStyle(int $style): array
     {
         $_IconStyle = [
             self::RESULT_UP2DATE => [
@@ -61,9 +66,12 @@ class Panel implements IBarPanel
         return $_IconStyle[$style];
     }
 
+    /**
+     * @var array<mixed>
+     */
     private static array $_svgCache = [];
 
-    private function loadSvg(string $svgName)
+    private function loadSvg(string $svgName): string
     {
         if (isset(static::$_svgCache[$svgName]))
             return static::$_svgCache[$svgName];
@@ -83,7 +91,10 @@ class Panel implements IBarPanel
     const HAS_ERROR = 0;
     const HAS_CHANGES = 1;
 
-    public function getResult()
+    /**
+     * @return array<mixed>
+     */
+    public function getResult(): array
     {
         $queries = Measure::getQueryModification();
 
@@ -141,7 +152,11 @@ class Panel implements IBarPanel
         return $PanelElement;
     }
 
-    private function headerElement(bool $success = true)
+    /**
+     * @param bool $success
+     * @return Html<Html>
+     */
+    private function headerElement(bool $success = true): Html
     {
         $elem = Html::el("h1")
             ->style("width", "100%");
@@ -169,7 +184,10 @@ class Panel implements IBarPanel
         return $elem;
     }
 
-    private function subPanelSpeed()
+    /**
+     * @return Html<Html>
+     */
+    private function subPanelSpeed(): Html
     {
 
         return Html::el("table")
@@ -233,7 +251,10 @@ class Panel implements IBarPanel
     }
 
 
-    private function subPanelStructure()
+    /**
+     * @return Html<Html>
+     */
+    private function subPanelStructure(): Html
     {
         $tables = Measure::structureTableCount();
         $columns = Measure::structureColumnCount();
@@ -270,22 +291,24 @@ class Panel implements IBarPanel
 
         foreach (Measure::structureTableList() as $_tableDefinition) {
             /**
-             * @var $tableObject Table
+             * @var Table $tableObject
              */
             $tableObject = $_tableDefinition["objects"][0];
 
             $totalCalls = $_tableDefinition["calls"];
-            $totalColumns = count(Measure::structureColumnList($tableObject->getName()));
+            $totalColumns = count(Measure::structureColumnList($tableObject->getName()??'unknown table'));
 
             $table->addHtml(Html::el("tr")
                 ->addHtml(
                     Html::el("td")
                         ->setHtml(
                         //Security: Replace the tag for already escaped html element!
-                            str_replace(
-                                "_",
-                                "&ZeroWidthSpace;_",
-                                Html::el()->setText($tableObject->getName())
+                            strval(
+                                str_replace(
+                                    "_",
+                                    "&ZeroWidthSpace;_",
+                                    Html::el()->setText($tableObject->getName()??'unknown table')
+                                )
                             )
                         )
                 )
@@ -339,7 +362,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName(),
+                                                $tableObject->getName()??'unknown table',
                                                 Measure::TABLE_SPEED_DESCRIBE
                                             ),
                                             3
@@ -359,7 +382,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName(),
+                                                $tableObject->getName()??'unknown table',
                                                 Measure::TABLE_SPEED_GENERATE
                                             ),
                                             3
@@ -379,7 +402,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName(),
+                                                $tableObject->getName()??'unknown table',
                                                 Measure::TABLE_SPEED_EXECUTE
                                             ),
                                             3
@@ -430,8 +453,8 @@ class Panel implements IBarPanel
             );
 
 
-            /** @var $columnObject Column */
-            foreach (Measure::structureColumnList($tableObject->getName()) as $columnObject) {
+            /** @var Column $columnObject */
+            foreach (Measure::structureColumnList($tableObject->getName()??'unknown table') as $columnObject) {
                 $detailDataTable->addHtml(
                     Html::el("tr", ["style" => ["background-color" => "rgba(0,200,255,0.1);"]])
                         ->addHtml(
@@ -598,7 +621,10 @@ class Panel implements IBarPanel
     }
 
 
-    private function subPanelDescription()
+    /**
+     * @return Html<Html>
+     */
+    private function subPanelDescription(): Html
     {
         $descriptionQueryList = Measure::getQueryDescription();
 
@@ -697,7 +723,10 @@ class Panel implements IBarPanel
         );
     }
 
-    private function subPanelModification()
+    /**
+     * @return Html<Html>
+     */
+    private function subPanelModification(): Html
     {
         $modificationQueryList = Measure::getQueryModification();
 
@@ -760,7 +789,7 @@ class Panel implements IBarPanel
                 ])
                     ->addHtml(
                         Html::el("td")
-                            ->setText($query->getTable()->getName())
+                            ->setText($query->getTable()->getName()??'unknown table')
                     )
                     ->addHtml(
                         Html::el("td")
@@ -947,7 +976,12 @@ class Panel implements IBarPanel
 
     }
 
-
+    /**
+     * @param string $id
+     * @param string $header
+     * @param bool $defaultHidden
+     * @return Html<Html>
+     */
     private function createToggleHandle(string $id, string $header, bool $defaultHidden = true): Html
     {
         $id = static::createRealId($id);
@@ -959,6 +993,13 @@ class Panel implements IBarPanel
             ->addHtml($header);
     }
 
+    /**
+     * @param string $id
+     * @param string $elem
+     * @param Html<Html> $content
+     * @param bool $defaultHidden
+     * @return Html<Html>
+     */
     private function createToggleContainer(string $id, string $elem, Html $content, bool $defaultHidden = true): Html
     {
         $id = static::createRealId($id);
@@ -972,9 +1013,9 @@ class Panel implements IBarPanel
     /**
      * @param string $id
      * @param string $header
-     * @param Html $content
+     * @param Html<Html> $content
      * @param bool $defaultHidden
-     * @return Html
+     * @return Html<Html>
      */
     private function createToggle(string $id, string $header, Html $content, bool $defaultHidden = true): Html
     {
@@ -1038,7 +1079,12 @@ class Panel implements IBarPanel
         return 'y';
     }
 
-    private static function yesNoInverted(bool $yesNo, bool $colors = true)
+    /**
+     * @param bool $yesNo
+     * @param bool $colors
+     * @return Html<Html>
+     */
+    private static function yesNoInverted(bool $yesNo, bool $colors = true): Html
     {
         $text = $yesNo ? "Yes" : "No";
         $color = $yesNo ? "maroon" : "darkgreen";
@@ -1052,7 +1098,12 @@ class Panel implements IBarPanel
         return $element;
     }
 
-    private static function yesNo(bool $yesNo, bool $colors = true)
+    /**
+     * @param bool $yesNo
+     * @param bool $colors
+     * @return Html<Html>
+     */
+    private static function yesNo(bool $yesNo, bool $colors = true): Html
     {
         $text = $yesNo ? "Yes" : "No";
         $color = $yesNo ? "darkgreen" : "maroon";
