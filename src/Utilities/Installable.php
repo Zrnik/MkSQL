@@ -19,7 +19,10 @@ use Zrnik\MkSQL\Updater;
 abstract class Installable
 {
     /**
-     * @var string[]
+     * Key = The installable class.
+     * Value = Array of tables created
+     *
+     * @var array<string, array<string>>
      */
     private static array $_repositoriesInstalled = [];
 
@@ -51,8 +54,6 @@ abstract class Installable
      */
     abstract function install(Updater $updater): void;
 
-
-
     /**
      * @throws ColumnDefinitionExists
      * @throws InvalidDriverException
@@ -61,19 +62,33 @@ abstract class Installable
      */
     private function executeInstallation(): void
     {
+        $installed = array_key_exists(static::class, self::$_repositoriesInstalled);
 
-        $installed = in_array(static::class, self::$_repositoriesInstalled);
-
-        if($installed)
+        if ($installed)
             return;
 
-        self::$_repositoriesInstalled[] = static::class;
-
+        // Create Updated
         $updater = new Updater($this->pdo);
         $updater->installable = static::class;
+
         $this->install($updater);
+
+        self::$_repositoriesInstalled[static::class] = [];
+        foreach ($updater->tableList() as $table)
+            self::$_repositoriesInstalled[static::class][] = $table->getName();
+
+        // Process Updated
         $updater->installable = null;
         $updater->install();
+    }
+
+    public static function uninstallAll(PDO $pdo)
+    {
+        foreach (self::$_repositoriesInstalled as $tables)
+            foreach ($tables as $table)
+                $pdo->query(sprintf("DELETE FROM %s", $table));
+
+        self::$_repositoriesInstalled = [];
     }
 
 }

@@ -13,6 +13,7 @@ use Mock\Installable\DifferentRepository;
 use Mock\Installable\RandomRepository;
 use Mock\PDO;
 use PHPUnit\Framework\TestCase;
+use Zrnik\MkSQL\Utilities\Installable;
 
 class InstallableTest extends TestCase
 {
@@ -31,5 +32,15 @@ class InstallableTest extends TestCase
 
         $differentRepo2 = new DifferentRepository($pdo);
         $this->assertFalse($differentRepo2->installed);
+
+        Installable::uninstallAll($pdo);
+
+        $randomRepo1 = new RandomRepository($pdo);
+        $this->assertTrue($randomRepo1->installed);
+
+        $differentRepo1 = new DifferentRepository($pdo);
+        $this->assertTrue($differentRepo1->installed);
+
     }
+
 }
