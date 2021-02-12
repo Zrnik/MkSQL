@@ -82,7 +82,7 @@ abstract class Installable
         $updater->install();
     }
 
-    public static function uninstallAll(PDO $pdo)
+    public static function uninstallAll(PDO $pdo): void
     {
         foreach (self::$_repositoriesInstalled as $tables)
             foreach ($tables as $table)
