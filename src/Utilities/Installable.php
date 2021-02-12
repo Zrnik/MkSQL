@@ -10,6 +10,7 @@
 namespace Zrnik\MkSQL\Utilities;
 
 use PDO;
+use PDOException;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
@@ -85,8 +86,13 @@ abstract class Installable
     public static function uninstallAll(PDO $pdo): void
     {
         foreach (self::$_repositoriesInstalled as $tables)
-            foreach ($tables as $table)
-                $pdo->query(sprintf("DELETE FROM %s", $table));
+            foreach ($tables as $table) {
+                try {
+                    $pdo->query(sprintf("DELETE FROM %s", $table));
+                } catch(PDOException) {
+                    // Whatever...
+                }
+            }
 
         self::$_repositoriesInstalled = [];
     }
