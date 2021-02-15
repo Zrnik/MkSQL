@@ -118,6 +118,39 @@ class Table
 
         return $this;
     }
+
+
+    private string $primaryKeyType = "int";
+
+    /**
+     * Returns a primary key name
+     */
+    public function getPrimaryKeyType(): string
+    {
+        return $this->primaryKeyType;
+    }
+
+    /**
+     * @param string $newPrimaryKeyType
+     * @return $this
+     */
+    public function setPrimaryKeyType(string $newPrimaryKeyType): Table
+    {
+        $oldPrimaryKeyType = $this->primaryKeyType;
+        $this->primaryKeyType = Utils::confirmType($newPrimaryKeyType);
+
+        // If i have parent a parent Updater, i need to find all references to this table
+        // and replace foreign keys to still point to this table...
+        //
+        // its mainly for integration test...
+
+        $parent = $this->getParent();
+
+        if($parent !== null)
+            $parent->updateForeignKeys($this, $oldPrimaryKeyType);
+
+        return $this;
+    }
     //endregion
 
     //region Columns

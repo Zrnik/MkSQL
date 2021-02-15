@@ -181,7 +181,7 @@ class QueryMakerMySQL implements IQueryMaker
     {
         return [
             (new Query($table, null))
-                ->setQuery("ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " int NOT NULL AUTO_INCREMENT;")
+                ->setQuery("ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;")
                 ->setReason("Primary key '" . $table->getPrimaryKeyName() . "' required but '" . $oldKey . "' found.")
         ];
     }
@@ -197,7 +197,7 @@ class QueryMakerMySQL implements IQueryMaker
             ->setQuery(
                 "CREATE TABLE " .
                 $table->getName()
-                . " (" . $table->getPrimaryKeyName() . " int NOT NULL AUTO_INCREMENT PRIMARY KEY)"
+                . " (" . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT PRIMARY KEY)"
             )
             ->setReason("Table '" . $table->getName() . "' not found.");
 

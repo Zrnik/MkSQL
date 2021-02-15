@@ -352,7 +352,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         return [
             (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " integer constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " ".$table->getPrimaryKeyType()." constraint " . $primaryKeyName . " primary key autoincrement);")
                 ->setReason("Table '" . $table->getName() . "' not found.")
         ];
     }
