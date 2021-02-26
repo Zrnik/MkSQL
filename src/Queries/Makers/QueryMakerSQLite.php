@@ -352,7 +352,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         return [
             (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " ".$table->getPrimaryKeyType()." constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " ".self::fixPrimaryKeyType($table->getPrimaryKeyType())." constraint " . $primaryKeyName . " primary key autoincrement);")
                 ->setReason("Table '" . $table->getName() . "' not found.")
         ];
     }
@@ -520,5 +520,13 @@ class QueryMakerSQLite implements IQueryMaker
     {
         //Comments not supported by SQLite, just report that its correct anyhow
         return true;
+    }
+
+    private static function fixPrimaryKeyType(string $keyType): string
+    {
+        if($keyType === "int")
+            return "integer";
+
+        return $keyType;
     }
 }
