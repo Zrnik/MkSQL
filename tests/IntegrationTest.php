@@ -27,7 +27,7 @@ class IntegrationTest extends TestCase
     public function testIntegration(): void
     {
         // MySQL Integration:
-        $MySQL_PDO = new PDO("mysql:dbname=mk_sql_test;host=127.0.0.1;port=3800", "root", "mk_sql_test");
+        $MySQL_PDO = new PDO("mysql:dbname=mk_sql_test;host=127.0.0.1", "root", "mk_sql_test");
         $this->processTest($MySQL_PDO);
 
         // SQLite Integration:

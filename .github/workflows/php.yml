@@ -39,11 +39,12 @@ jobs:
     - name: "PHPUnit: Unit"
       run: composer phpunit:unit
 
+    - name: "Shutdown Ubuntu MySQL (SUDO)"
+      run: sudo service mysql stop
+
     - uses: mirromutth/mysql-action@v1.1
       name: "Prepare MySQL"
       with:
-        host port: 3800 # Optional, default value is 3306. The port of host
-        mysql version: '8.0'
         mysql database: 'mk_sql_test'
         mysql root password: 'mk_sql_test'
 
