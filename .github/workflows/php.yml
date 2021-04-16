@@ -14,6 +14,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - uses: mirromutth/mysql-action@v1.1
+      with:
+        host port: 3800 # Optional, default value is 3306. The port of host
+        mysql version: '8.0'
+        mysql database: 'mk_sql_test'
+        mysql root password: 'mk_sql_test'
+
     - name: Validate composer.json and composer.lock
       run: composer validate
 
@@ -37,4 +44,4 @@ jobs:
       run: composer phpstan
       
     - name: PHPUnit 
-      run: composer phpunit:unit
+      run: composer phpunit
