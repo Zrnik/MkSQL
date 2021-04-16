@@ -37,7 +37,7 @@ class QueryMakerMySQLTest extends TestCase
             "SHOW CREATE TABLE tested_not_exist" => new PDOException("Table does not exists!"),
             "SHOW CREATE TABLE known_table" => [
                 "Table" => 'known_table',
-                "Create Table" =>  /** @lang */ 'CREATE TABLE `known_table` (
+                "Create Table" => /** @lang */ 'CREATE TABLE `known_table` (
                       `id` int NOT NULL AUTO_INCREMENT,
                       `name` varchar(255) NOT NULL DEFAULT \'undefined\',
                       `price` decimal(13,2) DEFAULT NULL,
@@ -72,6 +72,13 @@ class QueryMakerMySQLTest extends TestCase
 
         $this->assertNotNull($description);
 
+        $_column_get_name = $description->columnGet("name");
+        $_column_get_price = $description->columnGet("price");
+
+        $this->assertNotNull($_column_get_name);
+        $this->assertNotNull($_column_get_price);
+
+
         $this->assertTrue($description->tableExists);
 
         $this->assertSame(
@@ -81,40 +88,39 @@ class QueryMakerMySQLTest extends TestCase
 
         $this->assertSame(
             "name",
-            $description->columnGet("name")->column->getName()
+            $_column_get_name->column->getName()
         );
 
         $this->assertSame(
             "varchar(255)",
-            $description->columnGet("name")->type
+            $_column_get_name->type
         );
 
         $this->assertSame(
             [],
-            $description->columnGet("name")->foreignKeys
+            $_column_get_name->foreignKeys
         );
 
-        $this->assertTrue($description->columnGet("name")->columnExists);
+        $this->assertTrue($_column_get_name->columnExists);
 
         $this->assertSame(
             "undefined",
-            $description->columnGet("name")->default
+            $_column_get_name->default
         );
 
-        $this->assertNull($description->columnGet("name")->comment);
+        $this->assertNull($_column_get_name->comment);
 
-        $this->assertTrue($description->columnGet("name")->notNull);
+        $this->assertTrue($_column_get_name->notNull);
 
-        $this->assertNull($description->columnGet("name")->uniqueIndex);
+        $this->assertNull($_column_get_name->uniqueIndex);
 
         $this->assertSame(
             "price",
-            $description->columnGet("price")->column->getName()
+            $_column_get_price->column->getName()
         );
 
-        $this->assertSame(
-            null,
-            $description->columnGet("price")->default
+        $this->assertNull(
+            $_column_get_price->default
         );
 
 
@@ -123,20 +129,24 @@ class QueryMakerMySQLTest extends TestCase
 
         $description = QueryMakerMySQL::describeTable($MockPDO, $Table);
 
-
         $this->assertNotNull($description);
+
+        $column_get_parent = $description->columnGet("parent");
+
+        $this->assertNotNull($column_get_parent);
+
 
         $this->assertTrue($description->tableExists);
 
-        $this->assertSame("int", $description->columnGet("parent")->type);
+        $this->assertSame("int", $column_get_parent->type);
 
         $this->assertSame([
             'known_table.id' => 'sub_table_known_table_id_fk'
-        ], $description->columnGet("parent")->foreignKeys);
+        ], $column_get_parent->foreignKeys);
 
         $this->assertSame(
             "example comment",
-            $description->columnGet("parent")->comment
+            $column_get_parent->comment
         );
     }
 
@@ -148,11 +158,16 @@ class QueryMakerMySQLTest extends TestCase
     public function testChangePrimaryKeyQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
         $Queries = QueryMakerMySQL::changePrimaryKeyQuery(
             "id",
             $Desc->table,
             $Desc
         );
+
+        $this->assertNotNull($Queries);
 
         $this->assertCount(
             1, $Queries
@@ -182,10 +197,15 @@ class QueryMakerMySQLTest extends TestCase
     public function testCreateTableQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
         $Queries = QueryMakerMySQL::createTableQuery(
             $Desc->table,
             $Desc
         );
+
+        $this->assertNotNull($Queries);
 
         //Create MySQL Table = 1 query
         $this->assertCount(
@@ -207,12 +227,21 @@ class QueryMakerMySQLTest extends TestCase
     public function testAlterTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $table_column_get_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($table_column_get_name);
+
         $Queries = QueryMakerMySQL::alterTableColumnQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $table_column_get_name,
             $Desc,
             $Desc->columnGet("name")
         );
+
+        $this->assertNotNull($Queries);
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
@@ -235,12 +264,22 @@ class QueryMakerMySQLTest extends TestCase
     public function testCreateUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $table_column_get_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($table_column_get_name);
+
+
         $Queries = QueryMakerMySQL::createUniqueIndexQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $table_column_get_name,
             $Desc,
             $Desc->columnGet("name")
         );
+
+        $this->assertNotNull($Queries);
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
@@ -262,13 +301,21 @@ class QueryMakerMySQLTest extends TestCase
     {
         $Desc = MockSQLMaker_ExistingTable_Second::describeTable(new PDO(), new Table(""));
 
+        $this->assertNotNull($Desc);
+
+        $table_column_get_parent = $Desc->table->columnGet("parent");
+
+        $this->assertNotNull($table_column_get_parent);
+
         $Queries = QueryMakerMySQL::removeUniqueIndexQuery(
             $Desc->table,
-            $Desc->table->columnGet("parent"),
+            $table_column_get_parent,
             "some_index_we_have_found",
             $Desc,
             $Desc->columnGet("parent")
         );
+
+        $this->assertNotNull($Queries);
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
@@ -289,12 +336,21 @@ class QueryMakerMySQLTest extends TestCase
     public function testCreateTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $table_column_get_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($table_column_get_name);
+
         $Queries = QueryMakerMySQL::createTableColumnQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $table_column_get_name,
             $Desc,
             $Desc->columnGet("name")
         );
+
+        $this->assertNotNull($Queries);
 
         //Alter MySQL Column = 1 query
         $this->assertCount(
@@ -317,9 +373,16 @@ class QueryMakerMySQLTest extends TestCase
     public function testCreateForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $table_column_get_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($table_column_get_name);
+
         $Queries = QueryMakerMySQL::createForeignKey(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $table_column_get_name,
             "table.column",
             $Desc,
             $Desc->columnGet("name")
@@ -355,9 +418,16 @@ class QueryMakerMySQLTest extends TestCase
     public function testRemoveForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $table_column_get_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($table_column_get_name);
+
         $Queries = QueryMakerMySQL::removeForeignKey(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $table_column_get_name,
             "some_key_we_found_before",
             $Desc,
             $Desc->columnGet("name")

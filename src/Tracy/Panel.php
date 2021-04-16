@@ -7,6 +7,7 @@
 
 namespace Zrnik\MkSQL\Tracy;
 
+use Exception;
 use Nette\Utils\Html;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
@@ -71,6 +72,11 @@ class Panel implements IBarPanel
      */
     private static array $_svgCache = [];
 
+    /**
+     * @param string $svgName
+     * @return string
+     * @throws Exception
+     */
     private function loadSvg(string $svgName): string
     {
         if (isset(static::$_svgCache[$svgName]))
@@ -78,7 +84,16 @@ class Panel implements IBarPanel
 
         $assetsFolder = __DIR__ . '/../../assets/';
 
-        $imageContent = file_get_contents($assetsFolder . $svgName);
+        $imageContent = @file_get_contents($assetsFolder . $svgName);
+
+        if($imageContent === false)
+            throw new Exception(
+                sprintf(
+                    "Icon file '%s' was not found, if you are using 'vendor'".
+                    " directory cleaner, please add an exception to MkSQL package.",
+                    $assetsFolder . $svgName
+                )
+            );
 
         static::$_svgCache[$svgName] = $imageContent;
 

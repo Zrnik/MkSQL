@@ -270,8 +270,7 @@ class ColumnTest extends TestCase
         );
 
         $column->setDefault(false);
-        $this->assertSame(
-            false,
+        $this->assertFalse(
             $column->getDefault()
         );
 
@@ -353,7 +352,12 @@ class ColumnTest extends TestCase
     {
         //Get Mocked QueryMaker TableDefinition with prepared Tables:
         $desc = MockSQLMaker_ExistingTable_First::describeTable(new \Mock\PDO(), new Table("null"));
-        $column = $desc?->table->columnGet("name");
+
+        $this->assertNotNull($desc);
+
+        $column = $desc->table->columnGet("name");
+
+        $this->assertNotNull($column);
 
         //Should not fail.
         $QueriesToExecute = $column->install($desc, $desc->columnGet("name"));

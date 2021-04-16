@@ -201,11 +201,12 @@ class TableTest extends TestCase
         //Parent should be set!
 
         $col = $ColumnToAdd->endColumn();
+
         $this->assertNotNull($col);
 
         $this->assertSame(
             "testedTable",
-            $col !== null ? $col->getName() : ''
+            $col->getName()
         );
 
         $this->assertNotNull(

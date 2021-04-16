@@ -16,7 +16,7 @@ use Throwable;
 class PDOStatement extends \PDOStatement
 {
     /**
-     * @var array|null
+     * @var array<mixed>|null
      */
     private ?array $_expectedParams;
     /**
@@ -28,30 +28,36 @@ class PDOStatement extends \PDOStatement
      * PDOStatement constructor.
      * @param null $expectedParams
      */
-    public function __construct($expectedParams = null)
+    public function __construct(mixed $expectedParams = null)
     {
         $this->_expectedParams = $expectedParams;
     }
 
-    public function prepareResult($result)
+
+    public function prepareResult(mixed $result): void
     {
         $this->_mockResult = $result;
     }
 
-
-    public function fetchAll($mode = PDO::FETCH_BOTH, ...$args)
+    /**
+     * @param int $mode
+     * @param mixed ...$args
+     * @return mixed
+     * @throws Throwable
+     */
+    public function fetchAll($mode = PDO::FETCH_BOTH, ...$args): mixed
     {
         return $this->fetch();
     }
 
     /**
-     * @param null $fetch_style
-     * @param int $cursor_orientation
-     * @param int $cursor_offset
-     * @return mixed|null
+     * @param int|null $mode
+     * @param int $cursorOrientation
+     * @param int $cursorOffset
+     * @return mixed
      * @throws Throwable
      */
-    public function fetch($fetch_style = null, $cursor_orientation = PDO::FETCH_ORI_NEXT, $cursor_offset = 0): mixed
+    public function fetch(int $mode = null, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0): mixed
     {
         if ($this->_mockResult !== null) {
             if (is_object($this->_mockResult) && $this->_mockResult instanceof Throwable) {
@@ -66,19 +72,23 @@ class PDOStatement extends \PDOStatement
         return null;
     }
 
-    public function execute($input_parameters = null)
+    /**
+     * @param array<mixed>|null $params
+     * @return bool
+     */
+    public function execute(?array $params = null): bool
     {
         if ($this->_expectedParams !== null) {
             foreach ($this->_expectedParams as $ExpectedIndex => $ExpectedParam) {
                 if (
-                    !isset($input_parameters[$ExpectedIndex])
+                    !isset($params[$ExpectedIndex])
                     ||
-                    $input_parameters[$ExpectedIndex] != $ExpectedParam
+                    $params[$ExpectedIndex] != $ExpectedParam
                 )
                     throw new PDOException(
                         "Mock PDOStatement expected '" . $ExpectedIndex . "' 
                     at index '" . $ExpectedParam . "' but got
-                     '" . ($input_parameters[$ExpectedIndex] ?? strval(null)) . "'."
+                     '" . ($params[$ExpectedIndex] ?? strval(null)) . "'."
                     );
             }
         }

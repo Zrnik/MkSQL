@@ -52,7 +52,7 @@ class Updater
 
     //region Tables
 
-    /** @var Table[] */
+    /** @var array<string, Table> */
     private array $tables = [];
 
     /**
@@ -84,7 +84,7 @@ class Updater
     }
 
     /**
-     * @return Table[]
+     * @return array<string, Table>
      */
     public function tableList(): array
     {

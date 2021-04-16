@@ -27,9 +27,8 @@ class IntegrationTest extends TestCase
     public function testIntegration(): void
     {
         // MySQL Integration:
-          $MySQL_PDO = new PDO("mysql:dbname=mksql_test;host=127.0.0.1", "travis", "");
-
-          $this->processTest($MySQL_PDO);
+        $MySQL_PDO = new PDO("mysql:dbname=mk_sql_test;host=127.0.0.1;port=3800", "root", "mk_sql_test");
+        $this->processTest($MySQL_PDO);
 
         // SQLite Integration:
         $SQLite_PDO = new PDO("sqlite::memory:");
@@ -46,7 +45,7 @@ class IntegrationTest extends TestCase
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
-    private function processTest(PDO $pdo)
+    private function processTest(PDO $pdo): void
     {
         $Updater = new Updater($pdo);
         $this->addToAssertionCount(1);
@@ -59,7 +58,6 @@ class IntegrationTest extends TestCase
         //echo "Processing Test with: " .  . PHP_EOL;
 
         $this->dropAll($pdo);
-
         $this->assertTrue($this->installDefault($Updater));
         $this->dot();
 
@@ -141,6 +139,8 @@ class IntegrationTest extends TestCase
 
         $LastAction = $Updater->tableCreate("last_action");
 
+        $this->assertNotNull($LastAction);
+
         $LastAction->columnCreate("session")
             ->addForeignKey("sessions.id");
 
@@ -160,11 +160,16 @@ class IntegrationTest extends TestCase
      */
     private function subTestPrimaryKeyNameChange(Updater $Updater): void
     {
-        $Updater->tableGet("accounts")->setPrimaryKeyName("new_id");
+        $tableAccounts = $Updater->tableGet("accounts");
+        $this->assertNotNull($tableAccounts);
+
+
+
+        $tableAccounts->setPrimaryKeyName("new_id");
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("accounts")->setPrimaryKeyName("id");
+        $tableAccounts->setPrimaryKeyName("id");
         $this->assertTrue($Updater->install());
         $this->dot();
     }
@@ -175,15 +180,21 @@ class IntegrationTest extends TestCase
      */
     private function subTestTypeChange(Updater $Updater): void
     {
-        $Updater->tableGet("last_action")->columnGet("action_time")->setType("varchar(10)");
+        $lastActionTable =  $Updater->tableGet("last_action");
+        $this->assertNotNull($lastActionTable);
+
+        $columnActionTime = $lastActionTable->columnGet("action_time");
+        $this->assertNotNull($columnActionTime);
+
+        $columnActionTime->setType("varchar(10)");
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("last_action")->columnGet("action_time")->setType("char(15)");
+        $columnActionTime->setType("char(15)");
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("last_action")->columnGet("action_time")->setType("int");
+        $columnActionTime->setType("int");
         $this->assertTrue($Updater->install());
         $this->dot();
 
@@ -195,11 +206,19 @@ class IntegrationTest extends TestCase
      */
     private function subTestNotNull(Updater $Updater): void
     {
-        $Updater->tableGet("accounts")->columnGet("login")->setNotNull(false);
+        $tableAccounts = $Updater->tableGet("accounts");
+
+        $this->assertNotNull($tableAccounts);
+
+        $columnLogin = $tableAccounts->columnGet("login");
+
+        $this->assertNotNull($columnLogin);
+
+        $columnLogin->setNotNull(false);
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("accounts")->columnGet("login")->setNotNull();
+        $columnLogin->setNotNull();
         $this->assertTrue($Updater->install());
         $this->dot();
     }
@@ -210,11 +229,17 @@ class IntegrationTest extends TestCase
      */
     private function subTestDefaultValue(Updater $Updater): void
     {
-        $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(time());
+        $lastActionTable =  $Updater->tableGet("last_action");
+        $this->assertNotNull($lastActionTable);
+
+        $columnActionTime = $lastActionTable->columnGet("action_time");
+        $this->assertNotNull($columnActionTime);
+
+        $columnActionTime->setDefault(time());
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("last_action")->columnGet("action_time")->setDefault(strtotime("-3 days"));
+        $columnActionTime->setDefault(strtotime("-3 days"));
         $this->assertTrue($Updater->install());
         $this->dot();
     }
@@ -225,15 +250,21 @@ class IntegrationTest extends TestCase
      */
     private function subTestComment(Updater $Updater): void
     {
-        $Updater->tableGet("last_action")->columnGet("action_time")->setComment("A tested column");
+        $lastActionTable =  $Updater->tableGet("last_action");
+        $this->assertNotNull($lastActionTable);
+
+        $columnActionTime = $lastActionTable->columnGet("action_time");
+        $this->assertNotNull($columnActionTime);
+
+        $columnActionTime->setComment("A tested column");
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("last_action")->columnGet("action_time")->setComment(null);
+        $columnActionTime->setComment(null);
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("last_action")->columnGet("action_time")->setComment("Integration Tested Column");
+        $columnActionTime->setComment("Integration Tested Column");
         $this->assertTrue($Updater->install());
         $this->dot();
     }
@@ -244,11 +275,17 @@ class IntegrationTest extends TestCase
      */
     private function subTestForeignKeys(Updater $Updater): void
     {
-        $Updater->tableGet("sessions")->columnGet("token")->addForeignKey("accounts.login");
+        $tableSessions = $Updater->tableGet("sessions");
+        $this->assertNotNull($tableSessions);
+
+        $tableSessionsColumnToken = $tableSessions->columnGet("token");
+        $this->assertNotNull($tableSessionsColumnToken);
+
+        $tableSessionsColumnToken->addForeignKey("accounts.login");
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $Updater->tableGet("sessions")->columnGet("token")->dropForeignKey("accounts.login");
+        $tableSessionsColumnToken->dropForeignKey("accounts.login");
         $this->assertTrue($Updater->install());
         $this->dot();
 
@@ -260,13 +297,20 @@ class IntegrationTest extends TestCase
      */
     private function subTestUniqueIndexes(Updater $Updater): void
     {
-        $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
+        $lastActionTable =  $Updater->tableGet("last_action");
+        $this->assertNotNull($lastActionTable);
+
+        $columnActionTime = $lastActionTable->columnGet("action_time");
+        $this->assertNotNull($columnActionTime);
+
+
+        $columnActionTime->setUnique();
         $this->assertTrue($Updater->install());
         $this->dot();
-        $Updater->tableGet("last_action")->columnGet("action_time")->setUnique(false);
+        $columnActionTime->setUnique(false);
         $this->assertTrue($Updater->install());
         $this->dot();
-        $Updater->tableGet("last_action")->columnGet("action_time")->setUnique();
+        $columnActionTime->setUnique();
         $this->assertTrue($Updater->install());
         $this->dot();
     }

@@ -67,7 +67,7 @@ class Utils
             throw new InvalidArgumentException("Argument '" . $name . "' contains invalid characters!");
 
         // "It's a kind of fall-trough" - Freddie
-        return $name;
+        return Strings::toAscii($name);
     }
 
     /**

@@ -21,6 +21,17 @@ use Zrnik\MkSQL\Utils;
 
 class QueryMakerSQLite implements IQueryMaker
 {
+
+
+    // I haven't found true answer, some say that SQLite keys
+    // are limited by SQLITE_MAX_SQL_LENGTH (default 1 Mil.)
+    // and (hardcoded?) maximum of 1 073 741 824
+    //
+
+    // This was bugging!
+    // Lets don't change it into tokens...
+    const SQLiteKeyMaxLen = 2048;
+
     /**
      * @param PDO $pdo
      * @param Table $table
@@ -37,7 +48,8 @@ class QueryMakerSQLite implements IQueryMaker
         $Desc->table = $table;
 
         try {
-            $QueryInfo->querySql = /** @lang text */"SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'";
+            $QueryInfo->querySql = /** @lang text */
+                "SELECT * FROM sqlite_master WHERE tbl_name = '" . $table->getName() . "'";
 
             $Statement = $pdo->prepare($QueryInfo->querySql);
 
@@ -205,8 +217,7 @@ class QueryMakerSQLite implements IQueryMaker
 
                 $Desc->columns[] = $ColDesc;
             }
-        } catch (Exception $ex)
-        {
+        } catch (Exception $ex) {
             $QueryInfo->isSuccess = false;
             $Desc->tableExists = false;
         }
@@ -338,6 +349,8 @@ class QueryMakerSQLite implements IQueryMaker
                 }
             }
         }
+
+
         return $alterTableQueryList;
     }
 
@@ -348,11 +361,11 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): array
     {
-        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_" . $table->getPrimaryKeyName() . "_pk");
+        $primaryKeyName = Utils::confirmKeyName($table->getName() . "_" . $table->getPrimaryKeyName() . "_pk", self::SQLiteKeyMaxLen);
 
         return [
             (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " ".self::fixPrimaryKeyType($table->getPrimaryKeyType())." constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " " . self::fixPrimaryKeyType($table->getPrimaryKeyType()) . " constraint " . $primaryKeyName . " primary key autoincrement);")
                 ->setReason("Table '" . $table->getName() . "' not found.")
         ];
     }
@@ -387,13 +400,14 @@ class QueryMakerSQLite implements IQueryMaker
 
         //Comment
         //Not in SQLite, BUT:
+
         //FOREIGN KEY!
 
         foreach ($column->getForeignKeys() as $keyTarget) {
             $ptr = Utils::confirmForeignKeyTarget($keyTarget);
             list($targetTable, $targetColumn) = explode(".", $ptr);
 
-            $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn);
+            $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn, self::SQLiteKeyMaxLen);
 
             $CreateSQL .= 'CONSTRAINT ' . $foreignKeyName . ' REFERENCES ' . $targetTable . ' (' . $targetColumn . ') ';
         }
@@ -420,17 +434,10 @@ class QueryMakerSQLite implements IQueryMaker
 
         $column->unique_index_handled = true;
 
-        // I haven't found true answer, some say that SQLite keys
-        // are limited by SQLITE_MAX_SQL_LENGTH (default 1 Mil.)
-        // and (hardcoded?) maximum of 1 073 741 824
-        //
-        // Lets just stick with MySQL's 64 for now
-        // After i test the real maximum value i will update this.
-        $SQLite_Key_MaxLength = 64;
 
         $newKey = Utils::confirmKeyName(
             "unique_index_" . $table->getName() . "_" . $column->getName(),
-            $SQLite_Key_MaxLength
+            self::SQLiteKeyMaxLen
         );
 
         return [
@@ -524,7 +531,7 @@ class QueryMakerSQLite implements IQueryMaker
 
     private static function fixPrimaryKeyType(string $keyType): string
     {
-        if($keyType === "int")
+        if ($keyType === "int")
             return "integer";
 
         return $keyType;

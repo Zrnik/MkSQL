@@ -32,27 +32,33 @@ class PDO extends \PDO
         return parent::getAttribute($attribute);
     }
 
-    public function expectQuery(string $query)
+    public function expectQuery(string $query): void
     {
         $this->_expectedQuery = $query;
     }
 
-    public function expectParams(array $array)
+    /**
+     * @param array<mixed> $array
+     */
+    public function expectParams(array $array): void
     {
         $this->_expectParams = $array;
     }
 
-    public function mockResult($array)
+    /**
+     * @param array<mixed> $array
+     */
+    public function mockResult(array $array): void
     {
         $this->_mockResults = $array;
     }
 
     /**
      * @param mixed $query
-     * @param null $options
-     * @return bool|\PDOStatement
+     * @param array<mixed>|null $options
+     * @return PDOStatement
      */
-    public function prepare($query, $options = NULL)
+    public function prepare(mixed $query, array $options = NULL): PDOStatement
     {
 
         if ($this->_expectedQuery !== null && $query !== $this->_expectedQuery)

@@ -69,9 +69,6 @@ class QueryMakerSQLiteTest extends TestCase
 
         $this->assertNotNull($description);
 
-        if($description === null)
-            return;
-
         $this->assertNotTrue($description->tableExists);
 
         $Table = $updater->tableCreate("known_table");
@@ -90,42 +87,49 @@ class QueryMakerSQLiteTest extends TestCase
             $description->table->getName()
         );
 
+        $column_Name = $description->columnGet("name");
+
+        $this->assertNotNull($column_Name);
+
         $this->assertSame(
             "name",
-            $description->columnGet("name")->column->getName()
+            $column_Name->column->getName()
         );
 
         $this->assertSame(
             "varchar(255)",
-            $description->columnGet("name")->type
+            $column_Name->type
         );
 
         $this->assertSame(
             [],
-            $description->columnGet("name")->foreignKeys
+            $column_Name->foreignKeys
         );
 
-        $this->assertTrue($description->columnGet("name")->columnExists);
+        $this->assertTrue($column_Name->columnExists);
 
         $this->assertSame(
             "undefined",
-            $description->columnGet("name")->default
+            $column_Name->default
         );
 
-        $this->assertNull($description->columnGet("name")->comment);
+        $this->assertNull($column_Name->comment);
 
-        $this->assertTrue($description->columnGet("name")->notNull);
+        $this->assertTrue($column_Name->notNull);
 
-        $this->assertNull($description->columnGet("name")->uniqueIndex);
+        $this->assertNull($column_Name->uniqueIndex);
+
+        $column_get_price = $description->columnGet("price");
+
+        $this->assertNotNull($column_get_price);
 
         $this->assertSame(
             "price",
-            $description->columnGet("price")->column->getName()
+            $column_get_price->column->getName()
         );
 
-        $this->assertSame(
-            null,
-            $description->columnGet("price")->default
+        $this->assertNull(
+            $column_get_price->default
         );
 
 
@@ -136,18 +140,21 @@ class QueryMakerSQLiteTest extends TestCase
 
         $this->assertNotNull($description);
 
+        $column_get_parent = $description->columnGet("parent");
+
+        $this->assertNotNull($column_get_parent);
+
         $this->assertTrue($description->tableExists);
 
-        $this->assertSame("int", $description->columnGet("parent")->type);
+        $this->assertSame("int", $column_get_parent->type);
 
         $this->assertSame([
             'known_table.id' => 'sub_table_known_table_id_fk'
-        ], $description->columnGet("parent")->foreignKeys);
+        ], $column_get_parent->foreignKeys);
 
         //SQLite does not support comments!
-        $this->assertSame(
-            null,
-            $description->columnGet("parent")->comment
+        $this->assertNull(
+            $column_get_parent->comment
         );
     }
 
@@ -159,6 +166,9 @@ class QueryMakerSQLiteTest extends TestCase
     public function testChangePrimaryKeyQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
         $Queries = QueryMakerSQLite::changePrimaryKeyQuery(
             "id",
             $Desc->table,
@@ -179,7 +189,12 @@ class QueryMakerSQLiteTest extends TestCase
     public function testCreateTableQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
         $Queries = QueryMakerSQLite::createTableQuery($Desc->table, $Desc);
+
+        $this->assertNotNull($Queries);
 
         //Create SQLite Table = 1 query
         $this->assertCount(
@@ -196,12 +211,21 @@ class QueryMakerSQLiteTest extends TestCase
     {
 
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $desc_table_column_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($desc_table_column_name);
+
         $Queries = QueryMakerSQLite::alterTableColumnQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $desc_table_column_name,
             $Desc,
             $Desc->columnGet("name")
         );
+
+        $this->assertNotNull($Queries);
 
         // Changing a table in SQLite requires creating of temporary table!
         // 1. Create Temporary Table (+1)
@@ -273,9 +297,17 @@ class QueryMakerSQLiteTest extends TestCase
     public function testCreateUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $desc_table_column_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($desc_table_column_name);
+
+
         $Queries = QueryMakerSQLite::createUniqueIndexQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $desc_table_column_name,
             $Desc,
             $Desc->columnGet("name")
         );
@@ -301,17 +333,30 @@ class QueryMakerSQLiteTest extends TestCase
     public function testRemoveUniqueIndexQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $desc_table_column_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($desc_table_column_name);
+
         $Queries = QueryMakerSQLite::removeUniqueIndexQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $desc_table_column_name,
             "some_index_we_have_found",
             $Desc,
             $Desc->columnGet("name")
         );
 
+        $this->assertNotNull($Queries);
+
         //Remove SQLite Unique Index = 1 query
         $this->assertCount(
             1, $Queries
+        );
+
+        $this->assertArrayHasKey(
+            0, $Queries
         );
 
         $this->assertStringContainsString(
@@ -328,9 +373,16 @@ class QueryMakerSQLiteTest extends TestCase
     public function testCreateTableColumnQuery(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $desc_table_column_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($desc_table_column_name);
+
         $Queries = QueryMakerSQLite::createTableColumnQuery(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $desc_table_column_name,
             $Desc,
             $Desc->columnGet("name")
         );
@@ -359,9 +411,16 @@ class QueryMakerSQLiteTest extends TestCase
     public function testCreateForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $desc_table_column_name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($desc_table_column_name);
+
         $Queries = QueryMakerSQLite::createForeignKey(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $desc_table_column_name,
             "table.column",
             $Desc,
             $Desc->columnGet("name")
@@ -381,9 +440,16 @@ class QueryMakerSQLiteTest extends TestCase
     public function testRemoveForeignKey(): void
     {
         $Desc = MockSQLMaker_NotExistingTable_First::describeTable(new PDO(), new Table(""));
+
+        $this->assertNotNull($Desc);
+
+        $column_Name = $Desc->table->columnGet("name");
+
+        $this->assertNotNull($column_Name);
+
         $Queries = QueryMakerSQLite::removeForeignKey(
             $Desc->table,
-            $Desc->table->columnGet("name"),
+            $column_Name,
             "some_key_we_have_found_before",
             $Desc,
             $Desc->columnGet("name")

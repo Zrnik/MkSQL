@@ -106,25 +106,36 @@ class UpdaterTest extends TestCase
 
         $Updater->tableCreate("someTable");
 
+
+        /**
+         * This should be known from the 'return'
+         * statement of 'tableList' method docblock
+         *
+         * @var array<string, Table> $tableList
+         */
+        $tableList = $Updater->tableList();
+
+
         $this->assertArrayHasKey(
             "someTable",
-            $Updater->tableList()
+            $tableList
         );
 
-        $this->assertIsObject($Updater->tableList()["someTable"]);
-
+        $this->assertIsObject($tableList["someTable"]);
 
         $Updater->tableCreate("anotherTable");
 
 
+        $tableList = $Updater->tableList();
+
         $this->assertArrayHasKey(
             "someTable",
-            $Updater->tableList()
+            $tableList
         );
 
         $this->assertArrayHasKey(
             "anotherTable",
-            $Updater->tableList()
+            $tableList
         );
 
     }
