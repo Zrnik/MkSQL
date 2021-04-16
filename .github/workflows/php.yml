@@ -48,5 +48,13 @@ jobs:
         mysql database: 'mk_sql_test'
         mysql root password: 'mk_sql_test'
 
+    # I hope this will fix it, the MySQL is not available immediately, so we must wait for it
+    # see: https://github.com/mirromutth/mysql-action/issues/10
+    - name: Wait for MySQL
+      run: |
+        while ! mysqladmin ping --host=127.0.0.1 --password=$MYSQL_ROOT_PASSWORD --silent; do
+          sleep 1
+        done
+
     - name: "PHPUnit: Integration"
       run: composer phpunit:integration
