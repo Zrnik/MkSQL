@@ -33,16 +33,17 @@ class TableDescriptionTest extends TestCase
             "desc",
         ];
 
-        foreach ($existingColumns as $colName)
+        foreach ($existingColumns as $colName) {
             $this->assertNotNull($tableDescription?->columnGet($colName));
+        }
 
         $nonExistingColumns = [
             "column_that_doesnt_exists",
             "hello_world_column",
         ];
 
-        foreach ($nonExistingColumns as $colName)
-            $this->assertNull($tableDescription?->columnGet($colName));
+        foreach ($nonExistingColumns as $colName) {
+            $this->assertNull($tableDescription->columnGet($colName));
+        }
     }
-
 }
