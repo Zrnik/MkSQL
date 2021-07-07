@@ -2,4 +2,6 @@
 /.idea/
 /vendor/
 /docs/example.php
+.github/config/integrationTestDatabase.neon
 composer.lock
+

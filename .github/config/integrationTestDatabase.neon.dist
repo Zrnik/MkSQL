@@ -1,0 +1,10 @@
+# Hello, this file is used by integration tests
+# in github action.
+
+# If you want to use your own database settings
+# on your local environment, please copy this file
+# without the ".dist" ending and modify!
+
+dsn: "mysql:dbname=mk_sql_test;host=127.0.0.1"
+user: "root"
+pass: "mk_sql_test"

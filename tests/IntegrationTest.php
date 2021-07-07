@@ -6,6 +6,7 @@
  * Date: 02.09.2020 13:52
  */
 
+use Nette\Neon\Neon;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
@@ -27,7 +28,18 @@ class IntegrationTest extends TestCase
     public function testIntegration(): void
     {
         // MySQL Integration:
-        $MySQL_PDO = new PDO("mysql:dbname=mk_sql_test;host=127.0.0.1", "root", "mk_sql_test");
+        $configFile = file_exists(__DIR__."/../.github/config/integrationTestDatabase.neon")
+            ? __DIR__."/../.github/config/integrationTestDatabase.neon"
+            : __DIR__."/../.github/config/integrationTestDatabase.neon.dist";
+
+        $config = Neon::decode(strval(file_get_contents($configFile)));
+
+        $MySQL_PDO = new PDO(
+            $config["dsn"],
+            $config["user"],
+            $config["pass"]
+        );
+
         $this->processTest($MySQL_PDO);
 
         // SQLite Integration:

@@ -38,7 +38,8 @@
     "tracy/tracy": "^2",
     "phpunit/phpunit": "^9",
     "phpstan/phpstan": "^0.12",
-    "phpstan/phpstan-phpunit": "^0.12"
+    "phpstan/phpstan-phpunit": "^0.12",
+    "nette/neon": "^3"
   },
   "autoload": {
     "psr-4": {
