@@ -11,10 +11,7 @@ namespace Zrnik\MkSQL\Utilities;
 
 use PDO;
 use PDOException;
-use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrnik\MkSQL\Exceptions\InvalidDriverException;
-use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Updater;
 
 abstract class Installable
@@ -32,10 +29,7 @@ abstract class Installable
     /**
      * Installable constructor.
      * @param PDO $pdo
-     * @throws ColumnDefinitionExists
-     * @throws InvalidDriverException
-     * @throws PrimaryKeyAutomaticException
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     public function __construct(PDO $pdo)
     {
@@ -48,18 +42,12 @@ abstract class Installable
      * 'Installable' class will handle it!
      *
      * @param Updater $updater
-     * @throws InvalidDriverException
-     * @throws TableDefinitionExists
-     * @throws ColumnDefinitionExists
-     * @throws PrimaryKeyAutomaticException
+     * @throws MkSQLException
      */
     abstract function install(Updater $updater): void;
 
     /**
-     * @throws ColumnDefinitionExists
-     * @throws InvalidDriverException
-     * @throws PrimaryKeyAutomaticException
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     private function executeInstallation(): void
     {
@@ -89,7 +77,7 @@ abstract class Installable
             foreach ($tables as $table) {
                 try {
                     $pdo->query(sprintf("DELETE FROM %s", $table));
-                } catch(PDOException) {
+                } catch (PDOException) {
                     // Whatever...
                 }
             }

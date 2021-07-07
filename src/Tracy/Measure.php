@@ -1,13 +1,6 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | AgronaroWebsite  
- * User: Programátor
- * Date: 19.10.2020 8:52
- */
-
 
 namespace Zrnik\MkSQL\Tracy;
-
 
 use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Column;
@@ -173,52 +166,7 @@ class Measure
         return count(static::$_ModificationQueries);
     }
 
-    //endreion
-
-
-
-   /* public static function reportPrepareQuery(QueryInfo $queryInfo)
-    {
-        static::$_preparedQueries[] = $queryInfo;
-    }
-
-    public static function getTotalQueriesPrepareSpeed()
-    {
-        $res = 0;
-        /**
-         * @var $preparedQuery QueryInfo
-         * /
-        foreach (static::$_preparedQueries as $preparedQuery)
-            $res += $preparedQuery->executionSpeed;
-
-        return $res;
-    }
-
-    public static function getTotalQueriesPrepareCount(): int
-    {
-        return count(static::$_preparedQueries);
-    }
-
-    public static array $_executedQueries = [];
-
-    public static function reportExecuteQuery(Query $query)
-    {
-        static::$_executedQueries[] = $query;
-    }
-
-    public static function getTotalQueriesExecuteCount(): int
-    {
-        return count(static::$_executedQueries);
-    }
-
-    /**
-     * @return Query[]
-     * /
-    public static function getExecuteQueries()
-    {
-        return static::$_executedQueries;
-    }*/
-
+    //endregion
 
     //region Structure
 

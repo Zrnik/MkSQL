@@ -1,10 +1,4 @@
 <?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.07.2020 10:21
- */
-
 
 namespace Zrnik\MkSQL;
 
@@ -39,8 +33,9 @@ class Utils
      * YAGNI but testing for peace of mind
      * @param string $name
      * @return string
+     * @throws InvalidArgumentException
      */
-    public static function __testCommentsError(string $name)
+    public static function __testCommentsError(string $name): string
     {
         return static::confirmName($name, ["/", "*", "-"]);
     }

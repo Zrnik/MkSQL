@@ -1,9 +1,4 @@
 <?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 04.08.2020 9:42
- */
 
 namespace Zrnik\MkSQL\Tracy;
 

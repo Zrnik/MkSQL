@@ -1,9 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.07.2020 9:37
- */
 
 namespace Zrnik\MkSQL;
 
@@ -21,6 +16,7 @@ class Table
     /**
      * Table constructor.
      * @param string $tableName
+     * @throws InvalidArgumentException
      */
     public function __construct(string $tableName)
     {
@@ -100,6 +96,7 @@ class Table
     /**
      * @param string $newPrimaryKeyName
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function setPrimaryKeyName(string $newPrimaryKeyName): Table
     {
@@ -133,6 +130,7 @@ class Table
     /**
      * @param string $newPrimaryKeyType
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function setPrimaryKeyType(string $newPrimaryKeyType): Table
     {
@@ -166,6 +164,7 @@ class Table
      * @return Column
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
+     * @throws InvalidArgumentException
      */
     public function columnCreate(string $columnName, ?string $columnType = "int", bool $rewrite = false): Column
     {
@@ -251,7 +250,6 @@ class Table
         Measure::reportStructureTable($this);
         foreach ($this->columns as $column) {
 
-            //je to kvuli vypisu columnu kdyz sou 2 na stejnou tbauliu a maj rozdilne columny...
             Measure::reportStructureColumn($this, $column);
 
             $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));

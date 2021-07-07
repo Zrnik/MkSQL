@@ -1,13 +1,9 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.07.2020 9:38
- */
-
 
 namespace Zrnik\MkSQL;
 
+use JetBrains\PhpStorm\Pure;
+use LogicException;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
@@ -17,6 +13,12 @@ use Zrnik\MkSQL\Queries\Tables\TableDescription;
 class Column
 {
 
+    /**
+     * Column constructor.
+     * @param string $columnName
+     * @param string|null $columnType
+     * @throws InvalidArgumentException
+     */
     public function __construct(string $columnName, ?string $columnType = "int")
     {
         if($columnType === null)
@@ -58,7 +60,7 @@ class Column
     public function setParent(Table $parent): void
     {
         if ($this->parent !== null)
-            throw new \LogicException(
+            throw new LogicException(
                 "Column '" . $this->getName() . "' already has a parent '" . $this->getParent()?->getName() . "', consider cloning!"
             );
 
@@ -79,6 +81,7 @@ class Column
      *
      * It's alias of 'getParent()' method.
      */
+    #[Pure]
     public function endColumn(): ?Table
     {
         return $this->getParent();
@@ -113,6 +116,7 @@ class Column
      * Returns column type.
      * @param string $columnType
      * @return Column
+     * @throws InvalidArgumentException
      */
     public function setType(string $columnType): Column
     {
@@ -166,6 +170,7 @@ class Column
      * Set or unset (with null) default value of column.
      * @param mixed|null $defaultValue
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function setDefault($defaultValue = null): Column
     {
@@ -185,9 +190,9 @@ class Column
     /**
      * Gets a default value.
      *
-     * @return mixed|null
+     * @return mixed
      */
-    public function getDefault()
+    public function getDefault(): mixed
     {
         return $this->default;
     }
@@ -216,6 +221,7 @@ class Column
      *
      * @param string|null $commentString
      * @return $this
+     * @throws InvalidArgumentException
      */
     public function setComment(?string $commentString = null): Column
     {
@@ -245,7 +251,7 @@ class Column
     {
         //Unique must be NotNull?
         if ($Unique)
-            $this->setNotNull(true);
+            $this->setNotNull();
 
         $this->unique = $Unique;
 
@@ -264,6 +270,7 @@ class Column
      * @param string $foreignKey
      * @param bool $isUpdatedWithThisUpdater
      * @return Column
+     * @throws InvalidArgumentException
      */
     //TODO: Allow defining of 'ON DELETE'/'ON UPDATE' behavior , see:
     //      https://www.techonthenet.com/sql_server/foreign_keys/foreign_delete.php

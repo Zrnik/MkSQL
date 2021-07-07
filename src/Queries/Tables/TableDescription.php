@@ -12,6 +12,7 @@ use Zrnik\MkSQL\Table;
 
 class TableDescription
 {
+    /** @var IQueryMaker */
     public string $queryMakerClass = '';
 
     public bool $tableExists = false;

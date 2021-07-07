@@ -1,16 +1,11 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.07.2020 7:54
- */
 
 namespace Zrnik\MkSQL;
 
-use InvalidArgumentException;
 use PDO;
 use PDOException;
 use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
@@ -60,6 +55,7 @@ class Updater
      * @param bool $rewrite
      * @return Table
      * @throws TableDefinitionExists
+     * @throws InvalidArgumentException
      */
     public function tableCreate(string $tableName, bool $rewrite = false): Table
     {
@@ -105,7 +101,9 @@ class Updater
 
     /**
      * @return bool
+     * @throws InvalidArgumentException
      * @throws InvalidDriverException
+     * @throws UnexpectedCall
      */
     public function install(): bool
     {
@@ -190,10 +188,6 @@ class Updater
 
         //region Query[] Executing
 
-
-        $query_executing_speed_total = microtime(true);
-
-
         $stopped = false;
         if (count($QueryCommands) > 0)
         {
@@ -245,26 +239,19 @@ class Updater
     }
 
     /**
-     * @return mixed|null
+     * @return mixed
      */
-    public function getDriverType()
+    public function getDriverType(): mixed
     {
-        try {
+        $driver =  DriverType::getValue(
+            $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+            false
+        );
 
-            $driver =  DriverType::getValue(
-                $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
-                false
-            );
+        Measure::$Driver = $driver;
 
-            Measure::$Driver = $driver;
+        return $driver;
 
-            return $driver;
-
-        } catch (InvalidArgumentException $ex) {
-
-            return null;
-
-        }
     }
 
 
@@ -277,6 +264,7 @@ class Updater
      *
      * @param Table $table
      * @param string $oldPrimaryKeyName
+     * @throws InvalidArgumentException
      * @internal
      */
     public function updateForeignKeys(Table $table, string $oldPrimaryKeyName): void
