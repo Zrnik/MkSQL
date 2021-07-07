@@ -31,7 +31,7 @@ Documentation index is in [docs/index.md](docs/index.md)
 
 #### Installation
 
-`composer require zrny/mksql`
+`composer require zrnik/mksql`
 
 #### Supported Drivers: 
 
