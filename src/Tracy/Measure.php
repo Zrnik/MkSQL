@@ -33,9 +33,9 @@ class Measure
 
     //region Table Speed
 
-    const TABLE_SPEED_DESCRIBE = 1;
-    const TABLE_SPEED_GENERATE = 2;
-    const TABLE_SPEED_EXECUTE = 3;
+    public const TABLE_SPEED_DESCRIBE = 1;
+    public const TABLE_SPEED_GENERATE = 2;
+    public const TABLE_SPEED_EXECUTE = 3;
 
     /**
      * @var array<array<float>>
@@ -43,31 +43,42 @@ class Measure
     private static array $_tableSpeeds = [];
 
 
+    /**
+     * @param string $tableName
+     * @param int $type
+     * @param float $speed
+     * @throws InvalidArgumentException
+     */
     public static function logTableSpeed(string $tableName, int $type, float $speed): void
     {
         if(!in_array($type, [
             self::TABLE_SPEED_DESCRIBE,
             self::TABLE_SPEED_GENERATE,
             self::TABLE_SPEED_EXECUTE
-        ]))
-            throw new InvalidArgumentException("Invalid type '".$type."' for measurement!");
+        ])) {
+            throw new InvalidArgumentException("Invalid type '" . $type . "' for measurement!");
+        }
 
-        if(!isset(static::$_tableSpeeds[$tableName]))
+        if(!isset(static::$_tableSpeeds[$tableName])) {
             static::$_tableSpeeds[$tableName] = [];
+        }
 
-        if(!isset(static::$_tableSpeeds[$tableName][$type]))
+        if(!isset(static::$_tableSpeeds[$tableName][$type])) {
             static::$_tableSpeeds[$tableName][$type] = 0;
+        }
 
         static::$_tableSpeeds[$tableName][$type] += $speed;
     }
 
     public static function getTableSpeed(string $tableName, int $type): float
     {
-        if(!isset(static::$_tableSpeeds[$tableName]))
+        if(!isset(static::$_tableSpeeds[$tableName])) {
             static::$_tableSpeeds[$tableName] = [];
+        }
 
-        if(!isset(static::$_tableSpeeds[$tableName][$type]))
+        if(!isset(static::$_tableSpeeds[$tableName][$type])) {
             static::$_tableSpeeds[$tableName][$type] = 0;
+        }
 
         return static::$_tableSpeeds[$tableName][$type];
     }
@@ -78,18 +89,14 @@ class Measure
 
         foreach(static::$_tableSpeeds as $tableName => $measurements)
         {
-            if($checkedTable !== null && $checkedTable !== $tableName)
+            if($checkedTable !== null && $checkedTable !== $tableName) {
                 continue;
+            }
 
             $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_DESCRIBE);
             $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_GENERATE);
             $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_EXECUTE);
-
         }
-
-
-
-
 
         return $speed;
     }
@@ -112,7 +119,7 @@ class Measure
     /**
      * @return QueryInfo[]
      */
-    public static function getQueryDescription()
+    public static function getQueryDescription(): array
     {
         return static::$_DescriptionQueries;
     }
@@ -139,8 +146,9 @@ class Measure
     {
         $speed = 0;
 
-        foreach(static::$_DescriptionQueries as $descQuery)
+        foreach(static::$_DescriptionQueries as $descQuery) {
             $speed += $descQuery->executionSpeed;
+        }
 
         return $speed;
     }
@@ -149,8 +157,9 @@ class Measure
     {
         $speed = 0;
 
-        foreach(static::$_ModificationQueries as $modQuery)
+        foreach(static::$_ModificationQueries as $modQuery) {
             $speed += $modQuery->speed;
+        }
 
         return $speed;
     }
@@ -195,10 +204,7 @@ class Measure
      */
     public static function structureColumnList(string $tableName): array
     {
-        if (!isset(static::$_Columns[$tableName])) {
-            return [];
-        }
-        return static::$_Columns[$tableName];
+        return static::$_Columns[$tableName] ?? [];
     }
 
     /**
@@ -206,11 +212,12 @@ class Measure
      */
     public static function reportStructureTable(Table $table): void
     {
-        if (!isset(static::$_Tables[$table->getName()]))
+        if (!isset(static::$_Tables[$table->getName()])) {
             static::$_Tables[$table->getName()] = [
                 "calls" => 0,
                 "objects" => []
             ];
+        }
 
         static::$_Tables[$table->getName()]["calls"]++;
         static::$_Tables[$table->getName()]["objects"][] = $table;
@@ -222,11 +229,13 @@ class Measure
      */
     public static function reportStructureColumn(Table $table, Column $column): void
     {
-        if (!isset(static::$_Columns[$table->getName()]))
+        if (!isset(static::$_Columns[$table->getName()])) {
             static::$_Columns[$table->getName()] = [];
+        }
 
-        if (!isset(static::$_Columns[$table->getName()][$column->getName()]))
+        if (!isset(static::$_Columns[$table->getName()][$column->getName()])) {
             static::$_Columns[$table->getName()][$column->getName()] = [];
+        }
 
         static::$_Columns[$table->getName()][$column->getName()] = $column;
     }
@@ -247,8 +256,9 @@ class Measure
         $result = 0;
 
         foreach (static::$_Columns as $tableName => $columnList) {
-            if ($filterTable !== null && $filterTable !== $tableName)
+            if ($filterTable !== null && $filterTable !== $tableName) {
                 continue;
+            }
 
             $result += count($columnList);
         }

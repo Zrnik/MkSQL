@@ -56,13 +56,14 @@ class PDO extends \PDO
     /**
      * @param mixed $query
      * @param array<mixed>|null $options
-     * @return PDOStatement
+     * @return PDOStatement<mixed>
      */
     public function prepare(mixed $query, array $options = NULL): PDOStatement
     {
 
-        if ($this->_expectedQuery !== null && $query !== $this->_expectedQuery)
+        if ($this->_expectedQuery !== null && $query !== $this->_expectedQuery) {
             throw new PDOException("Mock PDO expected statement '" . $this->_expectedQuery . "' but got '" . $query . "'!");
+        }
 
         $pdoStatement = new PDOStatement($this->_expectParams);
 

@@ -16,7 +16,7 @@ class RandomRepository extends Installable
 {
     public bool $installed = false;
 
-    function install(Updater $updater): void
+    public function install(Updater $updater): void
     {
         $this->installed = true;
     }

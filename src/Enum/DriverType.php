@@ -11,6 +11,6 @@ use Zrnik\Base\Enum;
 
 class DriverType extends Enum
 {
-    const MySQL = 0;
-    const SQLite = 1;
+    public const MySQL = 0;
+    public const SQLite = 1;
 }

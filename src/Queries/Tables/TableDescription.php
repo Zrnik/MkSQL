@@ -7,6 +7,7 @@
 
 namespace Zrnik\MkSQL\Queries\Tables;
 
+use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Table;
 
@@ -36,14 +37,14 @@ class TableDescription
      * @param string $getName
      * @return ColumnDescription|null
      */
+    #[Pure]
     public function columnGet(string $getName): ?ColumnDescription
     {
-        $desc = null;
-
-        foreach ($this->columns as $column)
-            if ($column->column->getName() === $getName)
+        foreach ($this->columns as $column) {
+            if ($column->column->getName() === $getName) {
                 return $column;
-
+            }
+        }
         return null;
     }
 }

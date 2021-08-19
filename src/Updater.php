@@ -4,14 +4,18 @@ namespace Zrnik\MkSQL;
 
 use PDO;
 use PDOException;
+use ReflectionException;
+use Throwable;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Utilities\Installable;
 
@@ -26,6 +30,7 @@ class Updater
      * @internal
      */
     public ?string $installable = null;
+    public ?Throwable $lastError = null;
 
     /**
      * Updater constructor.
@@ -93,8 +98,9 @@ class Updater
      */
     public function tableGet(string $tableName): ?Table
     {
-        if (isset($this->tables[$tableName]))
+        if (isset($this->tables[$tableName])) {
             return $this->tables[$tableName];
+        }
         return null;
     }
     //endregion
@@ -107,7 +113,7 @@ class Updater
      */
     public function install(): bool
     {
-        if($this->installable !== null)
+        if($this->installable !== null) {
             throw new UnexpectedCall(
                 sprintf(
                     "Please, do not call '\$updater->install()' inside a '%s::install()' method, as its already handled by '%s'!",
@@ -115,22 +121,23 @@ class Updater
                     Installable::class
                 )
             );
+        }
 
         $Success = true;
 
         $timer_total = microtime(true);
 
 
-        /** @var ?IQueryMaker $QueryMakerClass */
-        $QueryMakerClass = null;
+
 
         //region DriverCheck
         /**
          * We need a correct driver and
          * IQueryMaker class for it!
          */
-        if ($this->getDriverType() === null)
+        if ($this->getDriverType() === null) {
             throw new InvalidDriverException("Driver type is 'NULL'!");
+        }
 
         $driverName = DriverType::getName($this->getDriverType());
 
@@ -142,10 +149,11 @@ class Updater
          */
         $QueryMakerClassCheck = $QueryMakerClass;
 
-        if (!class_exists($QueryMakerClassCheck))
+        if (!class_exists($QueryMakerClassCheck)) {
             throw new InvalidDriverException(
                 "Invalid driver '" . $driverName . "' for package 'Zrnik\\MkSQL' class 'Updater'. 
                 Allowed drivers: " . implode(", ", DriverType::getNames(false)));
+        }
 
         //endregion
 
@@ -176,7 +184,9 @@ class Updater
             /**
              * Create Queries:
              */
-            $QueryCommands = array_merge($QueryCommands, $table->install($TableDescription));
+            foreach($table->install($TableDescription) as $Command) {
+                $QueryCommands[] = $Command;
+            }
 
             Measure::logTableSpeed(
                 $table->getName()??'unknown table',
@@ -213,6 +223,7 @@ class Updater
                         $stopped = true;
                         $Success = false;
                         $QueryCommand->setError($pdoEx);
+                        $this->lastError = $pdoEx;
                     }
                 }
 
@@ -238,6 +249,12 @@ class Updater
         return $Success;
     }
 
+    public function clear(): void
+    {
+        $this->tables = [];
+        $this->installable = null;
+    }
+
     /**
      * @return mixed
      */
@@ -253,7 +270,6 @@ class Updater
         return $driver;
 
     }
-
 
     /**
      * Finds all columns referencing FOREIGN KEY of
@@ -288,4 +304,19 @@ class Updater
             }
         }
     }
+
+    /**
+     * @param class-string<BaseEntity> ...$baseEntities
+     * @throws MkSQLException
+     * @throws ReflectionException
+     */
+    public function use(...$baseEntities): void
+    {
+        /** @var BaseEntity $baseEntityClassName */
+        foreach ($baseEntities as $baseEntityClassName) {
+            $baseEntityClassName::hydrateUpdater($this);
+        }
+    }
+
+
 }

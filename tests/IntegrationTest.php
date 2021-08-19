@@ -6,33 +6,33 @@
  * Date: 02.09.2020 13:52
  */
 
+use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
+use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
+use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
+use Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
 use Nette\Neon\Neon;
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
-use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
-use Zrnik\MkSQL\Exceptions\InvalidDriverException;
-use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
-use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Updater;
+use Zrnik\MkSQL\Utilities\Installable;
 
 class IntegrationTest extends TestCase
 {
 
     /**
-     * @throws ColumnDefinitionExists
-     * @throws InvalidDriverException
-     * @throws PrimaryKeyAutomaticException
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     public function testIntegration(): void
     {
         // MySQL Integration:
-        $configFile = file_exists(__DIR__."/../.github/config/integrationTestDatabase.neon")
-            ? __DIR__."/../.github/config/integrationTestDatabase.neon"
-            : __DIR__."/../.github/config/integrationTestDatabase.neon.dist";
+        $configFile = file_exists(__DIR__ . "/../.github/config/integrationTestDatabase.neon")
+            ? __DIR__ . "/../.github/config/integrationTestDatabase.neon"
+            : __DIR__ . "/../.github/config/integrationTestDatabase.neon.dist";
 
-        $config = Neon::decode(strval(file_get_contents($configFile)));
+        $config = Neon::decode((string)file_get_contents($configFile));
 
         $MySQL_PDO = new PDO(
             $config["dsn"],
@@ -43,19 +43,23 @@ class IntegrationTest extends TestCase
         $this->processTest($MySQL_PDO);
 
         // SQLite Integration:
-        $SQLite_PDO = new PDO("sqlite::memory:");
+        //$SQLite_PDO = new PDO("sqlite::memory:");
         // memory is enough, but for visual data:
-        //$SQLite_PDO = new PDO('sqlite:mksql_test.sqlite');
+
+        $tempDir = __DIR__ . '/../temp';
+        if (!file_exists($tempDir)) {
+            @mkdir($tempDir, 0777, true);
+        }
+        $SQLiteFile = $tempDir . '/mksql_test.sqlite';
+        $SQLite_PDO = new PDO(sprintf('sqlite:%s', $SQLiteFile));
+
 
         $this->processTest($SQLite_PDO);
     }
 
     /**
      * @param PDO $pdo
-     * @throws ColumnDefinitionExists
-     * @throws InvalidDriverException
-     * @throws PrimaryKeyAutomaticException
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     private function processTest(PDO $pdo): void
     {
@@ -98,6 +102,12 @@ class IntegrationTest extends TestCase
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
 
+        // #####################################
+        // ### BaseRepoAndEntityTest: ##########
+        // #####################################
+
+        $this->subTestBaseRepoAndEntity($pdo);
+
         echo "]" . PHP_EOL . "Complete!";
     }
 
@@ -117,17 +127,19 @@ class IntegrationTest extends TestCase
         ];
 
         foreach ($tables as $table_name) {
-            $pdo->exec("DROP TABLE IF EXISTS " . $table_name . " ");
+            $pdo->exec(
+                sprintf(
+                /** @lang */ "DROP TABLE IF EXISTS %s"
+                    , $table_name
+                )
+            );
         }
     }
 
     /**
      * @param Updater $Updater
      * @return bool
-     * @throws ColumnDefinitionExists
-     * @throws InvalidDriverException
-     * @throws PrimaryKeyAutomaticException
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     private function installDefault(Updater $Updater): bool
     {
@@ -138,7 +150,7 @@ class IntegrationTest extends TestCase
             ->setUnique()
             ->setNotNull();
 
-        //Table Sessions with foreign key account pointing to accounts.account_id
+        //Table Sessions with foreign key account pointing to 'accounts.account_id'
 
         $Sessions = $Updater->tableCreate("sessions");
 
@@ -168,13 +180,12 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestPrimaryKeyNameChange(Updater $Updater): void
     {
         $tableAccounts = $Updater->tableGet("accounts");
         $this->assertNotNull($tableAccounts);
-
 
 
         $tableAccounts->setPrimaryKeyName("new_id");
@@ -188,11 +199,11 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestTypeChange(Updater $Updater): void
     {
-        $lastActionTable =  $Updater->tableGet("last_action");
+        $lastActionTable = $Updater->tableGet("last_action");
         $this->assertNotNull($lastActionTable);
 
         $columnActionTime = $lastActionTable->columnGet("action_time");
@@ -214,7 +225,7 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestNotNull(Updater $Updater): void
     {
@@ -237,11 +248,11 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestDefaultValue(Updater $Updater): void
     {
-        $lastActionTable =  $Updater->tableGet("last_action");
+        $lastActionTable = $Updater->tableGet("last_action");
         $this->assertNotNull($lastActionTable);
 
         $columnActionTime = $lastActionTable->columnGet("action_time");
@@ -258,11 +269,11 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestComment(Updater $Updater): void
     {
-        $lastActionTable =  $Updater->tableGet("last_action");
+        $lastActionTable = $Updater->tableGet("last_action");
         $this->assertNotNull($lastActionTable);
 
         $columnActionTime = $lastActionTable->columnGet("action_time");
@@ -272,7 +283,7 @@ class IntegrationTest extends TestCase
         $this->assertTrue($Updater->install());
         $this->dot();
 
-        $columnActionTime->setComment(null);
+        $columnActionTime->setComment(); // null
         $this->assertTrue($Updater->install());
         $this->dot();
 
@@ -283,7 +294,7 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestForeignKeys(Updater $Updater): void
     {
@@ -305,11 +316,11 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     private function subTestUniqueIndexes(Updater $Updater): void
     {
-        $lastActionTable =  $Updater->tableGet("last_action");
+        $lastActionTable = $Updater->tableGet("last_action");
         $this->assertNotNull($lastActionTable);
 
         $columnActionTime = $lastActionTable->columnGet("action_time");
@@ -333,4 +344,150 @@ class IntegrationTest extends TestCase
         echo ".";
     }
 
+    /**
+     * @throws MkSQLException
+     * @throws ReflectionException
+     */
+    private function subTestBaseRepoAndEntity(PDO $pdo): void
+    {
+        // Only checks Installation (Base Entity)
+        Installable::uninstallAll($pdo);
+        $invoiceRepo = new InvoiceRepository($pdo);
+
+        // Checks Base Repository
+        $auctionRepository = new AuctionRepository($pdo);
+
+        foreach (array_reverse($auctionRepository->getTables()) as $table) {
+            $pdo->exec(sprintf("DELETE FROM %s", $table->getName()));
+        }
+
+        $auction1 = Auction::create();
+        $auction1->name = "First Auction";
+
+        $auction1->auctionItems[0] = AuctionItem::create();
+        $auction1->auctionItems[0]->name = "Auction Item One";
+
+        $auction1->auctionItems[1] = AuctionItem::create();
+        $auction1->auctionItems[1]->name = "Auction Item Two";
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 0);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 0);
+
+        $auctionRepository->save($auction1);
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 1);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 2);
+
+        $auction2 = Auction::create();
+        $auction2->name = "Second Auction";
+
+        $auction2->auctionItems[0] = AuctionItem::create();
+        $auction2->auctionItems[0]->name = "Auction Item One";
+
+        $auction2->auctionItems[1] = AuctionItem::create();
+        $auction2->auctionItems[1]->name = "Auction Item Two";
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 1);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 2);
+
+        $auctionRepository->save($auction2);
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 2);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 4);
+
+        $auction2->auctionItems[0]->sold = true;
+
+        $auctionRepository->save($auction2);
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 2);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 4);
+
+        $auction2->auctionItems[1]->sold = true;
+
+        $auctionRepository->save($auction2->auctionItems[1]);
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 2);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 4);
+
+        /** @var Auction[] $auctionList1 */
+        $auctionList1 = $auctionRepository->getAll(Auction::class);
+        $this->assertCount(2, $auctionList1);
+
+        /** @var Auction $fetchedAuction1 */
+        $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
+
+       /* dump($auction1);
+        dumpe($fetchedAuction1);*/
+
+        $this->assertEquals($auction1, $fetchedAuction1);
+        $this->assertNotSame($auction1, $fetchedAuction1);
+
+        /** @var Auction $fetchedAuction2 */
+        $fetchedAuction2 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction2->id);
+
+        $this->assertEquals($auction2, $fetchedAuction2);
+        $this->assertNotSame($auction2, $fetchedAuction2);
+
+        /** @var AuctionItem[] $auctionItemsOfAuction1 */
+        $auctionItemsOfAuction1 = $auctionRepository->getResultsByKey(
+            AuctionItem::class, "auction", $fetchedAuction1->id
+        );
+
+        $this->assertEquals($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
+        $this->assertNotSame($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
+
+        /** @var Auction $fetchedAuctionByName1 */
+        $fetchedAuctionByName1 = $auctionRepository->getResultByKey(
+            Auction::class, "name", "First Auction"
+        );
+
+        $this->assertEquals($auction1, $fetchedAuctionByName1);
+        $this->assertNotSame($auction1, $fetchedAuctionByName1);
+
+        /** @var Auction $fetchedAuctionByName2 */
+        $fetchedAuctionByName2 = $auctionRepository->getResultByKey(
+            Auction::class, "name", "Second Auction"
+        );
+
+        $this->assertEquals($auction2, $fetchedAuctionByName2);
+        $this->assertNotSame($auction2, $fetchedAuctionByName2);
+        $this->assertEquals($fetchedAuction2, $fetchedAuctionByName2);
+        $this->assertNotSame($fetchedAuction2, $fetchedAuctionByName2);
+        $this->assertEquals($fetchedAuction2, $auction2);
+        $this->assertNotSame($fetchedAuction2, $auction2);
+    }
+
+
+
+    private function assertRowCountInTable(PDO $pdo, string $tableName, int $assertCount): void
+    {
+        $statement = $pdo->query("SELECT * FROM " . $tableName);
+
+        if($statement === false) {
+            throw new AssertionFailedError(
+                "No result returned!"
+            );
+        }
+
+        $fetch = $statement->fetchAll();
+
+        if($fetch === false) {
+            throw new AssertionFailedError(
+                "No result returned!"
+            );
+        }
+
+        $result = count($fetch);
+
+        if ($result !== $assertCount) {
+            throw new AssertionFailedError(
+                sprintf(
+                    "The number of rows in table '%s' does not match! Expected: %s Got: %s",
+                    $tableName, $assertCount, $result
+                )
+            );
+        }
+
+        $this->addToAssertionCount(1);
+    }
 }

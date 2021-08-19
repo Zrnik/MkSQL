@@ -268,19 +268,18 @@ class Column
     /**
      * Add foreign key on column
      * @param string $foreignKey
-     * @param bool $isUpdatedWithThisUpdater
      * @return Column
      * @throws InvalidArgumentException
      */
     //TODO: Allow defining of 'ON DELETE'/'ON UPDATE' behavior , see:
     //      https://www.techonthenet.com/sql_server/foreign_keys/foreign_delete.php
-    public function addForeignKey(string $foreignKey, bool $isUpdatedWithThisUpdater = true): Column
+    public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
 
-        list($_refTable, $_refColumn) = explode(".", $foreignKey);
+        // list($_refTable, $_refColumn) = explode(".", $foreignKey);
 
-        if ($isUpdatedWithThisUpdater) {
+        /*if ($isUpdatedWithThisUpdater) {
             $referencedTable = $this->getParent()?->endTable()?->tableGet($_refTable);
             if ($referencedTable === null)
                 throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '" . $_refTable . "' but that table is not defined!");
@@ -288,10 +287,11 @@ class Column
             $referencedColumn = $referencedTable->columnGet($_refColumn);
             if ($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
                 throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '" . $_refColumn . "' in table '" . $_refTable . "' but that column is not defined!");
-        }
+        }*/
 
-        if (in_array($foreignKey, $this->foreignKeys))
+        if (in_array($foreignKey, $this->foreignKeys, true)) {
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
+        }
 
         $this->foreignKeys[] = $foreignKey;
 
@@ -304,7 +304,7 @@ class Column
      */
     public function dropForeignKey(string $foreignKey): Column
     {
-        if (($key = array_search($foreignKey, $this->foreignKeys)) !== false) {
+        if (($key = array_search($foreignKey, $this->foreignKeys, true)) !== false) {
             unset($this->foreignKeys[$key]);
         }
         return $this;

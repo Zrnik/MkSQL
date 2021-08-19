@@ -1,6 +1,7 @@
 /.phpunit.result.cache
 /.idea/
 /vendor/
+/temp/
 /docs/example.php
 .github/config/integrationTestDatabase.neon
 

@@ -105,23 +105,7 @@ class ColumnTest extends TestCase
             //Already Defined Error
             $sessions->addForeignKey("accounts.id");
             throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
-
-        try {
-            //Column account_id is not defined in accounts table
-            $sessions->addForeignKey("accounts.account_id");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
-
-        try {
-            //Table user is not defined in accounts table
-            $sessions->addForeignKey("user.id");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
+        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException) {
             $this->addToAssertionCount(1);
         }
     }

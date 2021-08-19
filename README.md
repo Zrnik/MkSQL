@@ -1,4 +1,12 @@
 # MkSQL
+
+### Warning!
+**You are currently looking at *v0.7* documentation.**
+**There is not yet documentation for *v0.8*.**
+**For v0.8 and more you will need PHP 8+**
+
+/end warning
+
 ![GitHub](https://img.shields.io/github/license/zrnik/mksql)
 ![Packagist Downloads](https://img.shields.io/packagist/dm/zrnik/mksql)
 ![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql)  
@@ -18,7 +26,7 @@ Documentation index is in [docs/index.md](docs/index.md)
 #### Requirements
 ```json 
 {
-    "PHP": ">= 7.4",
+    "PHP": ">= 8",
     "ext-pdo": "*",
 
     "nette/utils": "^3.0",

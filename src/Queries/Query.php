@@ -130,7 +130,7 @@ class Query
      * @param mixed $value
      * @return $this
      */
-    public function paramAdd($value): Query
+    public function paramAdd(mixed $value): Query
     {
         $this->Parameters[] = $value;
         return $this;

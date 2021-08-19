@@ -12,6 +12,7 @@ use Nette\Utils\Strings;
 use PDO;
 use PDOException;
 use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\QueryInfo;
 use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
@@ -73,8 +74,9 @@ class QueryMakerMySQL implements IQueryMaker
                 foreach ($DescriptionData as $DescriptionLine) {
                     $DescriptionLine = trim($DescriptionLine);
 
-                    if (Strings::startsWith($DescriptionLine, "`" . $column->getName() . "`"))
+                    if (Strings::startsWith($DescriptionLine, "`" . $column->getName() . "`")) {
                         $col_desc = $DescriptionLine;
+                    }
 
                     if (
                         Strings::startsWith($DescriptionLine, "UNIQUE KEY") &&
@@ -92,8 +94,9 @@ class QueryMakerMySQL implements IQueryMaker
                         Strings::contains($DescriptionLine, "FOREIGN KEY")
                     ) {
                         $fkData = explode("`", $DescriptionLine);
-                        if ($fkData[3] === $column->getName())
+                        if ($fkData[3] === $column->getName()) {
                             $foreign_keys[$fkData[5] . "." . $fkData[7]] = $fkData[1];
+                        }
                     }
                 }
                 //endregion
@@ -108,13 +111,13 @@ class QueryMakerMySQL implements IQueryMaker
                     $ColDesc->type = Strings::trim(explode(" ", $col_desc)[1],",");
 
                     // - NOT NULL
-                    $ColDesc->notNull = strpos($col_desc, "NOT NULL") !== false;
+                    $ColDesc->notNull = str_contains($col_desc, "NOT NULL");
                     // - Unique
                     $ColDesc->uniqueIndex = $unique_index_key;
 
                     // - Default Value
                     if (Strings::contains($col_desc, "DEFAULT '")) {
-                        list($_trash, $default_part) = explode("DEFAULT '", $col_desc);
+                        [$_trash, $default_part] = explode("DEFAULT '", $col_desc);
                         unset($_trash);
                         $RestOfDefault = explode("'", $default_part);
 
@@ -137,7 +140,7 @@ class QueryMakerMySQL implements IQueryMaker
 
                     // - Comment
                     if (Strings::contains($col_desc, "COMMENT '")) {
-                        list($_throwAway, $comment_part) = explode("COMMENT '", $col_desc);
+                        [$_throwAway, $comment_part] = explode("COMMENT '", $col_desc);
                         $RestOfComments = explode("'", $comment_part);
 
                         $Index = 0;
@@ -181,7 +184,15 @@ class QueryMakerMySQL implements IQueryMaker
     {
         return [
             (new Query($table, null))
-                ->setQuery("ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;")
+                ->setQuery(
+                    sprintf(
+                        /** @lang */"ALTER TABLE %s CHANGE %s %s %s NOT NULL%s;",
+                        $table->getName(),
+                        $oldKey,  $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
+                        str_starts_with(strtolower($table->getPrimaryKeyType()),"int") ? " AUTO_INCREMENT" : ""
+                    )
+                    /*"ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;"*/
+                )
                 ->setReason("Primary key '" . $table->getPrimaryKeyName() . "' required but '" . $oldKey . "' found.")
         ];
     }
@@ -195,9 +206,18 @@ class QueryMakerMySQL implements IQueryMaker
     {
         $CreateTableQuery = (new Query($table, null))
             ->setQuery(
+
+                sprintf(
+                    /** @lang */"CREATE TABLE %s (%s %s NOT NULL %s PRIMARY KEY)",
+                    $table->getName(), $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
+                    str_starts_with(strtolower($table->getPrimaryKeyType()),"int") ? " AUTO_INCREMENT" : ""
+                )
+                /*
                 "CREATE TABLE " .
                 $table->getName()
                 . " (" . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT PRIMARY KEY)"
+                */
+
             )
             ->setReason("Table '" . $table->getName() . "' not found.");
 
@@ -219,13 +239,15 @@ class QueryMakerMySQL implements IQueryMaker
 
         $ModifySQL = 'ALTER TABLE ' . $table->getName() . ' MODIFY ' . $column->getName() . ' ' . $column->getType();
 
-        if ($column->getDefault() !== null)
+        if ($column->getDefault() !== null) {
             $ModifySQL .= " DEFAULT '" . $column->getDefault() . "'";
+        }
 
         $ModifySQL .= ($column->getNotNull() ? ' NOT ' : ' ') . 'NULL';
 
-        if ($column->getComment() !== null && $column->getComment() !== "")
+        if ($column->getComment() !== null && $column->getComment() !== "") {
             $ModifySQL .= " COMMENT '" . $column->getComment() . "'";
+        }
 
         $alterTableQuery->setReason("to-be-determined");
 
@@ -249,15 +271,17 @@ class QueryMakerMySQL implements IQueryMaker
         $CreateSQL .= 'ADD ' . $column->getName() . ' ' . $column->getType() . ' ';
 
         //Default Value
-        if ($column->getDefault() !== null)
+        if ($column->getDefault() !== null) {
             $CreateSQL .= 'DEFAULT \'' . $column->getDefault() . '\' ';
+        }
 
         //Null/NotNull
         $CreateSQL .= ($column->getNotNull() ? "NOT " : '') . 'NULL ';
 
         //Comment
-        if ($column->getComment() !== null)
+        if ($column->getComment() !== null) {
             $CreateSQL .= "COMMENT '" . $column->getComment() . "' ";
+        }
 
         return [
             (new Query($table, $column))
@@ -272,6 +296,7 @@ class QueryMakerMySQL implements IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]|null
+     * @throws InvalidArgumentException
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
@@ -297,6 +322,7 @@ class QueryMakerMySQL implements IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return array<mixed>|null
+     * @throws InvalidArgumentException
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
     {
@@ -306,10 +332,13 @@ class QueryMakerMySQL implements IQueryMaker
         //var_dump($columnDescription->foreignKeys);
         foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
-            foreach ($DropQueries as $DropQuery)
+            foreach ($DropQueries as $DropQuery) {
                 $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
+            }
 
-            $Queries = array_merge($Queries, $DropQueries);
+            foreach($DropQueries as $dropQuery) {
+                $Queries[] = $dropQuery;
+            }
         }
 
         $Queries[] = (new Query($table, $column))
@@ -320,10 +349,14 @@ class QueryMakerMySQL implements IQueryMaker
         foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
 
-            foreach ($CreateQueries as $CreateQuery)
+            foreach ($CreateQueries as $CreateQuery) {
                 $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
+            }
 
-            $Queries = array_merge($Queries, $CreateQueries??[]);
+            foreach($CreateQueries??[] as $query) {
+                $Queries[] = $query;
+            }
+
         }
 
         return $Queries;
@@ -353,15 +386,16 @@ class QueryMakerMySQL implements IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]
+     * @throws InvalidArgumentException
      */
     public static function createForeignKey(Table $table, Column $column, string $RefPointerString, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
         $pointerString = Utils::confirmForeignKeyTarget($RefPointerString);
         // $pointerString has exactly one dot or the exception was already thrown!
 
-        $foreignKeyParts = explode(".", $pointerString);
-        $targetTable = $foreignKeyParts[0];
-        $targetColumn = $foreignKeyParts[1];
+        [$targetTable, $targetColumn] /* $foreignKeyParts */ = explode(".", $pointerString);
+        /*$targetTable = $foreignKeyParts[0];
+        $targetColumn = $foreignKeyParts[1];*/
 
         $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn);
 
@@ -377,6 +411,7 @@ class QueryMakerMySQL implements IQueryMaker
      * @param string $type1
      * @param string $type2
      * @return bool
+     * @throws InvalidArgumentException
      */
     public static function compareType(string $type1, string $type2): bool
     {
@@ -387,20 +422,22 @@ class QueryMakerMySQL implements IQueryMaker
             "tinyint", "mediumint", "int", "bigint",
         ];
 
-        foreach ($Exceptions as $Exception)
-            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception))
+        foreach ($Exceptions as $Exception) {
+            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception)) {
                 return true;
+            }
+        }
 
         return $type1 === $type2;
     }
 
     /**
-     * @param string|null $type1
-     * @param string|null $type2
+     * @param string|null $comment1
+     * @param string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $type1, ?string $type2): bool
+    public static function compareComment(?string $comment1, ?string $comment2): bool
     {
-        return $type1 === $type2;
+        return $comment1 === $comment2;
     }
 }

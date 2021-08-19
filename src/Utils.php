@@ -35,7 +35,7 @@ class Utils
      * @return string
      * @throws InvalidArgumentException
      */
-    public static function __testCommentsError(string $name): string
+    public static function internalTestCommentsError(string $name): string
     {
         return static::confirmName($name, ["/", "*", "-"]);
     }

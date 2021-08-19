@@ -11,6 +11,7 @@ use Exception;
 use Nette\Utils\Strings;
 use PDO;
 use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\QueryInfo;
 use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
@@ -29,13 +30,14 @@ class QueryMakerSQLite implements IQueryMaker
     //
 
     // This was bugging!
-    // Lets don't change it into tokens...
-    const SQLiteKeyMaxLen = 2048;
+    // Let's not change it into tokens...
+    public const SQLiteKeyMaxLen = 2048;
 
     /**
      * @param PDO $pdo
      * @param Table $table
      * @return TableDescription|null
+     * @noinspection MultiAssignmentUsageInspection
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
@@ -77,12 +79,15 @@ class QueryMakerSQLite implements IQueryMaker
                     /**
                      * @var string $sql
                      */
-                    $sql = str_replace("\r", " ", $PartRow["sql"]);
-                    $sql = str_replace("\n", " ", $sql);
-                    $sql = str_replace("CREATE TABLE \"" . $table->getName() . "\"", "CREATE TABLE " . $table->getName(), $sql);
+                    $sql = str_replace(
+                        ["\r", "\n", "CREATE TABLE \"" . $table->getName() . "\""],
+                        [" ", " ", "CREATE TABLE " . $table->getName()],
+                        $PartRow["sql"]
+                    );
 
-                    while (Strings::contains($sql, "  "))
+                    while (Strings::contains($sql, "  ")) {
                         $sql = str_replace("  ", " ", $sql);
+                    }
 
                     if (Strings::startsWith($sql, "CREATE TABLE")) {
 
@@ -97,7 +102,7 @@ class QueryMakerSQLite implements IQueryMaker
                         //Find Primary Key Name:
                         foreach ($parts as $part) {
                             if (Strings::contains(strtolower($part), "primary key")) {
-                                list($primaryKey) = explode(" ", Strings::normalize($part));
+                                [$primaryKey] = explode(" ", Strings::normalize($part));
                                 $primaryKey = Strings::normalize($primaryKey);
                                 $Desc->primaryKeyName = $primaryKey;
                             }
@@ -131,13 +136,15 @@ class QueryMakerSQLite implements IQueryMaker
                                     $BeforeDefault = '';
                                     $DefaultPart = '';
 
-                                    if (Strings::contains($part, "DEFAULT"))
-                                        list($BeforeDefault, $DefaultPart)
+                                    if (Strings::contains($part, "DEFAULT")) {
+                                        [$BeforeDefault, $DefaultPart]
                                             = explode("DEFAULT '", $part);
+                                    }
 
-                                    if (Strings::contains($part, "default"))
-                                        list($BeforeDefault, $DefaultPart)
+                                    if (Strings::contains($part, "default")) {
+                                        [$BeforeDefault, $DefaultPart]
                                             = explode("default '", $part);
+                                    }
 
                                     unset($BeforeDefault);
 
@@ -179,18 +186,22 @@ class QueryMakerSQLite implements IQueryMaker
                                             $refWord = Strings::contains($part, "REFERENCES") ? "REFERENCES" : "references";
 
                                             //Yup, seems like foreign key
-                                            list($key, $ref) = explode($refWord, $constraint);
+                                            [$key, $ref] = explode($refWord, $constraint);
 
-                                            $ref = str_replace([")", " "], "", $ref);
-                                            $ref = str_replace("(", ".", $ref);
+                                            $ref = str_replace(
+                                                [")", " ", "("],
+                                                ["", "", "."],
+                                                $ref
+                                            );
 
                                             // If there is no dot in the ref string,
-                                            // it references primary key of table..
-                                            // if its all created from MkSQL then
-                                            // the primary kes is ID...
+                                            // it references primary key of table...
+                                            // if it's all created from MkSQL then
+                                            // the primary key is ID...
 
-                                            if (!Strings::contains($ref, "."))
-                                                $ref = $ref . "." . $table->getPrimaryKeyName();
+                                            if (!Strings::contains($ref, ".")) {
+                                                $ref .= "." . $table->getPrimaryKeyName();
+                                            }
 
                                             $ColDesc->foreignKeys[$ref] = trim($key);
                                             //echo "Found ForeignKey: ".$ref.'=>'.$key.PHP_EOL;
@@ -209,9 +220,11 @@ class QueryMakerSQLite implements IQueryMaker
                         $_uniqueIndexTable = $parts[5];
                         $_uniqueIndexColumn = Strings::trim($parts[6], "()");
 
-                        if ($_uniqueIndexTable === $ColDesc->table->getName())
-                            if ($_uniqueIndexColumn === $ColDesc->column->getName())
+                        if ($_uniqueIndexTable === $ColDesc->table->getName()) {
+                            if ($_uniqueIndexColumn === $ColDesc->column->getName()) {
                                 $ColDesc->uniqueIndex = $_uniqueIndexKey;
+                            }
+                        }
                     }
                 }
 
@@ -234,6 +247,7 @@ class QueryMakerSQLite implements IQueryMaker
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
      * @return Query[]|null
+     * @throws InvalidArgumentException
      */
     public static function changePrimaryKeyQuery(string $oldKey, Table $table, ?TableDescription $oldTableDescription): ?array
     {
@@ -252,13 +266,15 @@ class QueryMakerSQLite implements IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @param array<string> $swapPrimaryKeyName
      * @return Query[]|null
+     * @throws InvalidArgumentException
      */
-    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, $swapPrimaryKeyName = []): ?array
+    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, array $swapPrimaryKeyName = []): ?array
     {
         $alterTableQueryList = [];
 
-        if ($column->column_handled)
+        if ($column->column_handled) {
             return [];
+        }
 
         $temporaryName = Utils::confirmTableName($table->getName() . "_mksql_tmp");
 
@@ -273,9 +289,9 @@ class QueryMakerSQLite implements IQueryMaker
 
         $MoveColumns = [];
 
-        foreach ($table->columnList() as $column) {
+        foreach ($table->columnList() as $subColumn) {
             $MoveColumns[] = $column->getName();
-            $createColumnQueryList = static::createTableColumnQuery($table, $column, $oldTableDescription, $columnDescription, true);
+            $createColumnQueryList = static::createTableColumnQuery($table, $subColumn, $oldTableDescription, $columnDescription, true);
             foreach ($createColumnQueryList as $columnQuery) {
                 $columnQuery->setQuery(str_replace(
                     "ALTER TABLE " . $table->getName() . " ADD",
@@ -284,13 +300,13 @@ class QueryMakerSQLite implements IQueryMaker
 
                 $alterTableQueryList[] = $columnQuery;
             }
-            $column->column_handled = true;
+            $subColumn->column_handled = true;
         }
 
         $keyInBothArrays = [$table->getPrimaryKeyName()];
         foreach ($MoveColumns as $columnName) {
-            foreach ($oldTableDescription?->columns as $columnDescription) {
-                if ($columnDescription->column->getName() === $columnName) {
+            foreach ($oldTableDescription?->columns as $subColumnDescription) {
+                if ($subColumnDescription->column->getName() === $columnName) {
                     $keyInBothArrays[] = $columnName;
                     break;
                 }
@@ -304,10 +320,9 @@ class QueryMakerSQLite implements IQueryMaker
         //Implementation of $swapColumnNames
         $originalList = [];
         foreach ($keyInBothArrays as $oldColName) {
-            $insertCol = $oldColName;
 
-            if (isset($swapPrimaryKeyName[$insertCol]))
-                $insertCol = $swapPrimaryKeyName[$insertCol];
+            $insertCol = $oldColName;
+            $insertCol = $swapPrimaryKeyName[$insertCol] ?? $oldColName;
 
             $originalList[] = $insertCol;
         }
@@ -332,13 +347,13 @@ class QueryMakerSQLite implements IQueryMaker
 
         //echo " -Modified table ".$table->getName()." creating Unique Indexes".PHP_EOL;
 
-        foreach ($table->columnList() as $column) {
-            if ($column->getUnique()) {
+        foreach ($table->columnList() as $listedColumn) {
+            if ($listedColumn->getUnique()) {
                 //echo " - creating unique index for ".$column->getName()." in table ".$table->getName().PHP_EOL;
 
                 $newQueries = static::createUniqueIndexQuery(
                     $table,
-                    $column,
+                    $listedColumn,
                     $oldTableDescription,
                     null
                 );
@@ -358,6 +373,7 @@ class QueryMakerSQLite implements IQueryMaker
      * @param Table $table
      * @param TableDescription|null $oldTableDescription
      * @return Query[]
+     * @throws InvalidArgumentException
      */
     public static function createTableQuery(Table $table, ?TableDescription $oldTableDescription): array
     {
@@ -365,7 +381,20 @@ class QueryMakerSQLite implements IQueryMaker
 
         return [
             (new Query($table, null))
-                ->setQuery("CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " " . self::fixPrimaryKeyType($table->getPrimaryKeyType()) . " constraint " . $primaryKeyName . " primary key autoincrement);")
+                ->setQuery(
+
+                    sprintf(
+                        /** @lang */ "CREATE TABLE %s (%s %s constraint %s primary key %s) ",
+                        $table->getName(),  $table->getPrimaryKeyName(),
+                        self::fixPrimaryKeyType($table->getPrimaryKeyType()),
+                        $primaryKeyName,
+                        str_starts_with(strtolower(self::fixPrimaryKeyType($table->getPrimaryKeyType())),"int") ? "autoincrement" : ""
+
+                    )
+
+                    //"CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " " . self::fixPrimaryKeyType($table->getPrimaryKeyType()) . " constraint " . $primaryKeyName . " primary key autoincrement);"
+
+                )
                 ->setReason("Table '" . $table->getName() . "' not found.")
         ];
     }
@@ -377,23 +406,27 @@ class QueryMakerSQLite implements IQueryMaker
      * @param ColumnDescription|null $columnDescription
      * @param bool $isForTemporaryTable
      * @return Query[]
+     * @throws InvalidArgumentException
      */
     public static function createTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, bool $isForTemporaryTable = false): array
     {
 
-        if (!$isForTemporaryTable && $column->column_handled)
+        if (!$isForTemporaryTable && $column->column_handled) {
             return [];
+        }
 
         $CreateSQL = 'ALTER TABLE ' . $table->getName() . ' ';
         $CreateSQL .= 'ADD ' . $column->getName() . ' ' . $column->getType() . ' ';
 
         //Default Value
 
-        if ($column->getDefault() !== null)
+        if ($column->getDefault() !== null) {
             $CreateSQL .= 'DEFAULT \'' . $column->getDefault() . '\' ';
+        }
 
-        if ($column->getDefault() === null && $column->getNotNull())
+        if ($column->getDefault() === null && $column->getNotNull()) {
             $CreateSQL .= 'DEFAULT \'\' ';
+        }
 
         //Null/NotNull
         $CreateSQL .= ($column->getNotNull() ? "NOT " : '') . 'NULL ';
@@ -405,7 +438,7 @@ class QueryMakerSQLite implements IQueryMaker
 
         foreach ($column->getForeignKeys() as $keyTarget) {
             $ptr = Utils::confirmForeignKeyTarget($keyTarget);
-            list($targetTable, $targetColumn) = explode(".", $ptr);
+            [$targetTable, $targetColumn] = explode(".", $ptr);
 
             $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn, self::SQLiteKeyMaxLen);
 
@@ -426,6 +459,7 @@ class QueryMakerSQLite implements IQueryMaker
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
      * @return Query[]
+     * @throws InvalidArgumentException
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
@@ -495,35 +529,40 @@ class QueryMakerSQLite implements IQueryMaker
      * @param string $type1
      * @param string $type2
      * @return bool
+     * @throws InvalidArgumentException
      */
     public static function compareType(string $type1, string $type2): bool
     {
         $type1 = Utils::confirmType(strtolower($type1));
         $type2 = Utils::confirmType(strtolower($type2));
 
-        if ($type1 === "integer")
+        if ($type1 === "integer") {
             $type1 = "int";
+        }
 
-        if ($type2 === "integer")
+        if ($type2 === "integer") {
             $type2 = "int";
+        }
 
         $Exceptions = [
             "tinyint", "mediumint", "int", "bigint",
         ];
 
-        foreach ($Exceptions as $Exception)
-            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception))
+        foreach ($Exceptions as $Exception) {
+            if (Strings::startsWith($type1, $Exception) && Strings::startsWith($type2, $Exception)) {
                 return true;
+            }
+        }
 
         return $type1 === $type2;
     }
 
     /**
-     * @param string|null $type1
-     * @param string|null $type2
+     * @param string|null $comment1
+     * @param string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $type1, ?string $type2): bool
+    public static function compareComment(?string $comment1, ?string $comment2): bool
     {
         //Comments not supported by SQLite, just report that its correct anyhow
         return true;
@@ -531,8 +570,9 @@ class QueryMakerSQLite implements IQueryMaker
 
     private static function fixPrimaryKeyType(string $keyType): string
     {
-        if ($keyType === "int")
+        if ($keyType === "int") {
             return "integer";
+        }
 
         return $keyType;
     }

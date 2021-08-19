@@ -8,15 +8,18 @@
 
 
 use PHPUnit\Framework\TestCase;
-use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Table;
 use Zrnik\MkSQL\Updater;
+use Zrnik\PHPUnit\Exceptions;
 
 class UpdaterTest extends TestCase
 {
+    use Exceptions;
+
     /**
-     * @throws InvalidDriverException
+     * @throws MkSQLException
      */
     public function testInstall(): void
     {
@@ -35,6 +38,7 @@ class UpdaterTest extends TestCase
 
     /**
      * @throws TableDefinitionExists
+     * @throws \Zrnik\MkSQL\Exceptions\InvalidArgumentException
      */
     public function testTableGet(): void
     {
@@ -47,8 +51,7 @@ class UpdaterTest extends TestCase
     }
 
     /**
-     * @throws TableDefinitionExists
-     * @throws Exception
+     * @throws MkSQLException
      */
     public function testTableAdd(): void
     {
@@ -59,18 +62,17 @@ class UpdaterTest extends TestCase
         $Updater->tableAdd($Table);
         $this->addToAssertionCount(1); //Created (because no exception)
 
-        try {
-            $Updater->tableAdd($Table);
-            throw new Exception("Expected exception " . TableDefinitionExists::class . " not thrown!");
-        } catch (TableDefinitionExists $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            TableDefinitionExists::class,
+            function () use ($Updater, $Table) {
+                $Updater->tableAdd($Table);
+            }
+        );
 
     }
 
     /**
-     * @throws TableDefinitionExists
-     * @throws Exception
+     * @throws MkSQLException
      */
     public function testTableCreate(): void
     {
@@ -81,19 +83,17 @@ class UpdaterTest extends TestCase
         $this->addToAssertionCount(1); //Created (because no exception)
 
         //Now it exists, it should throw an exception
-        try {
-            $Updater->tableCreate("someTable");
-            throw new Exception("Expected exception " . TableDefinitionExists::class . " not thrown!");
-        } catch (TableDefinitionExists $_) {
-            $this->addToAssertionCount(1);
-        }
-
-
+        $this->assertExceptionThrown(
+            TableDefinitionExists::class,
+            function () use ($Updater) {
+                $Updater->tableCreate("someTable");
+            }
+        );
     }
 
 
     /**
-     * @throws TableDefinitionExists
+     * @throws MkSQLException
      */
     public function testTableList(): void
     {
@@ -110,12 +110,10 @@ class UpdaterTest extends TestCase
         /**
          * This should be known from the 'return'
          * statement of 'tableList' method docblock
-         *
-         * @var array<string, Table> $tableList
          */
         $tableList = $Updater->tableList();
 
-
+        /** @phpstan-ignore-next-line */
         $this->assertArrayHasKey(
             "someTable",
             $tableList
@@ -125,9 +123,9 @@ class UpdaterTest extends TestCase
 
         $Updater->tableCreate("anotherTable");
 
-
         $tableList = $Updater->tableList();
 
+        /** @phpstan-ignore-next-line */
         $this->assertArrayHasKey(
             "someTable",
             $tableList

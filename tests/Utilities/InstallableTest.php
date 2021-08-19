@@ -13,10 +13,16 @@ use Mock\Installable\DifferentRepository;
 use Mock\Installable\RandomRepository;
 use Mock\PDO;
 use PHPUnit\Framework\TestCase;
+use ReflectionException;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Utilities\Installable;
 
 class InstallableTest extends TestCase
 {
+    /**
+     * @throws MkSQLException
+     * @throws ReflectionException
+     */
     public function testSingleInstallationInMultipleRepositories(): void
     {
         $pdo = new PDO();

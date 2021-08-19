@@ -97,11 +97,12 @@ class UtilsTest extends TestCase
             "AnyOtherTable.SomeColumn",
         ];
 
-        foreach ($CorrectValues as $TestedValue)
+        foreach ($CorrectValues as $TestedValue) {
             $this->assertSame(
                 $TestedValue,
                 Utils::confirmForeignKeyTarget($TestedValue)
             );
+        }
 
         $IncorrectValues = [
             "no_dot_so_its_error",
@@ -166,11 +167,12 @@ class UtilsTest extends TestCase
         $defaultOKValues = $this->getDefaultTestedValuesOK();
         $defaultERRValues = $this->getDefaultTestedValuesERR();
 
-        foreach ($defaultOKValues as $TestedKey => $ExpectedValue)
+        foreach ($defaultOKValues as $TestedKey => $ExpectedValue) {
             $this->assertSame(
                 $ExpectedValue,
                 Utils::confirmColumnName($TestedKey)
             );
+        }
 
         foreach ($defaultERRValues as $TestedKey) {
             try {
@@ -219,11 +221,12 @@ class UtilsTest extends TestCase
         $defaultOKValues = $this->getDefaultTestedValuesOK();
         $defaultERRValues = $this->getDefaultTestedValuesERR();
 
-        foreach ($defaultOKValues as $TestedKey => $ExpectedValue)
+        foreach ($defaultOKValues as $TestedKey => $ExpectedValue) {
             $this->assertSame(
                 $ExpectedValue,
                 Utils::confirmTableName($TestedKey)
             );
+        }
 
         foreach ($defaultERRValues as $TestedKey) {
             try {
@@ -280,7 +283,7 @@ class UtilsTest extends TestCase
 
         foreach ($ValidKeys as $TestedComment)
             $this->assertSame(
-                Utils::__testCommentsError($TestedComment),
+                Utils::internalTestCommentsError($TestedComment),
                 $TestedComment
             );
 
@@ -292,7 +295,7 @@ class UtilsTest extends TestCase
 
         foreach ($KeysWithComments as $TestedComment) {
             try {
-                Utils::__testCommentsError($TestedComment);
+                Utils::internalTestCommentsError($TestedComment);
                 throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
             } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
                 $this->addToAssertionCount(1);

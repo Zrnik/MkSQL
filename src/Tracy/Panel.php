@@ -3,6 +3,8 @@
 namespace Zrnik\MkSQL\Tracy;
 
 use Exception;
+use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\Pure;
 use Nette\Utils\Html;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
@@ -20,17 +22,18 @@ class Panel implements IBarPanel
 {
 
     //region Styles
-    const RESULT_UP2DATE = 0;
-    const RESULT_CHANGES = 1;
-    const RESULT_ERROR = 2;
-    const RESULT_UNINITIALIZED = 3;
+    public const RESULT_UP2DATE = 0;
+    public const RESULT_CHANGES = 1;
+    public const RESULT_ERROR = 2;
+    public const RESULT_UNINITIALIZED = 3;
 
-    const ICON = 0;
-    const COLOR = 1;
+    public const ICON = 0;
+    public const COLOR = 1;
 
     /**
      * @param int $style
      * @return array<mixed>
+     * @throws Exception
      */
     private function getIconStyle(int $style): array
     {
@@ -74,21 +77,23 @@ class Panel implements IBarPanel
      */
     private function loadSvg(string $svgName): string
     {
-        if (isset(static::$_svgCache[$svgName]))
+        if (isset(static::$_svgCache[$svgName])) {
             return static::$_svgCache[$svgName];
+        }
 
         $assetsFolder = __DIR__ . '/../../assets/';
 
         $imageContent = @file_get_contents($assetsFolder . $svgName);
 
-        if($imageContent === false)
+        if($imageContent === false) {
             throw new Exception(
                 sprintf(
-                    "Icon file '%s' was not found, if you are using 'vendor'".
+                    "Icon file '%s' was not found, if you are using 'vendor'" .
                     " directory cleaner, please add an exception to MkSQL package.",
                     $assetsFolder . $svgName
                 )
             );
+        }
 
         static::$_svgCache[$svgName] = $imageContent;
 
@@ -98,12 +103,14 @@ class Panel implements IBarPanel
     //endregion
 
     //region DataDig
-    const HAS_ERROR = 0;
-    const HAS_CHANGES = 1;
+    public const HAS_ERROR = 0;
+    public const HAS_CHANGES = 1;
 
     /**
      * @return array<mixed>
      */
+    #[Pure]
+    #[ArrayShape([self::HAS_ERROR => "bool", self::HAS_CHANGES => "bool"])]
     public function getResult(): array
     {
         $queries = Measure::getQueryModification();
@@ -111,9 +118,11 @@ class Panel implements IBarPanel
         $hasChanges = count($queries) > 0;
         $hasError = false;
 
-        foreach ($queries as $query)
-            if ($query->errorText !== null)
+        foreach ($queries as $query) {
+            if ($query->errorText !== null) {
                 $hasError = true;
+            }
+        }
 
         return [
             self::HAS_ERROR => $hasError,
@@ -124,21 +133,25 @@ class Panel implements IBarPanel
 
     /**
      * @inheritDoc
+     * @throws Exception
      */
-    function getTab(): ?string
+    public function getTab(): ?string
     {
         $data = $this->getResult();
 
         $imgStyle = self::RESULT_UP2DATE;
 
-        if ($data[self::HAS_CHANGES])
+        if ($data[self::HAS_CHANGES]) {
             $imgStyle = self::RESULT_CHANGES;
+        }
 
-        if ($data[self::HAS_ERROR])
+        if ($data[self::HAS_ERROR]) {
             $imgStyle = self::RESULT_ERROR;
+        }
 
-        if (Measure::$Driver === null)
+        if (Measure::$Driver === null) {
             $imgStyle = self::RESULT_UNINITIALIZED;
+        }
 
         $style = $this->getIconStyle($imgStyle);
 
@@ -312,12 +325,12 @@ class Panel implements IBarPanel
                 ->addHtml(
                     Html::el("td")
                         ->setHtml(
-                        //Security: Replace the tag for already escaped html element!
-                            strval(
+                            //Security: Replace the tag for already escaped html element!
+                            $this->confirmString(
                                 str_replace(
                                     "_",
                                     "&ZeroWidthSpace;_",
-                                    Html::el()->setText($tableObject->getName()??'unknown table')
+                                    Html::el()->setText($tableObject->getName() ?? 'unknown table')
                                 )
                             )
                         )
@@ -934,8 +947,9 @@ class Panel implements IBarPanel
 
     /**
      * @inheritDoc
+     * @throws Exception
      */
-    function getPanel(): ?string
+    public function getPanel(): ?string
     {
 
         if (Measure::$Driver === null) {
@@ -1072,8 +1086,9 @@ class Panel implements IBarPanel
      */
     private static function s(int $count): string
     {
-        if ($count != 1)
+        if ($count !== 1) {
             return 's';
+        }
         return '';
     }
 
@@ -1081,11 +1096,13 @@ class Panel implements IBarPanel
      * Quer[y]/ Quer[ies]
      * @param int $count
      * @return string
+     * @noinspection SpellCheckingInspection
      */
     private static function ies(int $count): string
     {
-        if ($count != 1)
+        if ($count !== 1) {
             return 'ies';
+        }
         return 'y';
     }
 
@@ -1101,8 +1118,9 @@ class Panel implements IBarPanel
 
         $element = Html::el("b");
 
-        if ($colors)
+        if ($colors) {
             $element->style("color", $color);
+        }
 
         $element->setText($text);
         return $element;
@@ -1120,11 +1138,17 @@ class Panel implements IBarPanel
 
         $element = Html::el("b");
 
-        if ($colors)
+        if ($colors) {
             $element->style("color", $color);
+        }
 
         $element->setText($text);
         return $element;
+    }
+
+    private function confirmString(mixed $possibleString): string
+    {
+        return (string) $possibleString;
     }
 
 

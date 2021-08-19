@@ -103,15 +103,12 @@ class Table
         $oldPrimaryKeyName = $this->primaryKeyName;
         $this->primaryKeyName = Utils::confirmColumnName($newPrimaryKeyName);
 
-        // If i have parent a parent Updater, i need to find all references to this table
+        // If we got a parent Updater, we need to find all references to this table
         // and replace foreign keys to still point to this table...
-        //
-        // its mainly for integration test...
 
         $parent = $this->getParent();
 
-        if($parent !== null)
-            $parent->updateForeignKeys($this, $oldPrimaryKeyName);
+        $parent?->updateForeignKeys($this, $oldPrimaryKeyName);
 
         return $this;
     }
@@ -144,8 +141,7 @@ class Table
 
         $parent = $this->getParent();
 
-        if($parent !== null)
-            $parent->updateForeignKeys($this, $oldPrimaryKeyType);
+        $parent?->updateForeignKeys($this, $oldPrimaryKeyType);
 
         return $this;
     }
@@ -182,14 +178,17 @@ class Table
      */
     public function columnAdd(Column $column, bool $rewrite = false): Column
     {
-        if ($column->getName() === $this->getPrimaryKeyName())
+        if ($column->getName() === $this->getPrimaryKeyName()) {
             throw new PrimaryKeyAutomaticException("Primary, auto incrementing key '" . $this->getPrimaryKeyName() . "' is created automatically.");
+        }
 
-        if (!$rewrite && isset($this->columns[$column->getName()]))
+        if (!$rewrite && isset($this->columns[$column->getName()])) {
             throw new ColumnDefinitionExists("Column '" . $column->getName() . "' already defined in table '" . $this->getName() . "'.");
+        }
 
-        if ($column->getName() == $this->getName())
+        if ($column->getName() === $this->getName()) {
             throw new InvalidArgumentException("Column name '" . $column->getName() . "' cannot be same as table name '" . $this->getName() . "'.");
+        }
 
         $column->setParent($this);
 
@@ -214,10 +213,7 @@ class Table
      */
     public function columnGet(string $columnName): ?Column
     {
-        if (isset($this->columns[$columnName]))
-            return $this->columns[$columnName];
-
-        return null;
+        return $this->columns[$columnName] ?? null;
     }
     //endregion
 
@@ -229,17 +225,23 @@ class Table
     public function install(TableDescription $desc): array
     {
 
-        $Commands = [];
+        $commands = [];
 
-        if (!$desc->tableExists)
-            $Commands = array_merge($Commands, $desc->queryMakerClass::createTableQuery($this, $desc)??[]);
+        if (!$desc->tableExists) {
+            $createTableCommands = $desc->queryMakerClass::createTableQuery($this, $desc) ?? [];
+            foreach($createTableCommands as $createTableCommand) {
+                $commands[] = $createTableCommand;
+            }
+        }
 
-        if ($desc->tableExists) {
-            if ($desc->primaryKeyName !== $this->getPrimaryKeyName()) {
-                $Commands = array_merge($Commands, $desc->queryMakerClass::changePrimaryKeyQuery(
-                    $desc->primaryKeyName,
-                    $this, $desc
-                )??[]);
+        if ($desc->tableExists && $desc->primaryKeyName !== $this->getPrimaryKeyName()) {
+            $newCommands = $desc->queryMakerClass::changePrimaryKeyQuery(
+                $desc->primaryKeyName,
+                $this, $desc
+            )??[];
+
+            foreach($newCommands as $newCommand) {
+                $commands[] = $newCommand;
             }
         }
 
@@ -252,10 +254,12 @@ class Table
 
             Measure::reportStructureColumn($this, $column);
 
-            $Commands = array_merge($Commands, $column->install($desc, $desc->columnGet($column->getName())));
+            foreach($column->install($desc, $desc->columnGet($column->getName())) as $command) {
+                $commands[] = $command;
+            }
         }
 
-        return $Commands;
+        return $commands;
     }
     //endregion
 }
