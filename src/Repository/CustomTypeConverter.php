@@ -31,6 +31,8 @@ abstract class CustomTypeConverter
 
     abstract public function deserialize(mixed $value): mixed;
 
+    abstract public function getDatabaseType(): string;
+
     /**
      * @param mixed $value
      * @param string $type

@@ -6,7 +6,6 @@ use Brick\DateTime\LocalDateTime;
 use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeConverter;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\DefaultValue;
-use Zrnik\MkSQL\Repository\Attributes\Fetch;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\Attributes\NotNull;
@@ -32,7 +31,6 @@ class Invoice extends BaseEntity
     #[DefaultValue]
     public string $invoiceCurrency = "EUR";
 
-    #[ColumnType("varchar(64)")]
     #[CustomType(LocalDateTimeTypeConverter::class)]
     #[NotNull]
     public LocalDateTime $createDate;

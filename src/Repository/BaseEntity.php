@@ -510,6 +510,7 @@ abstract class BaseEntity
     /**
      * @throws ReflectionException
      * @throws UnableToResolveTypeException
+     * @throws InvalidArgumentException
      */
     public static function columnType(ReflectionProperty $reflectionProperty): string
     {
@@ -519,6 +520,18 @@ abstract class BaseEntity
             /** @var BaseEntity $foreignEntityClassName */
             $foreignEntityClassName = Reflection::attributeGetArgument($foreignAttributeType);
             return $foreignEntityClassName::getPrimaryKeyType();
+        }
+
+        $attributeCustomType = Reflection::propertyGetAttribute(
+            $reflectionProperty, CustomType::class
+        );
+
+        if($attributeCustomType !== null) {
+            $typeConverter = CustomTypeConverter::initialize(
+                Reflection::attributeGetArgument($attributeCustomType)
+            );
+
+            return $typeConverter->getDatabaseType();
         }
 
         $attributeType = Reflection::propertyGetAttribute(

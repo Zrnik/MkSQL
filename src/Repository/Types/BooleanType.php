@@ -20,4 +20,9 @@ class BooleanType extends CustomTypeConverter
     {
         return (int) $value === 1;
     }
+
+    public function getDatabaseType(): string
+    {
+        return "tinyint";
+    }
 }

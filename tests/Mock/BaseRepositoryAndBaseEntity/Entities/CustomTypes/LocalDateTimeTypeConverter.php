@@ -22,4 +22,9 @@ class LocalDateTimeTypeConverter extends CustomTypeConverter
     {
         return LocalDateTime::parse($value);
     }
+
+    public function getDatabaseType(): string
+    {
+        return "varchar(255)";
+    }
 }
