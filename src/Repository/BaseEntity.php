@@ -124,7 +124,7 @@ abstract class BaseEntity
 
             if ($customTypeAttribute !== null) {
                 $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
+                $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
                 $propertyValue = $converter->serialize($propertyValue);
             } else {
                 // Is there any 'default' converter?
@@ -138,7 +138,7 @@ abstract class BaseEntity
                     };
 
                     if ($converterClassName !== null) {
-                        $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
+                        $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
                         $propertyValue = $converter->serialize($propertyValue);
                     }
 
@@ -287,7 +287,7 @@ abstract class BaseEntity
 
             if ($customTypeAttribute !== null) {
                 $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
+                $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
                 $propertyValue = $converter->deserialize($propertyValue);
             }
 
@@ -529,7 +529,7 @@ abstract class BaseEntity
 
         if($attributeCustomType !== null) {
             $typeConverter = CustomTypeConverter::initialize(
-                Reflection::attributeGetArgument($attributeCustomType), $propertyName
+                Reflection::attributeGetArgument($attributeCustomType), $reflectionProperty
             );
 
             return $typeConverter->getDatabaseType();

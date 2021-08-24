@@ -4,6 +4,8 @@ namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
 use Brick\DateTime\LocalDateTime;
 use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeConverter;
+use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NonNullableStringTypeConverter;
+use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NullableStringTypeConverter;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\DefaultValue;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
@@ -44,5 +46,12 @@ class Invoice extends BaseEntity
      */
     #[FetchArray(InvoiceItem::class)]
     public array $invoiceItems;
+
+    #[CustomType(NullableStringTypeConverter::class)]
+    public ?string $nullableProp = null;
+
+    #[CustomType(NonNullableStringTypeConverter::class)]
+    public string $nonNullableProp = '';
+
 
 }

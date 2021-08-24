@@ -72,7 +72,9 @@ class BaseEntityTest extends TestCase
             'invoiceToken' => '123456something',
             'invoiceCurrency' => 'CZK',
             'createDate' => '2000-10-05T10:11:12',
-            'receiver' => 'some_receiver'
+            'receiver' => 'some_receiver',
+            'nullableProp' => null,
+            'nonNullableProp' => ''
         ],$invoice->toArray());
 
     }
