@@ -4,6 +4,7 @@ namespace Zrnik\MkSQL;
 
 use JetBrains\PhpStorm\Pure;
 use LogicException;
+use ReflectionClass;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
@@ -418,4 +419,26 @@ class Column
         $this->parent = null;
     }
     //endregion
+
+    public function getHashData(): array
+    {
+        $hashData = [];
+        $reflection = new ReflectionClass($this);
+        foreach($reflection->getProperties() as $property) {
+            if($property->isStatic()) {
+                continue;
+            }
+            $propName = $property->getName();
+            $propValue = $this->$propName;
+
+            if(!is_scalar($propValue)) {
+                continue;
+            }
+
+            $hashData[$propName] = $propValue;
+        }
+
+        return $hashData;
+    }
+
 }

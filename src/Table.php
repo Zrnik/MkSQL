@@ -3,12 +3,14 @@
 namespace Zrnik\MkSQL;
 
 use JetBrains\PhpStorm\Pure;
+use ReflectionClass;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Tracy\Measure;
+use Zrnik\MkSQL\Utilities\Reflection;
 
 
 class Table
@@ -262,4 +264,14 @@ class Table
         return $commands;
     }
     //endregion
+    public function getHashKey(): string
+    {
+        $hashData = [];
+
+        foreach($this->columnList() as $column) {
+            $hashData[$column->getName()] = $column->getHashData();
+        }
+
+        return hash("sha256", (string) var_export($hashData,true));
+    }
 }

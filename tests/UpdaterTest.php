@@ -23,12 +23,10 @@ class UpdaterTest extends TestCase
      */
     public function testInstall(): void
     {
-
-        $Updater = new Updater($this->createPDO());
-        $Updater->install();
-
-        //Expected no exceptions
-        $this->addToAssertionCount(1);
+        $this->assertNoExceptionThrown(function(){
+            $Updater = new Updater($this->createPDO());
+            $Updater->install();
+        });
     }
 
     private function createPDO(): \Mock\PDO

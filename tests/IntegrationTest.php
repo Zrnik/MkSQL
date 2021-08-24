@@ -15,7 +15,10 @@ use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
+use Zrnik\MkSQL\Exceptions\UnexpectedCall;
+use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
 
@@ -107,6 +110,8 @@ class IntegrationTest extends TestCase
         // #####################################
 
         $this->subTestBaseRepoAndEntity($pdo);
+
+        $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
         echo "]" . PHP_EOL . "Complete!";
     }
@@ -489,5 +494,53 @@ class IntegrationTest extends TestCase
         }
 
         $this->addToAssertionCount(1);
+    }
+
+
+
+    /**
+     * @throws UnexpectedCall
+     * @throws InvalidDriverException
+     * @throws \Zrnik\MkSQL\Exceptions\InvalidArgumentException
+     */
+    public function subTestSingleInstallForMultipleDefinedTables(PDO $pdo): void
+    {
+
+        $updater = new Updater($pdo);
+
+        $hello = $updater->tableCreate("hello");
+        $hello->columnCreate("world", "text");
+
+        $updater->install();
+
+        $startingCalls = Measure::structureTableList()["hello"]["calls"];
+
+        $this->assertSame(
+            $startingCalls,Measure::structureTableList()["hello"]["calls"]
+        );
+
+
+        $updater->install();
+
+        $this->assertSame(
+            $startingCalls, Measure::structureTableList()["hello"]["calls"]
+        );
+
+        $hello->columnCreate("new_one");
+
+        $updater->install();
+
+        $this->assertSame(
+            $startingCalls + 1, Measure::structureTableList()["hello"]["calls"]
+        );
+
+
+
+
+
+        // dumpe(Measure::structureTableList()["hello"]["calls"]);
+
+        // dumpe($updater);
+
     }
 }

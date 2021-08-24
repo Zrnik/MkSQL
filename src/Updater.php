@@ -46,8 +46,9 @@ class Updater
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
         ];
 
-        foreach ($options as $key => $value)
+        foreach ($options as $key => $value) {
             $this->pdo->setAttribute($key, $value);
+        }
     }
 
     //region Tables
@@ -98,10 +99,7 @@ class Updater
      */
     public function tableGet(string $tableName): ?Table
     {
-        if (isset($this->tables[$tableName])) {
-            return $this->tables[$tableName];
-        }
-        return null;
+        return $this->tables[$tableName] ?? null;
     }
     //endregion
 
@@ -126,9 +124,6 @@ class Updater
         $Success = true;
 
         $timer_total = microtime(true);
-
-
-
 
         //region DriverCheck
         /**
@@ -164,6 +159,11 @@ class Updater
 
         foreach ($this->tables as $table)
         {
+            if($this->isAlreadyProcessed($table)) {
+                continue;
+            }
+
+            $this->indicateProcess($table);
 
             $table_speed_prepare = microtime(true);
 
@@ -316,6 +316,27 @@ class Updater
         foreach ($baseEntities as $baseEntityClassName) {
             $baseEntityClassName::hydrateUpdater($this);
         }
+    }
+
+
+    private static array $processedTableIndication = [];
+
+    private function indicateProcess(Table $table): void
+    {
+        static::$processedTableIndication[$table->getName()] = $table->getHashKey();
+    }
+
+    private function isAlreadyProcessed(Table $table): bool
+    {
+        if(!array_key_exists($table->getName(), static::$processedTableIndication)) {
+            return false;
+        }
+
+        if(static::$processedTableIndication[$table->getName()] !== $table->getHashKey()) {
+            return false;
+        }
+
+        return true;
     }
 
 
