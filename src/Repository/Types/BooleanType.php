@@ -2,12 +2,15 @@
 
 namespace Zrnik\MkSQL\Repository\Types;
 
-use Zrnik\MkSQL\Repository\Attributes\CustomType;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Repository\CustomTypeConverter;
 
 class BooleanType extends CustomTypeConverter
 {
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public function serialize(mixed $value): int
     {
         /** @var bool $value */

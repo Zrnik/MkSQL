@@ -124,7 +124,7 @@ abstract class BaseEntity
 
             if ($customTypeAttribute !== null) {
                 $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName);
+                $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
                 $propertyValue = $converter->serialize($propertyValue);
             } else {
                 // Is there any 'default' converter?
@@ -138,7 +138,7 @@ abstract class BaseEntity
                     };
 
                     if ($converterClassName !== null) {
-                        $converter = CustomTypeConverter::initialize($converterClassName);
+                        $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
                         $propertyValue = $converter->serialize($propertyValue);
                     }
 
@@ -287,7 +287,7 @@ abstract class BaseEntity
 
             if ($customTypeAttribute !== null) {
                 $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName);
+                $converter = CustomTypeConverter::initialize($converterClassName, $propertyName);
                 $propertyValue = $converter->deserialize($propertyValue);
             }
 
@@ -514,6 +514,7 @@ abstract class BaseEntity
      */
     public static function columnType(ReflectionProperty $reflectionProperty): string
     {
+        $propertyName = static::columnName($reflectionProperty);
         $foreignAttributeType = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
 
         if ($foreignAttributeType !== null) {
@@ -528,7 +529,7 @@ abstract class BaseEntity
 
         if($attributeCustomType !== null) {
             $typeConverter = CustomTypeConverter::initialize(
-                Reflection::attributeGetArgument($attributeCustomType)
+                Reflection::attributeGetArgument($attributeCustomType), $propertyName
             );
 
             return $typeConverter->getDatabaseType();

@@ -6,14 +6,17 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 
 abstract class CustomTypeConverter
 {
+    public function __construct(private string $key)
+    {
+    }
 
     /**
      * @throws InvalidArgumentException
      */
-    public static function initialize(string $className): CustomTypeConverter
+    public static function initialize(string $className, string $key): CustomTypeConverter
     {
         //TODO: Cache the instances?
-        $instance = new $className();
+        $instance = new $className($key);
 
         if(!($instance instanceof self)) {
             throw new InvalidArgumentException(
@@ -45,8 +48,8 @@ abstract class CustomTypeConverter
         if ($realType !== $type) {
             throw new InvalidArgumentException(
                 sprintf(
-                    "Type converter '%s' expects '%s', but got '%s'.",
-                    static::class, $type, $realType
+                    "Type converter '%s' for key '%s' expects '%s', but got '%s'.",
+                    static::class, $this->key, $type, $realType
                 )
             );
         }

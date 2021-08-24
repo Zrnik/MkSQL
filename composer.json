@@ -1,7 +1,7 @@
 {
   "name": "zrnik/mksql",
   "description": "MkSQL is a tool for keeping your tables up to date with PHP code. You can use it in your project or as a database preparation in your integration tests.",
-  "version": "v0.8.1",
+  "version": "v0.8.2",
   "minimum-stability": "dev",
   "prefer-stable": true,
   "type": "library",
