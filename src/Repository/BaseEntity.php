@@ -70,6 +70,17 @@ abstract class BaseEntity
         }
         return static::$reflectionClasses[$objKey];
     }
+
+    /**
+     * TODO: Test this!
+     * @param string $propertyName
+     * @return ReflectionProperty|null
+     * @throws ReflectionFailedException
+     */
+    public static function propertyReflection(string $propertyName): ?ReflectionProperty {
+        $reflection = static::getReflectionClass(static::class);
+        return Reflection::classGetProperty($reflection, $propertyName);
+    }
     //endregion
 
     //region Override functions
