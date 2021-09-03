@@ -10,7 +10,9 @@ namespace Zrnik\MkSQL\Queries;
 use PDO;
 use PDOException;
 use Zrnik\MkSQL\Column;
+use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 /**
  * Class Query
@@ -56,6 +58,12 @@ class Query
     public float $speed = 0;
 
     /**
+     * @var int|null
+     * @see DriverType
+     */
+    private ?int $driver = null;
+
+    /**
      * Query constructor.
      * @param Table $table
      * @param Column|null $column
@@ -66,12 +74,18 @@ class Query
         $this->referencedColumn = $column;
     }
 
+    public function getDriver() : ?int
+    {
+        return $this->driver;
+    }
+
     /**
      * @param PDO $pdo
      * @return bool
      */
-    public function execute(PDO $pdo): bool
+    public function execute(PDO $pdo, Updater $updater): bool
     {
+        $this->driver = $updater->getDriverType();
         $this->executed = true;
         return $pdo->prepare($this->Query)->execute($this->Parameters);
     }
@@ -165,5 +179,6 @@ class Query
     }
 
     //endregion
+
 
 }

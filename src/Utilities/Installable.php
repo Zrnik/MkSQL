@@ -89,13 +89,19 @@ abstract class Installable extends BaseRepository
         foreach (self::$_repositoriesInstalled as $tables) {
             foreach ($tables as $table) {
                 try {
+                    /**
+                     * @noinspection SqlWithoutWhere
+                     * @noinspection UnknownInspectionInspection
+                     */
                     $pdo->exec(sprintf("DELETE FROM %s", $table));
                 } catch (PDOException) {
                     // Whatever...
                 }
             }
         }
+
         self::$_repositoriesInstalled = [];
+        Updater::$processedTableIndication = [];
     }
 
     /**

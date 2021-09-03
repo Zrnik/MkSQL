@@ -6,8 +6,6 @@ use JetBrains\PhpStorm\Pure;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
-use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
-use Zrnik\MkSQL\Repository\Attributes\TableName;
 
 class Reflection
 {
@@ -26,7 +24,7 @@ class Reflection
     /**
      * @param ReflectionClass<object> $reflection
      * @param class-string $attributeClassName
-     * @return array<ReflectionAttribute>
+     * @return array<ReflectionAttribute<object>>
      */
     #[Pure]
     public static function classGetAttributes(ReflectionClass $reflection, string $attributeClassName): array
@@ -45,7 +43,7 @@ class Reflection
     /**
      * @param ReflectionClass<object> $reflection
      * @param class-string $attributeClassName
-     * @return ReflectionAttribute|null
+     * @return ReflectionAttribute<object>|null
      */
     #[Pure]
     public static function classGetAttribute(ReflectionClass $reflection, string $attributeClassName): ?ReflectionAttribute
@@ -57,6 +55,11 @@ class Reflection
         return null;
     }
 
+    /**
+     * @param ReflectionAttribute<object> $reflectionAttribute
+     * @param int $index
+     * @return mixed
+     */
     #[Pure]
     public static function attributeGetArgument(ReflectionAttribute $reflectionAttribute, int $index = 0): mixed
     {
@@ -79,7 +82,7 @@ class Reflection
     /**
      * @param ReflectionProperty $reflectionProperty
      * @param class-string $attributeClassName
-     * @return ReflectionAttribute|null
+     * @return ReflectionAttribute<object>|null
      */
     #[Pure]
     public static function propertyGetAttribute(ReflectionProperty $reflectionProperty, string $attributeClassName): ?ReflectionAttribute
@@ -94,7 +97,7 @@ class Reflection
     /**
      * @param ReflectionProperty $reflectionProperty
      * @param class-string $attributeClassName
-     * @return array<ReflectionAttribute>
+     * @return array<ReflectionAttribute<object>>
      */
     #[Pure]
     public static function propertyGetAttributes(ReflectionProperty $reflectionProperty, string $attributeClassName): array
@@ -109,6 +112,22 @@ class Reflection
 
         return $attributes;
 
+    }
+
+    /**
+     * @param ReflectionClass<object> $reflection
+     * @param string $propertyName
+     * @return ReflectionProperty|null
+     */
+    #[Pure]
+    public static function classGetProperty(ReflectionClass $reflection, string $propertyName): ?ReflectionProperty
+    {
+        foreach ($reflection->getProperties() as $property) {
+            if($property->name === $propertyName) {
+                return $property;
+            }
+        }
+        return null;
     }
 
 

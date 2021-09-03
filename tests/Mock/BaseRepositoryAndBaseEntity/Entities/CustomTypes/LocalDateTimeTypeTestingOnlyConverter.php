@@ -6,20 +6,24 @@ use Brick\DateTime\LocalDateTime;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Repository\CustomTypeConverter;
 
-class LocalDateTimeTypeConverter extends CustomTypeConverter
+class LocalDateTimeTypeTestingOnlyConverter extends CustomTypeConverter
 {
     /**
      * @throws InvalidArgumentException
      */
-    public function serialize(mixed $value): string
+    public function serialize(mixed $value): ?string
     {
-        /** @var LocalDateTime $value */
+        /** @var ?LocalDateTime $value */
         $value = $this->assertType($value, LocalDateTime::class);
-        return $value->jsonSerialize();
+        return $value?->jsonSerialize();
     }
 
-    public function deserialize(mixed $value): LocalDateTime
+    public function deserialize(mixed $value): ?LocalDateTime
     {
+        if($value === null) {
+            return null;
+        }
+
         return LocalDateTime::parse($value);
     }
 
@@ -27,4 +31,5 @@ class LocalDateTimeTypeConverter extends CustomTypeConverter
     {
         return "varchar(255)";
     }
+
 }

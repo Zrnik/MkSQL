@@ -2,8 +2,12 @@
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
+use Brick\DateTime\LocalDateTime;
+use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\BooleanTypeTestingOnlyConverter;
+use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeTestingOnlyConverter;
 use Zrnik\MkSQL\Repository\Attributes\ColumnName;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
+use Zrnik\MkSQL\Repository\Attributes\CustomType;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
@@ -22,6 +26,9 @@ class AuctionItem extends BaseEntity
     #[ColumnType("varchar(64)")]
     public string $name;
 
-    #[ColumnType("bool")]
+    #[CustomType(BooleanTypeTestingOnlyConverter::class)]
     public bool $sold = false;
+
+    #[CustomType(LocalDateTimeTypeTestingOnlyConverter::class)]
+    public ?LocalDateTime $whenSold = null;
 }

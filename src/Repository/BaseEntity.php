@@ -13,6 +13,7 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidEntityOrderException;
 use Zrnik\MkSQL\Exceptions\InvalidTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
+use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
@@ -28,7 +29,6 @@ use Zrnik\MkSQL\Repository\Attributes\NotNull;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
-use Zrnik\MkSQL\Repository\Types\BooleanType;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Reflection;
 
@@ -118,33 +118,10 @@ abstract class BaseEntity
             }
 
             // If there is a `#[CustomType]` attribute, we use it.
-            $customTypeAttribute = Reflection::propertyGetAttribute(
-                $reflectionProperty, CustomType::class
+
+            $propertyValue = static::customTypeSerialize(
+                $propertyValue, $reflectionProperty
             );
-
-            if ($customTypeAttribute !== null) {
-                $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
-                $propertyValue = $converter->serialize($propertyValue);
-            } else {
-                // Is there any 'default' converter?
-                $type = $reflectionProperty->getType();
-
-                if ($type instanceof ReflectionNamedType) {
-
-                    $converterClassName = match ($type->getName()) {
-                        "bool" => BooleanType::class,
-                        default => null
-                    };
-
-                    if ($converterClassName !== null) {
-                        $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
-                        $propertyValue = $converter->serialize($propertyValue);
-                    }
-
-                }
-
-            }
 
             // If there is a `#[ForeignKey]` attribute, we insert it's primary key value here!
             $foreignAttributeType = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
@@ -219,8 +196,6 @@ abstract class BaseEntity
      * @param iterable<mixed> $iterable
      * @return static
      * @throws InvalidArgumentException
-     * @throws PrimaryKeyDefinitionException
-     * @throws ReflectionException
      * @throws ReflectionFailedException
      */
     public static function fromIterable(iterable $iterable): static
@@ -281,15 +256,9 @@ abstract class BaseEntity
             // 4. If we have a "CustomType" set, we will convert
             // it with it!
 
-            $customTypeAttribute = Reflection::propertyGetAttribute(
-                $reflectionProperty, CustomType::class
+            $propertyValue = static::customTypeDeserialize(
+                $propertyValue, $reflectionProperty
             );
-
-            if ($customTypeAttribute !== null) {
-                $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
-                $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
-                $propertyValue = $converter->deserialize($propertyValue);
-            }
 
             if ($intrinsicType !== null && $propertyValue === null && !$intrinsicType->allowsNull()) {
                 throw new InvalidArgumentException(
@@ -348,7 +317,7 @@ abstract class BaseEntity
      * @param ReflectionClass<BaseEntity>|null $reflection
      * @return string
      * @throws MissingAttributeArgumentException
-     * @throws ReflectionException
+     * @throws ReflectionFailedException
      * @throws RequiredClassAttributeMissingException
      */
     public static function getTableName(?ReflectionClass $reflection = null): string
@@ -384,7 +353,7 @@ abstract class BaseEntity
      * @param ReflectionClass<BaseEntity>|null $reflection
      * @return ReflectionProperty
      * @throws PrimaryKeyDefinitionException
-     * @throws ReflectionException
+     * @throws ReflectionFailedException
      */
     private static function getPrimaryKeyReflectionProperty(?ReflectionClass $reflection = null): ReflectionProperty
     {
@@ -427,7 +396,7 @@ abstract class BaseEntity
      * @param ReflectionClass<BaseEntity>|null $reflection
      * @return string
      * @throws PrimaryKeyDefinitionException
-     * @throws ReflectionException
+     * @throws ReflectionFailedException
      */
     public static function getPrimaryKeyName(?ReflectionClass $reflection = null): string
     {
@@ -439,8 +408,10 @@ abstract class BaseEntity
     /**
      * @param ReflectionClass<BaseEntity>|null $reflection
      * @return string
+     * @throws InvalidArgumentException
      * @throws PrimaryKeyDefinitionException
      * @throws ReflectionException
+     * @throws ReflectionFailedException
      * @throws UnableToResolveTypeException
      */
     public static function getPrimaryKeyType(?ReflectionClass $reflection = null): string
@@ -508,13 +479,17 @@ abstract class BaseEntity
 
     //region Column Type
     /**
-     * @throws ReflectionException
-     * @throws UnableToResolveTypeException
+     * @param ReflectionProperty $reflectionProperty
+     * @return string
      * @throws InvalidArgumentException
+     * @throws PrimaryKeyDefinitionException
+     * @throws ReflectionException
+     * @throws ReflectionFailedException
+     * @throws UnableToResolveTypeException
      */
     public static function columnType(ReflectionProperty $reflectionProperty): string
     {
-        $propertyName = static::columnName($reflectionProperty);
+        // $propertyName = static::columnName($reflectionProperty);
         $foreignAttributeType = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
 
         if ($foreignAttributeType !== null) {
@@ -592,7 +567,8 @@ abstract class BaseEntity
      * @param ReflectionProperty $property
      * @return array<string>
      * @throws MissingAttributeArgumentException
-     * @throws ReflectionException
+     * @throws PrimaryKeyDefinitionException
+     * @throws ReflectionFailedException
      * @throws RequiredClassAttributeMissingException
      */
     private static function columnForeignKeys(ReflectionProperty $property): array
@@ -612,6 +588,50 @@ abstract class BaseEntity
         }
 
         return $keys;
+    }
+    //endregion
+
+    //region Custom Type Converting
+    /**
+     * @throws InvalidArgumentException
+     */
+    public static function customTypeDeserialize(mixed $propertyValue, ReflectionProperty $reflectionProperty): mixed
+    {
+        $customTypeAttribute = Reflection::propertyGetAttribute(
+            $reflectionProperty, CustomType::class
+        );
+
+        if ($customTypeAttribute !== null) {
+            $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
+            $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
+            $propertyValue = $converter->deserialize($propertyValue);
+        }
+
+        return $propertyValue;
+    }
+
+    /**
+     * @param mixed $propertyValue
+     * @param ReflectionProperty $reflectionProperty
+     * @return mixed
+     * @throws InvalidArgumentException
+     */
+    public static function customTypeSerialize(
+        mixed $propertyValue,
+        ReflectionProperty $reflectionProperty
+    ): mixed
+    {
+        $customTypeAttribute = Reflection::propertyGetAttribute(
+            $reflectionProperty, CustomType::class
+        );
+
+        if ($customTypeAttribute !== null) {
+            $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
+            $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
+            $propertyValue = $converter->serialize($propertyValue);
+        }
+
+        return $propertyValue;
     }
     //endregion
 
@@ -705,6 +725,7 @@ abstract class BaseEntity
                 self::columnName($property),
                 self::columnType($property)
             );
+
             $column->setNotNull(self::columnNotNull($property));
             $column->setUnique(self::columnUnique($property));
             $column->setDefault(self::columnDefaultValue($property));
@@ -712,15 +733,13 @@ abstract class BaseEntity
             foreach (self::columnForeignKeys($property) as $foreignKey) {
                 $column->addForeignKey($foreignKey);
             }
-
         }
-
     }
 
-
     /**
-     * @throws ReflectionException
+     * @return mixed
      * @throws PrimaryKeyDefinitionException
+     * @throws ReflectionFailedException
      */
     public function getPrimaryKeyValue(): mixed
     {
@@ -729,7 +748,6 @@ abstract class BaseEntity
     }
 
     /**
-     * @throws ReflectionException
      * @throws PrimaryKeyDefinitionException
      * @throws ReflectionFailedException
      */

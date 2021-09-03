@@ -2,12 +2,10 @@
 
 namespace Zrnik\MkSQL\Repository;
 
-use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use PDO;
 use ReflectionException;
 use ReflectionNamedType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
-use Zrnik\MkSQL\Exceptions\InvalidTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
@@ -417,5 +415,59 @@ class BaseRepository
         }
 
         return $resultEntities;
+    }
+
+    /**
+     * @param class-string<BaseEntity> $className
+     * @param string $propertyName
+     * @return array<mixed>
+     * @throws MissingAttributeArgumentException
+     * @throws ReflectionException
+     * @throws ReflectionFailedException
+     * @throws RequiredClassAttributeMissingException
+     * @throws InvalidArgumentException
+     */
+    public function distinctValues(string $className, string $propertyName): array
+    {
+        $reflection = BaseEntity::getReflectionClass($className);
+        $tableName = BaseEntity::getTableName($reflection);
+
+        $property = Reflection::classGetProperty($reflection, $propertyName);
+        if($property === null) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Property '%s' does not exists on class '%s'!",
+                    $propertyName, $className
+                )
+            );
+        }
+        $columnName = BaseEntity::columnName($property);
+
+        $sql = sprintf(
+            'SELECT DISTINCT %s FROM %s',
+            $columnName, $tableName
+        );
+
+        $pdoStatement = $this->pdo->query($sql);
+
+        if($pdoStatement === false) {
+            return []; // Dafuq? Guess we should handle this somehow...
+        }
+
+        $data = $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
+
+        if($data === false) {
+            return []; // Dafuq? Guess we should handle this somehow...
+        }
+
+        $result = [];
+
+        foreach($data as $row) {
+            $result[] = BaseEntity::customTypeDeserialize(
+                $row[$columnName], $property
+            );
+        }
+
+        return $result;
     }
 }

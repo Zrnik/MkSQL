@@ -1,11 +1,12 @@
 <?php
 
-namespace Zrnik\MkSQL\Repository\Types;
+namespace Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
+
 
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Repository\CustomTypeConverter;
 
-class BooleanType extends CustomTypeConverter
+class BooleanTypeTestingOnlyConverter extends CustomTypeConverter
 {
 
     /**
@@ -13,19 +14,18 @@ class BooleanType extends CustomTypeConverter
      */
     public function serialize(mixed $value): int
     {
-        /** @var bool $value */
-        $value = $this->assertType($value, 'bool');
-        return $value ? 1 : 0;
-        // TODO: Implement serialize() method.
+        /** @var bool $bool */
+        $bool = $this->assertType($value,get_debug_type(true));
+        return $bool ? 1 : 0;
     }
 
     public function deserialize(mixed $value): bool
     {
-        return (int) $value === 1;
+        return (int)$value === 1;
     }
 
     public function getDatabaseType(): string
     {
-        return "tinyint";
+        return "tinyint(1)";
     }
 }

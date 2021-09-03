@@ -7,6 +7,10 @@ use ReflectionAttribute;
 
 class MissingAttributeArgumentException extends MkSQLException
 {
+    /**
+     * @param ReflectionAttribute<object> $attr
+     * @param int $index
+     */
     #[Pure]
     public function __construct(ReflectionAttribute $attr, int $index = 0)
     {

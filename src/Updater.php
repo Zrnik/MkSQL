@@ -9,6 +9,7 @@ use Throwable;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
@@ -77,8 +78,9 @@ class Updater
      */
     public function tableAdd(Table $table, bool $rewrite = false): Table
     {
-        if (!$rewrite && isset($this->tables[$table->getName()]))
+        if (!$rewrite && isset($this->tables[$table->getName()])) {
             throw new TableDefinitionExists("Table '" . $table->getName() . "' already defined!");
+        }
 
         $this->tables[$table->getName()] = $table;
         $table->setParent($this);
@@ -217,7 +219,7 @@ class Updater
                 {
                     $QueryCommand->executed = true;
                     try {
-                        $QueryCommand->execute($this->pdo);
+                        $QueryCommand->execute($this->pdo, $this);
                     } catch (PDOException $pdoEx) {
 
                         $stopped = true;
@@ -309,6 +311,7 @@ class Updater
      * @param class-string<BaseEntity> ...$baseEntities
      * @throws MkSQLException
      * @throws ReflectionException
+     * @throws MissingForeignKeyDefinitionInEntityException
      */
     public function use(...$baseEntities): void
     {
@@ -318,8 +321,10 @@ class Updater
         }
     }
 
-
-    private static array $processedTableIndication = [];
+    /**
+     * @var array<string, string>
+     */
+    public static array $processedTableIndication = [];
 
     private function indicateProcess(Table $table): void
     {
@@ -328,16 +333,26 @@ class Updater
 
     private function isAlreadyProcessed(Table $table): bool
     {
-        if(!array_key_exists($table->getName(), static::$processedTableIndication)) {
+        $tableName = $table->getName();
+
+        if($tableName === null) {
             return false;
         }
 
-        if(static::$processedTableIndication[$table->getName()] !== $table->getHashKey()) {
+        if(
+            !array_key_exists(
+                $tableName,
+                static::$processedTableIndication
+            )
+        ) {
+            return false;
+        }
+
+        if(static::$processedTableIndication[$tableName] !== $table->getHashKey()) {
             return false;
         }
 
         return true;
     }
-
 
 }

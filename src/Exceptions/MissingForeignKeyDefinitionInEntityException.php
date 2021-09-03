@@ -1,6 +1,6 @@
 <?php
 
-namespace Zrnik\MkSQL\Repository;
+namespace Zrnik\MkSQL\Exceptions;
 
 use Exception;
 use JetBrains\PhpStorm\Pure;

@@ -131,7 +131,7 @@ class QueryMakerSQLite implements IQueryMaker
                                     Strings::contains($part, "not null");
 
                                 //Default Value:
-                                if (Strings::contains($part, "DEFAULT") || Strings::contains($part, "default")) {
+                                if (Strings::contains(strtolower($part), "default")) {
 
                                     $BeforeDefault = '';
                                     $DefaultPart = '';
@@ -268,7 +268,12 @@ class QueryMakerSQLite implements IQueryMaker
      * @return Query[]|null
      * @throws InvalidArgumentException
      */
-    public static function alterTableColumnQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription, array $swapPrimaryKeyName = []): ?array
+    public static function alterTableColumnQuery(
+        Table $table, Column $column,
+        ?TableDescription $oldTableDescription,
+        ?ColumnDescription $columnDescription,
+        array $swapPrimaryKeyName = []
+    ): ?array
     {
         $alterTableQueryList = [];
 
@@ -348,7 +353,10 @@ class QueryMakerSQLite implements IQueryMaker
         //echo " -Modified table ".$table->getName()." creating Unique Indexes".PHP_EOL;
 
         foreach ($table->columnList() as $listedColumn) {
-            if ($listedColumn->getUnique()) {
+
+            $listedColumnDesc = $oldTableDescription?->columnGet($listedColumn->getName());
+
+            if ($listedColumnDesc?->uniqueIndex !== null || $listedColumn->getUnique()) {
                 //echo " - creating unique index for ".$column->getName()." in table ".$table->getName().PHP_EOL;
 
                 $newQueries = static::createUniqueIndexQuery(
@@ -463,8 +471,9 @@ class QueryMakerSQLite implements IQueryMaker
      */
     public static function createUniqueIndexQuery(Table $table, Column $column, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): array
     {
-        if ($column->unique_index_handled)
+        if ($column->unique_index_handled) {
             return [];
+        }
 
         $column->unique_index_handled = true;
 

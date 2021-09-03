@@ -250,9 +250,14 @@ class Column
      */
     public function setUnique(bool $Unique = true): Column
     {
+        if($this->unique !== $Unique) {
+            $this->unique_index_handled = false;
+        }
+
         //Unique must be NotNull?
-        if ($Unique)
+        if ($Unique) {
             $this->setNotNull();
+        }
 
         $this->unique = $Unique;
 
@@ -277,18 +282,6 @@ class Column
     public function addForeignKey(string $foreignKey): Column
     {
         $foreignKey = Utils::confirmForeignKeyTarget($foreignKey);
-
-        // list($_refTable, $_refColumn) = explode(".", $foreignKey);
-
-        /*if ($isUpdatedWithThisUpdater) {
-            $referencedTable = $this->getParent()?->endTable()?->tableGet($_refTable);
-            if ($referencedTable === null)
-                throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing table '" . $_refTable . "' but that table is not defined!");
-
-            $referencedColumn = $referencedTable->columnGet($_refColumn);
-            if ($referencedColumn === null && $_refColumn !== $referencedTable->getPrimaryKeyName())
-                throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' is referencing column '" . $_refColumn . "' in table '" . $_refTable . "' but that column is not defined!");
-        }*/
 
         if (in_array($foreignKey, $this->foreignKeys, true)) {
             throw new InvalidArgumentException("Foreign key '" . $foreignKey . "' already exist on column '" . $this->getName() . "'!");
@@ -341,35 +334,48 @@ class Column
         if ($columnDescription === null || !$columnDescription->columnExists) {
             $Commands = array_merge($Commands, $queryMaker::createTableColumnQuery($tableDescription->table, $this, $tableDescription, $columnDescription)??[]);
 
-            foreach ($this->getForeignKeys() as $foreignKey)
-                $Commands = array_merge($Commands, $queryMaker::createForeignKey($tableDescription->table, $this, $foreignKey, $tableDescription, $columnDescription)??[]);
+            foreach ($this->getForeignKeys() as $foreignKey) {
+                $newCommands = $queryMaker::createForeignKey($tableDescription->table, $this, $foreignKey, $tableDescription, $columnDescription)??[];
+                foreach($newCommands as $newCommand) {
+                    $Commands[] = $newCommand;
+                }
+            }
 
-            if ($this->getUnique())
-                $Commands = array_merge($Commands, $queryMaker::createUniqueIndexQuery($tableDescription->table, $this, $tableDescription, $columnDescription)??[]);
+            if ($this->getUnique()) {
+                $newCommands = $queryMaker::createUniqueIndexQuery($tableDescription->table, $this, $tableDescription, $columnDescription) ?? [];
+                foreach($newCommands as $newCommand) {
+                    $Commands[] = $newCommand;
+                }
+            }
         } else {
             $Reasons = [];
 
             //Utils::typeEquals($desc->type, $this->getType())
-            if (!$queryMaker::compareType($columnDescription->type, $this->getType()))
+            if (!$queryMaker::compareType($columnDescription->type, $this->getType())) {
                 $Reasons[] = "type different [" . $columnDescription->type . " != " . $this->getType() . "]";
+            }
 
-            if ($columnDescription->notNull !== $this->getNotNull())
+            if ($columnDescription->notNull !== $this->getNotNull()) {
                 $Reasons[] = "not_null [is: " . ($columnDescription->notNull ? "yes" : "no") . " need:" . ($this->getNotNull() ? "yes" : "no") . "]";
+            }
 
             //$desc->comment != $this->getComment()
-            if (!$queryMaker::compareComment($columnDescription->comment, $this->getComment()))
+            if (!$queryMaker::compareComment($columnDescription->comment, $this->getComment())) {
                 $Reasons[] = "comment [" . $columnDescription->comment . " != " . $this->getComment() . "]";
+            }
 
-            if ($columnDescription->default != $this->getDefault())
-                $Reasons[] = "default [" . $columnDescription->default . " != " . $this->getDefault() . "]";
+            if ($columnDescription->default !== $this->getDefault()) {
+                $Reasons[] = "default [" . $columnDescription->default . " !== " . $this->getDefault() . "]";
+            }
 
             if (count($Reasons) > 0) {
                 $Queries = $queryMaker::alterTableColumnQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription)??[];
 
                 $reasons = 'Reasons: ' . implode(", ", $Reasons);
 
-                foreach ($Queries as $alterQuery)
+                foreach ($Queries as $alterQuery) {
                     $alterQuery->setReason($reasons);
+                }
 
                 $Commands = array_merge($Commands, $Queries);
             }
@@ -377,8 +383,11 @@ class Column
             //Foreign Keys to Delete:
             if (count($columnDescription->foreignKeys) > 0) {
                 foreach ($columnDescription->foreignKeys as $existingForeignKey => $foreignKeyName) {
-                    if (!in_array($existingForeignKey, $this->getForeignKeys())) {
-                        $Commands = array_merge($Commands, $queryMaker::removeForeignKey($columnDescription->table, $columnDescription->column, $foreignKeyName, $tableDescription, $columnDescription)??[]);
+                    if (!in_array($existingForeignKey, $this->getForeignKeys(), true)) {
+                        $rfkCommands = $queryMaker::removeForeignKey($columnDescription->table, $columnDescription->column, $foreignKeyName, $tableDescription, $columnDescription)??[];
+                        foreach($rfkCommands as $rfkCommand) {
+                            $Commands[] = $rfkCommand;
+                        }
                     }
                 }
             }
@@ -387,8 +396,9 @@ class Column
             foreach ($this->getForeignKeys() as $requiredForeignKey) {
                 if (!isset($columnDescription->foreignKeys[$requiredForeignKey])) {
                     $alterationCommands = $queryMaker::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription)??[];
-
-                    $Commands = array_merge($Commands, $alterationCommands);
+                    foreach($alterationCommands as $command) {
+                        $Commands[] = $command;
+                    }
                 }
             }
 
@@ -396,13 +406,26 @@ class Column
             if ($this->getUnique()) {
                 //Must be unique
                 if ($columnDescription->uniqueIndex === null) {
-                    $Commands = array_merge($Commands, $queryMaker::createUniqueIndexQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription)??[]);
+
+                    $createUniqueIndexQueries =  $queryMaker::createUniqueIndexQuery(
+                        $columnDescription->table, $columnDescription->column,
+                        $tableDescription, $columnDescription
+                    )??[];
+
+                    foreach($createUniqueIndexQueries as $command) {
+                        $Commands[] = $command;
+                    }
                 }
-            } else {
-                //Must not be unique
-                if ($columnDescription->uniqueIndex !== null) {
-                    $Commands = array_merge($Commands, $queryMaker::removeUniqueIndexQuery($columnDescription->table, $columnDescription->column, $columnDescription->uniqueIndex, $tableDescription, $columnDescription)??[]);
-                }
+
+            } else if ($columnDescription->uniqueIndex !== null) {
+                $Commands = array_merge(
+                    $Commands,
+                    $queryMaker::removeUniqueIndexQuery(
+                        $columnDescription->table, $columnDescription->column,
+                        $columnDescription->uniqueIndex, $tableDescription,
+                        $columnDescription
+                    )??[]
+                );
             }
         }
         return $Commands;
@@ -420,6 +443,9 @@ class Column
     }
     //endregion
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getHashData(): array
     {
         $hashData = [];

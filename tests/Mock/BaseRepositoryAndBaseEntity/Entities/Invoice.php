@@ -3,19 +3,19 @@
 namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
 use Brick\DateTime\LocalDateTime;
-use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeConverter;
+use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeTestingOnlyConverter;
 use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NonNullableStringTypeConverter;
 use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NullableStringTypeConverter;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
+use Zrnik\MkSQL\Repository\Attributes\CustomType;
 use Zrnik\MkSQL\Repository\Attributes\DefaultValue;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\Attributes\NotNull;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
-use Zrnik\MkSQL\Repository\Attributes\CustomType;
+use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
 use Zrnik\MkSQL\Repository\BaseEntity;
-use Zrnik\MkSQL\Repository\Attributes\TableName;
 
 #[TableName("invoice_list")]
 class Invoice extends BaseEntity
@@ -33,7 +33,7 @@ class Invoice extends BaseEntity
     #[DefaultValue]
     public string $invoiceCurrency = "EUR";
 
-    #[CustomType(LocalDateTimeTypeConverter::class)]
+    #[CustomType(LocalDateTimeTypeTestingOnlyConverter::class)]
     #[NotNull]
     public LocalDateTime $createDate;
 

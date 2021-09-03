@@ -6,6 +6,7 @@
  * Date: 02.09.2020 13:52
  */
 
+use Brick\DateTime\LocalDateTime;
 use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
@@ -15,15 +16,20 @@ use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
+use Zrnik\PHPUnit\Exceptions;
 
 class IntegrationTest extends TestCase
 {
+    use Exceptions;
 
     /**
      * @throws MkSQLException
@@ -192,7 +198,6 @@ class IntegrationTest extends TestCase
         $tableAccounts = $Updater->tableGet("accounts");
         $this->assertNotNull($tableAccounts);
 
-
         $tableAccounts->setPrimaryKeyName("new_id");
         $this->assertTrue($Updater->install());
         $this->dot();
@@ -331,7 +336,6 @@ class IntegrationTest extends TestCase
         $columnActionTime = $lastActionTable->columnGet("action_time");
         $this->assertNotNull($columnActionTime);
 
-
         $columnActionTime->setUnique();
         $this->assertTrue($Updater->install());
         $this->dot();
@@ -357,12 +361,17 @@ class IntegrationTest extends TestCase
     {
         // Only checks Installation (Base Entity)
         Installable::uninstallAll($pdo);
-        $invoiceRepo = new InvoiceRepository($pdo);
+        new InvoiceRepository($pdo); // Just for installation
+        $this->addToAssertionCount(1);
 
         // Checks Base Repository
         $auctionRepository = new AuctionRepository($pdo);
 
         foreach (array_reverse($auctionRepository->getTables()) as $table) {
+            /**
+             * @noinspection SqlWithoutWhere
+             * @noinspection UnknownInspectionInspection
+             */
             $pdo->exec(sprintf("DELETE FROM %s", $table->getName()));
         }
 
@@ -421,8 +430,8 @@ class IntegrationTest extends TestCase
         /** @var Auction $fetchedAuction1 */
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
 
-       /* dump($auction1);
-        dumpe($fetchedAuction1);*/
+        /* dump($auction1);
+         dumpe($fetchedAuction1);*/
 
         $this->assertEquals($auction1, $fetchedAuction1);
         $this->assertNotSame($auction1, $fetchedAuction1);
@@ -460,15 +469,73 @@ class IntegrationTest extends TestCase
         $this->assertNotSame($fetchedAuction2, $fetchedAuctionByName2);
         $this->assertEquals($fetchedAuction2, $auction2);
         $this->assertNotSame($fetchedAuction2, $auction2);
-    }
 
+        /** @var AuctionItem[] $allAuctionItems */
+        $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
+
+        $allAuctionItems[0]->whenSold = LocalDateTime::of(
+            2020, 9, 1, 12, 0, 0
+        );
+
+        $allAuctionItems[1]->whenSold = LocalDateTime::of(
+            2020, 9, 1, 12, 0, 0
+        );
+
+        $allAuctionItems[2]->whenSold = LocalDateTime::of(
+            2021, 9, 1, 12, 0, 0
+        );
+
+        $auctionRepository->save($allAuctionItems);
+
+        /* foreach($allAuctionItems as $auctionItem) {
+             dump($auctionItem->whenSold);
+         }*/
+
+        $this->assertSame(
+            [
+                'Auction Item One',
+                'Auction Item Two',
+            ],
+            $auctionRepository->distinctValues(
+                AuctionItem::class, "name"
+            )
+        );
+
+        $this->assertExceptionThrown(
+            \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class,
+            function () use ($auctionRepository) {
+                $auctionRepository->distinctValues(
+                    AuctionItem::class, "nonExisting"
+                );
+            }
+        );
+
+        $this->assertEquals(
+            [
+                LocalDateTime::of(
+                    2020, 9, 1, 12, 0, 0
+                ),
+                LocalDateTime::of(
+                    2021, 9, 1, 12, 0, 0
+                ),
+                null,
+            ],
+            $auctionRepository->distinctValues(
+                AuctionItem::class, "whenSold"
+            )
+        );
+
+
+
+
+    }
 
 
     private function assertRowCountInTable(PDO $pdo, string $tableName, int $assertCount): void
     {
         $statement = $pdo->query("SELECT * FROM " . $tableName);
 
-        if($statement === false) {
+        if ($statement === false) {
             throw new AssertionFailedError(
                 "No result returned!"
             );
@@ -476,7 +543,7 @@ class IntegrationTest extends TestCase
 
         $fetch = $statement->fetchAll();
 
-        if($fetch === false) {
+        if ($fetch === false) {
             throw new AssertionFailedError(
                 "No result returned!"
             );
@@ -497,11 +564,14 @@ class IntegrationTest extends TestCase
     }
 
 
-
     /**
-     * @throws UnexpectedCall
+     * @param PDO $pdo
      * @throws InvalidDriverException
+     * @throws UnexpectedCall
+     * @throws ColumnDefinitionExists
      * @throws \Zrnik\MkSQL\Exceptions\InvalidArgumentException
+     * @throws PrimaryKeyAutomaticException
+     * @throws TableDefinitionExists
      */
     public function subTestSingleInstallForMultipleDefinedTables(PDO $pdo): void
     {
@@ -516,7 +586,7 @@ class IntegrationTest extends TestCase
         $startingCalls = Measure::structureTableList()["hello"]["calls"];
 
         $this->assertSame(
-            $startingCalls,Measure::structureTableList()["hello"]["calls"]
+            $startingCalls, Measure::structureTableList()["hello"]["calls"]
         );
 
 
@@ -534,13 +604,6 @@ class IntegrationTest extends TestCase
             $startingCalls + 1, Measure::structureTableList()["hello"]["calls"]
         );
 
-
-
-
-
-        // dumpe(Measure::structureTableList()["hello"]["calls"]);
-
-        // dumpe($updater);
 
     }
 }

@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 
 class QueryTest extends TestCase
 {
@@ -107,7 +108,7 @@ class QueryTest extends TestCase
         $query->setQuery(/** @lang */ "SELECT * FROM random_table WHERE id = ?");
         $query->paramAdd(10); //id
 
-        $query->execute($MockPDO);
+        $query->execute($MockPDO, new Updater($MockPDO));
         $this->addToAssertionCount(1);
     }
 

@@ -19,10 +19,10 @@ use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidEntityOrderException;
+use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
-use Zrnik\MkSQL\Repository\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Updater;
 use Zrnik\PHPUnit\Exceptions;
 

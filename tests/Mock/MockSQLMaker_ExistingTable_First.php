@@ -12,6 +12,7 @@ namespace Mock;
 use PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
@@ -30,9 +31,12 @@ class MockSQLMaker_ExistingTable_First implements IQueryMaker
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
+     * @throws InvalidArgumentException
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
+        $table->getHashKey();
+
         //New Desc
         $Description = new TableDescription();
         $Description->queryMakerClass = static::class;
