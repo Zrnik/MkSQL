@@ -177,7 +177,7 @@ abstract class BaseEntity
     {
         $data = $this->toArray();
         foreach (static::getColumnNames() as $columnName) {
-            $this->rawData[$columnName] = $data[$columnName];
+            $this->rawData[$columnName] = $data[$columnName] ?? null;
         }
     }
 

@@ -4,6 +4,7 @@ namespace Mock\BaseRepositoryAndBaseEntity;
 
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
+use Mock\BaseRepositoryAndBaseEntity\Entities\InvalidItem;
 use ReflectionException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
@@ -22,7 +23,7 @@ class AuctionRepository extends Installable
     {
         $updater->use(
             Auction::class,
-            AuctionItem::class
+            AuctionItem::class,
         );
     }
 }

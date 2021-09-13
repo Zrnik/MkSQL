@@ -524,12 +524,7 @@ class IntegrationTest extends TestCase
                 AuctionItem::class, "whenSold"
             )
         );
-
-
-
-
     }
-
 
     private function assertRowCountInTable(PDO $pdo, string $tableName, int $assertCount): void
     {

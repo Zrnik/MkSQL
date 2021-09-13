@@ -21,7 +21,7 @@ class AuctionItem extends BaseEntity
 
     #[ForeignKey(Auction::class)]
     #[ColumnName("theAuctionIRelateTo")]
-    public Auction $auction;
+    public ?Auction $auction;
 
     #[ColumnType("varchar(64)")]
     public string $name;
