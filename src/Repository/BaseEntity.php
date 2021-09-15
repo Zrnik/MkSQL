@@ -481,6 +481,31 @@ abstract class BaseEntity
 
         return self::columnType(self::getPrimaryKeyReflectionProperty($reflection));
     }
+
+    /**
+    /**
+     * @param ReflectionClass<BaseEntity>|null $reflection
+     * @return string
+     */
+    public static function getIntrinsicPrimaryKeyType(?ReflectionClass $reflection = null): string
+    {
+        $primaryKeyReflectionProperty = self::getPrimaryKeyReflectionProperty($reflection);
+        $propertyType = $primaryKeyReflectionProperty->getType();
+
+        if ($propertyType instanceof ReflectionNamedType) {
+            return $propertyType->getName();
+        }
+
+        if ($propertyType instanceof ReflectionUnionType) {
+            foreach ($propertyType->getTypes() as $reflectionNamedType) {
+                if ($reflectionNamedType->isBuiltin()) {
+                    return $reflectionNamedType->getName();
+                }
+            }
+        }
+
+        return get_debug_type(0);
+    }
     //endregion
 
     //region Column Name
@@ -785,7 +810,8 @@ abstract class BaseEntity
     public function setPrimaryKeyValue(mixed $newPrimaryKeyValue): void
     {
         $primaryKeyPropertyName = self::getPrimaryKeyReflectionProperty()->getName();
-        settype($newPrimaryKeyValue, self::getPrimaryKeyType()); // Transfer the type, so we don't get TypeError
+        // TODO: Create tests for this, as it was a bug here!
+        settype($newPrimaryKeyValue, self::getIntrinsicPrimaryKeyType()); // Transfer the type, so we don't get TypeError
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
         foreach ($this->getSubEntities() as $subEntity) {
