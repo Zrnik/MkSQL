@@ -2,10 +2,9 @@
 
 namespace Zrnik\MkSQL\Exceptions;
 
-use Exception;
 use JetBrains\PhpStorm\Pure;
 
-class MissingForeignKeyDefinitionInEntityException extends Exception
+class MissingForeignKeyDefinitionInEntityException extends MkSQLException
 {
 
     #[Pure]

@@ -3,7 +3,6 @@
 namespace Zrnik\MkSQL\Exceptions;
 
 use JetBrains\PhpStorm\Pure;
-use Throwable;
 
 class InvalidTypeException extends MkSQLException
 {
