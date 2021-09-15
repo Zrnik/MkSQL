@@ -1,4 +1,9 @@
 <?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL\Tracy;
 
@@ -8,6 +13,8 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\QueryInfo;
 use Zrnik\MkSQL\Table;
+use function count;
+use function in_array;
 
 class Measure
 {
@@ -214,13 +221,13 @@ class Measure
     {
         if (!isset(static::$_Tables[$table->getName()])) {
             static::$_Tables[$table->getName()] = [
-                "calls" => 0,
-                "objects" => []
+                'calls' => 0,
+                'objects' => []
             ];
         }
 
-        static::$_Tables[$table->getName()]["calls"]++;
-        static::$_Tables[$table->getName()]["objects"][] = $table;
+        static::$_Tables[$table->getName()]['calls']++;
+        static::$_Tables[$table->getName()]['objects'][] = $table;
     }
 
     /**

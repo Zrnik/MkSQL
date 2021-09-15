@@ -1,21 +1,19 @@
 <?php declare(strict_types=1);
 /**
- * @generator PhpStorm
- * @author Štěpán Zrník <stepan@zrnik.eu>
- * @date 13.01.2021
- * @project MkSQL
- * @copyright (c) 2021 - Štěpán Zrník
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
 namespace Zrnik\MkSQL\Utilities;
 
 use PDO;
 use PDOException;
-use ReflectionException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Repository\BaseRepository;
 use Zrnik\MkSQL\Table;
 use Zrnik\MkSQL\Updater;
+use function array_key_exists;
 
 abstract class Installable extends BaseRepository
 {
@@ -36,7 +34,6 @@ abstract class Installable extends BaseRepository
      * Installable constructor.
      * @param PDO $pdo
      * @throws MkSQLException
-     * @throws ReflectionException
      */
     public function __construct(PDO $pdo)
     {
@@ -51,13 +48,11 @@ abstract class Installable extends BaseRepository
      *
      * @param Updater $updater
      * @throws MkSQLException
-     * @throws ReflectionException
      */
     abstract protected function install(Updater $updater): void;
 
     /**
      * @throws MkSQLException
-     * @throws ReflectionException
      */
     private function executeInstallation(): void
     {
@@ -74,7 +69,7 @@ abstract class Installable extends BaseRepository
         $this->install($updater);
 
         self::$_repositoriesInstalled[static::class] = [];
-        foreach ($updater->tableList() as $table){
+        foreach ($updater->tableList() as $table) {
             self::$_repositoriesInstalled[static::class][] = $table->getName();
         }
 
@@ -93,7 +88,7 @@ abstract class Installable extends BaseRepository
                      * @noinspection SqlWithoutWhere
                      * @noinspection UnknownInspectionInspection
                      */
-                    $pdo->exec(sprintf("DELETE FROM %s", $table));
+                    $pdo->exec(sprintf('DELETE FROM %s', $table));
                 } catch (PDOException) {
                     // Whatever...
                 }

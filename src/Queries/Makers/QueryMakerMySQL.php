@@ -1,10 +1,8 @@
-<?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 06.08.2020 7:45
+<?php declare(strict_types=1);
+/**
+ * @author Fully Retarded Squirrell <don't@me.pls>
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 namespace Zrnik\MkSQL\Queries\Makers;
 
@@ -28,7 +26,7 @@ class QueryMakerMySQL implements IQueryMaker
      */
     public static function describeTable(PDO $pdo, Table $table): ?TableDescription
     {
-        $QueryInfo = new QueryInfo;
+        $QueryInfo = new QueryInfo();
         $QueryInfo->executionSpeed = microtime(true);
         $QueryInfo->referencedTable = $table;
 
@@ -36,14 +34,18 @@ class QueryMakerMySQL implements IQueryMaker
         $Desc->queryMakerClass = __CLASS__;
         $Desc->table = $table;
 
+        /**
+         * @noinspection BadExceptionsProcessingInspection
+         * Yes, I know :(
+         */
         try {
-            $QueryInfo->querySql = "SHOW CREATE TABLE " . $table->getName();
+            $QueryInfo->querySql = 'SHOW CREATE TABLE ' . $table->getName();
             $Statement = $pdo->prepare($QueryInfo->querySql);
 
             $QueryInfo->isExecuted = true;
             $Statement->execute();
 
-            $result = $Statement->fetch(PDO::FETCH_ASSOC)["Create Table"];
+            $result = $Statement->fetch(PDO::FETCH_ASSOC)['Create Table'];
             $QueryInfo->isSuccess = true;
 
             $Desc->tableExists = true;
@@ -52,11 +54,11 @@ class QueryMakerMySQL implements IQueryMaker
 
             //Find Primary Key Name:
             foreach ($DescriptionData as $DescriptionRow) {
-                if (Strings::contains($DescriptionRow, "PRIMARY KEY")) {
-                    [$trash, $keyPart] = explode("(", $DescriptionRow);
+                if (Strings::contains($DescriptionRow, 'PRIMARY KEY')) {
+                    [$trash, $keyPart] = explode('(', $DescriptionRow);
                     unset($trash); // Make PhpStorm stop screaming...
-                    [$keyPart] = explode(")", $keyPart);
-                    $keyPart = Strings::normalize(str_replace("`", "", $keyPart));
+                    [$keyPart] = explode(')', $keyPart);
+                    $keyPart = Strings::normalize(str_replace('`', '', $keyPart));
                     $Desc->primaryKeyName = $keyPart;
                 }
             }
@@ -74,28 +76,28 @@ class QueryMakerMySQL implements IQueryMaker
                 foreach ($DescriptionData as $DescriptionLine) {
                     $DescriptionLine = trim($DescriptionLine);
 
-                    if (Strings::startsWith($DescriptionLine, "`" . $column->getName() . "`")) {
+                    if (Strings::startsWith($DescriptionLine, '`' . $column->getName() . '`')) {
                         $col_desc = $DescriptionLine;
                     }
 
                     if (
-                        Strings::startsWith($DescriptionLine, "UNIQUE KEY") &&
+                        Strings::startsWith($DescriptionLine, 'UNIQUE KEY') &&
                         (
-                            Strings::endsWith($DescriptionLine, "(`" . $column->getName() . "`)")
+                            Strings::endsWith($DescriptionLine, '(`' . $column->getName() . '`)')
                             ||
-                            Strings::endsWith($DescriptionLine, "(`" . $column->getName() . "`),")
+                            Strings::endsWith($DescriptionLine, '(`' . $column->getName() . '`),')
                         )
                     ) {
-                        $unique_index_key = explode("`", $DescriptionLine)[1];
+                        $unique_index_key = explode('`', $DescriptionLine)[1];
                     }
 
                     if (
-                        Strings::startsWith($DescriptionLine, "CONSTRAINT ") &&
-                        Strings::contains($DescriptionLine, "FOREIGN KEY")
+                        Strings::startsWith($DescriptionLine, 'CONSTRAINT ') &&
+                        Strings::contains($DescriptionLine, 'FOREIGN KEY')
                     ) {
-                        $fkData = explode("`", $DescriptionLine);
+                        $fkData = explode('`', $DescriptionLine);
                         if ($fkData[3] === $column->getName()) {
-                            $foreign_keys[$fkData[5] . "." . $fkData[7]] = $fkData[1];
+                            $foreign_keys[$fkData[5] . '.' . $fkData[7]] = $fkData[1];
                         }
                     }
                 }
@@ -108,10 +110,10 @@ class QueryMakerMySQL implements IQueryMaker
 
                     //Need:
                     // - Type
-                    $ColDesc->type = Strings::trim(explode(" ", $col_desc)[1],",");
+                    $ColDesc->type = Strings::trim(explode(' ', $col_desc)[1], ',');
 
                     // - NOT NULL
-                    $ColDesc->notNull = str_contains($col_desc, "NOT NULL");
+                    $ColDesc->notNull = str_contains($col_desc, 'NOT NULL');
                     // - Unique
                     $ColDesc->uniqueIndex = $unique_index_key;
 
@@ -163,7 +165,7 @@ class QueryMakerMySQL implements IQueryMaker
             }
 
 
-        } catch (PDOException $pdoEx) {
+        } catch (PDOException) {
             $QueryInfo->isSuccess = false;
             $Desc->tableExists = false;
         }
@@ -186,10 +188,10 @@ class QueryMakerMySQL implements IQueryMaker
             (new Query($table, null))
                 ->setQuery(
                     sprintf(
-                        /** @lang */"ALTER TABLE %s CHANGE %s %s %s NOT NULL%s;",
+                        /** @lang */ 'ALTER TABLE %s CHANGE %s %s %s NOT NULL%s;',
                         $table->getName(),
                         $oldKey,  $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
-                        str_starts_with(strtolower($table->getPrimaryKeyType()),"int") ? " AUTO_INCREMENT" : ""
+                        str_starts_with(strtolower($table->getPrimaryKeyType()), 'int') ? ' AUTO_INCREMENT' : ''
                     )
                     /*"ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;"*/
                 )
@@ -208,9 +210,9 @@ class QueryMakerMySQL implements IQueryMaker
             ->setQuery(
 
                 sprintf(
-                    /** @lang */"CREATE TABLE %s (%s %s NOT NULL %s PRIMARY KEY)",
+                    /** @lang */ 'CREATE TABLE %s (%s %s NOT NULL %s PRIMARY KEY)',
                     $table->getName(), $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
-                    str_starts_with(strtolower($table->getPrimaryKeyType()),"int") ? " AUTO_INCREMENT" : ""
+                    str_starts_with(strtolower($table->getPrimaryKeyType()), 'int') ? ' AUTO_INCREMENT' : ''
                 )
                 /*
                 "CREATE TABLE " .
@@ -245,11 +247,13 @@ class QueryMakerMySQL implements IQueryMaker
 
         $ModifySQL .= ($column->getNotNull() ? ' NOT ' : ' ') . 'NULL';
 
-        if ($column->getComment() !== null && $column->getComment() !== "") {
-            $ModifySQL .= " COMMENT '" . $column->getComment() . "'";
+        $comment = $column->getComment();
+
+        if ($comment !== null && $comment !== '') {
+            $ModifySQL .= " COMMENT '" . $comment . "'";
         }
 
-        $alterTableQuery->setReason("to-be-determined");
+        $alterTableQuery->setReason('to-be-determined');
 
         $alterTableQuery->setQuery(trim($ModifySQL));
 
@@ -276,7 +280,7 @@ class QueryMakerMySQL implements IQueryMaker
         }
 
         //Null/NotNull
-        $CreateSQL .= ($column->getNotNull() ? "NOT " : '') . 'NULL ';
+        $CreateSQL .= ($column->getNotNull() ? 'NOT ' : '') . 'NULL ';
 
         //Comment
         if ($column->getComment() !== null) {
@@ -286,7 +290,7 @@ class QueryMakerMySQL implements IQueryMaker
         return [
             (new Query($table, $column))
                 ->setQuery(trim($CreateSQL))
-                ->setReason("Column '" . $table->getName() . "." . $column->getName() . "' not found.")
+                ->setReason("Column '" . $table->getName() . '.' . $column->getName() . "' not found.")
         ];
     }
 
@@ -303,14 +307,14 @@ class QueryMakerMySQL implements IQueryMaker
         $MySQL_Key_MaxLength = 64;
 
         $newKey = Utils::confirmKeyName(
-            "unique_index_" . $table->getName() . "_" . $column->getName(),
+            'unique_index_' . $table->getName() . '_' . $column->getName(),
             $MySQL_Key_MaxLength
         );
 
         return [
             (new Query($table, $column))
                 ->setQuery('CREATE UNIQUE INDEX ' . $newKey . ' on ' . $table->getName() . ' (' . $column->getName() . ');')
-                ->setReason("Unique index for '" . $table->getName() . "." . $column->getName() . "' not found.")
+                ->setReason("Unique index for '" . $table->getName() . '.' . $column->getName() . "' not found.")
 
         ];
     }
@@ -330,7 +334,7 @@ class QueryMakerMySQL implements IQueryMaker
         $Queries = [];
 
         //var_dump($columnDescription->foreignKeys);
-        foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
+        foreach ($columnDescription?->foreignKeys as $foreignKeyName) {
             $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
             foreach ($DropQueries as $DropQuery) {
                 $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
@@ -344,7 +348,7 @@ class QueryMakerMySQL implements IQueryMaker
         $Queries[] = (new Query($table, $column))
             ->setQuery('DROP INDEX ' . $uniqueIndex . ' ON ' . $table->getName() . ';')
             ->setReason("There is unexpected unique index '" . $uniqueIndex . "' on '"
-                . $table->getName() . "." . $column->getName() . "'.");
+                . $table->getName() . '.' . $column->getName() . "'.");
 
         foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
             $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
@@ -374,7 +378,7 @@ class QueryMakerMySQL implements IQueryMaker
     {
         return [
             (new Query($table, $column))
-                ->setQuery("ALTER TABLE " . $table->getName() . " DROP FOREIGN KEY " . $ForeignKeyName . ";")
+                ->setQuery('ALTER TABLE ' . $table->getName() . ' DROP FOREIGN KEY ' . $ForeignKeyName . ';')
                 ->setReason("Unexpected foreign key '" . $ForeignKeyName . "' found for column '" . $column->getName() . "'.")
         ];
     }
@@ -393,17 +397,17 @@ class QueryMakerMySQL implements IQueryMaker
         $pointerString = Utils::confirmForeignKeyTarget($RefPointerString);
         // $pointerString has exactly one dot or the exception was already thrown!
 
-        [$targetTable, $targetColumn] /* $foreignKeyParts */ = explode(".", $pointerString);
+        [$targetTable, $targetColumn] /* $foreignKeyParts */ = explode('.', $pointerString);
         /*$targetTable = $foreignKeyParts[0];
         $targetColumn = $foreignKeyParts[1];*/
 
-        $foreignKeyName = Utils::confirmKeyName("f_key_" . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn);
+        $foreignKeyName = Utils::confirmKeyName('f_key_' . $table->getName() . '_' . $targetTable . '_' . $column->getName() . '_' . $targetColumn);
 
         return [
             (new Query($table, $column))
                 ->setQuery('ALTER TABLE ' . $table->getName() . ' ADD CONSTRAINT ' . $foreignKeyName . '
                              FOREIGN KEY (' . $column->getName() . ') REFERENCES ' . $targetTable . ' (' . $targetColumn . ');')
-                ->setReason("Foreign key on '" . $table->getName() . "." . $column->getName() . "' referencing '" . $RefPointerString . "' not found.")
+                ->setReason("Foreign key on '" . $table->getName() . '.' . $column->getName() . "' referencing '" . $RefPointerString . "' not found.")
         ];
     }
 
@@ -419,7 +423,7 @@ class QueryMakerMySQL implements IQueryMaker
         $type2 = Utils::confirmType(strtolower($type2));
 
         $Exceptions = [
-            "tinyint", "mediumint", "int", "bigint",
+            'tinyint', 'mediumint', 'int', 'bigint',
         ];
 
         foreach ($Exceptions as $Exception) {

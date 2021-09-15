@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
@@ -9,14 +14,14 @@ use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\BaseEntity;
 
-#[TableName("auction")]
+#[TableName('auction')]
 class Auction extends BaseEntity
 {
     #[PrimaryKey]
     public ?int $id = null;
 
-    #[ColumnType("varchar(64)")]
-    #[ColumnName("theNameOfTheAuction")]
+    #[ColumnType('varchar(64)')]
+    #[ColumnName('theNameOfTheAuction')]
     public string $name;
 
     /**

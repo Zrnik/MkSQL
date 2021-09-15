@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="MkSQL Source Code" pattern="file[MkSQL]:*/&amp;&amp;!file[MkSQL]:.idea//*&amp;&amp;!file[MkSQL]:vendor//*&amp;&amp;!file:composer.lock&amp;&amp;!file[MkSQL]:assets//*" />
+</component>

@@ -1,10 +1,8 @@
-<?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 06.08.2020 7:44
+<?php declare(strict_types=1);
+/**
+ * @author Fully Retarded Squirrell <don't@me.pls>
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 namespace Zrnik\MkSQL\Queries\Makers;
 

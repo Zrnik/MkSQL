@@ -1,21 +1,23 @@
 <?php declare(strict_types=1);
-
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 02.09.2020 13:52
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
 use Brick\DateTime\LocalDateTime;
 use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
+use Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
 use Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
 use Nette\Neon\Neon;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
+use Tracy\Debugger;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
+use Zrnik\MkSQL\Exceptions\CircularReferenceDetectedException;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
@@ -23,6 +25,7 @@ use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Tracy\Measure;
+use Zrnik\MkSQL\Tracy\Panel;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
 use Zrnik\PHPUnit\Exceptions;
@@ -36,17 +39,21 @@ class IntegrationTest extends TestCase
      */
     public function testIntegration(): void
     {
+        // Initialize TracyPanel so it's not marked as unused.
+        Debugger::getBar()->addPanel(new Panel());
+
+
         // MySQL Integration:
-        $configFile = file_exists(__DIR__ . "/../.github/config/integrationTestDatabase.neon")
-            ? __DIR__ . "/../.github/config/integrationTestDatabase.neon"
-            : __DIR__ . "/../.github/config/integrationTestDatabase.neon.dist";
+        $configFile = file_exists(__DIR__ . '/../.github/config/integrationTestDatabase.neon')
+            ? __DIR__ . '/../.github/config/integrationTestDatabase.neon'
+            : __DIR__ . '/../.github/config/integrationTestDatabase.neon.dist';
 
         $config = Neon::decode((string)file_get_contents($configFile));
 
         $MySQL_PDO = new PDO(
-            $config["dsn"],
-            $config["user"],
-            $config["pass"]
+            $config['dsn'],
+            $config['user'],
+            $config['pass']
         );
 
         $this->processTest($MySQL_PDO);
@@ -75,15 +82,15 @@ class IntegrationTest extends TestCase
         $Updater = new Updater($pdo);
         $this->addToAssertionCount(1);
 
-        echo PHP_EOL . "Testing \""
+        echo PHP_EOL . 'Testing "'
             . DriverType::getName($Updater->getDriverType()) .
-            "\" Driver:" . PHP_EOL . "[";
+            '" Driver:' . PHP_EOL . '[';
 
-        $this->assertNotNull($Updater->getDriverType());
+        static::assertNotNull($Updater->getDriverType());
         //echo "Processing Test with: " .  . PHP_EOL;
 
         $this->dropAll($pdo);
-        $this->assertTrue($this->installDefault($Updater));
+        static::assertTrue($this->installDefault($Updater));
         $this->dot();
 
         // #####################################
@@ -116,23 +123,25 @@ class IntegrationTest extends TestCase
         // #####################################
 
         $this->subTestBaseRepoAndEntity($pdo);
+        $this->subTestCircularReference($pdo);
+
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
-        echo "]" . PHP_EOL . "Complete!";
+        echo ']' . PHP_EOL . 'Complete!';
     }
 
     private function dropAll(PDO $pdo): void
     {
         //Must be in reverse order because of foreign key constraints
         $tables = [
-            "last_action",
-            "sessions",
-            "accounts",
+            'last_action',
+            'sessions',
+            'accounts',
 
-            "last_action_mksql_tmp",
-            "sessions_mksql_tmp",
-            "accounts_mksql_tmp"
+            'last_action_mksql_tmp',
+            'sessions_mksql_tmp',
+            'accounts_mksql_tmp'
 
             //Temp tables created by SQLite
         ];
@@ -140,7 +149,7 @@ class IntegrationTest extends TestCase
         foreach ($tables as $table_name) {
             $pdo->exec(
                 sprintf(
-                /** @lang */ "DROP TABLE IF EXISTS %s"
+                /** @lang */ 'DROP TABLE IF EXISTS %s'
                     , $table_name
                 )
             );
@@ -155,33 +164,33 @@ class IntegrationTest extends TestCase
     private function installDefault(Updater $Updater): bool
     {
         //Table Accounts only with Login:
-        $Accounts = $Updater->tableCreate("accounts")->setPrimaryKeyName("account_id");
+        $Accounts = $Updater->tableCreate('accounts')->setPrimaryKeyName('account_id');
 
-        $Accounts->columnCreate("login", "varchar(60)")
+        $Accounts->columnCreate('login', 'varchar(60)')
             ->setUnique()
             ->setNotNull();
 
         //Table Sessions with foreign key account pointing to 'accounts.account_id'
 
-        $Sessions = $Updater->tableCreate("sessions");
+        $Sessions = $Updater->tableCreate('sessions');
 
-        $Sessions->columnCreate("token", "varchar(64)")
+        $Sessions->columnCreate('token', 'varchar(64)')
             ->setUnique()
             ->setNotNull();
 
-        $Sessions->columnCreate("account")
-            ->addForeignKey("accounts.account_id");
+        $Sessions->columnCreate('account')
+            ->addForeignKey('accounts.account_id');
 
-        $LastAction = $Updater->tableCreate("last_action");
+        $LastAction = $Updater->tableCreate('last_action');
 
-        $this->assertNotNull($LastAction);
+        static::assertNotNull($LastAction);
 
-        $LastAction->columnCreate("session")
-            ->addForeignKey("sessions.id");
+        $LastAction->columnCreate('session')
+            ->addForeignKey('sessions.id');
 
-        $LastAction->columnCreate("action_time");
+        $LastAction->columnCreate('action_time');
 
-        $TokenColumn = new Column("cloned_token", "varchar(100)");
+        $TokenColumn = new Column('cloned_token', 'varchar(100)');
         $Accounts->columnAdd(clone $TokenColumn);
         $Sessions->columnAdd(clone $TokenColumn);
         $LastAction->columnAdd(clone $TokenColumn);
@@ -195,15 +204,15 @@ class IntegrationTest extends TestCase
      */
     private function subTestPrimaryKeyNameChange(Updater $Updater): void
     {
-        $tableAccounts = $Updater->tableGet("accounts");
-        $this->assertNotNull($tableAccounts);
+        $tableAccounts = $Updater->tableGet('accounts');
+        static::assertNotNull($tableAccounts);
 
-        $tableAccounts->setPrimaryKeyName("new_id");
-        $this->assertTrue($Updater->install());
+        $tableAccounts->setPrimaryKeyName('new_id');
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $tableAccounts->setPrimaryKeyName("id");
-        $this->assertTrue($Updater->install());
+        $tableAccounts->setPrimaryKeyName('id');
+        static::assertTrue($Updater->install());
         $this->dot();
     }
 
@@ -213,22 +222,22 @@ class IntegrationTest extends TestCase
      */
     private function subTestTypeChange(Updater $Updater): void
     {
-        $lastActionTable = $Updater->tableGet("last_action");
-        $this->assertNotNull($lastActionTable);
+        $lastActionTable = $Updater->tableGet('last_action');
+        static::assertNotNull($lastActionTable);
 
-        $columnActionTime = $lastActionTable->columnGet("action_time");
-        $this->assertNotNull($columnActionTime);
+        $columnActionTime = $lastActionTable->columnGet('action_time');
+        static::assertNotNull($columnActionTime);
 
-        $columnActionTime->setType("varchar(10)");
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setType('varchar(10)');
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $columnActionTime->setType("char(15)");
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setType('char(15)');
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $columnActionTime->setType("int");
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setType('int');
+        static::assertTrue($Updater->install());
         $this->dot();
 
     }
@@ -239,20 +248,20 @@ class IntegrationTest extends TestCase
      */
     private function subTestNotNull(Updater $Updater): void
     {
-        $tableAccounts = $Updater->tableGet("accounts");
+        $tableAccounts = $Updater->tableGet('accounts');
 
-        $this->assertNotNull($tableAccounts);
+        static::assertNotNull($tableAccounts);
 
-        $columnLogin = $tableAccounts->columnGet("login");
+        $columnLogin = $tableAccounts->columnGet('login');
 
-        $this->assertNotNull($columnLogin);
+        static::assertNotNull($columnLogin);
 
         $columnLogin->setNotNull(false);
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
 
         $columnLogin->setNotNull();
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
     }
 
@@ -262,18 +271,18 @@ class IntegrationTest extends TestCase
      */
     private function subTestDefaultValue(Updater $Updater): void
     {
-        $lastActionTable = $Updater->tableGet("last_action");
-        $this->assertNotNull($lastActionTable);
+        $lastActionTable = $Updater->tableGet('last_action');
+        static::assertNotNull($lastActionTable);
 
-        $columnActionTime = $lastActionTable->columnGet("action_time");
-        $this->assertNotNull($columnActionTime);
+        $columnActionTime = $lastActionTable->columnGet('action_time');
+        static::assertNotNull($columnActionTime);
 
         $columnActionTime->setDefault(time());
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $columnActionTime->setDefault(strtotime("-3 days"));
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setDefault(strtotime('-3 days'));
+        static::assertTrue($Updater->install());
         $this->dot();
     }
 
@@ -283,22 +292,22 @@ class IntegrationTest extends TestCase
      */
     private function subTestComment(Updater $Updater): void
     {
-        $lastActionTable = $Updater->tableGet("last_action");
-        $this->assertNotNull($lastActionTable);
+        $lastActionTable = $Updater->tableGet('last_action');
+        static::assertNotNull($lastActionTable);
 
-        $columnActionTime = $lastActionTable->columnGet("action_time");
-        $this->assertNotNull($columnActionTime);
+        $columnActionTime = $lastActionTable->columnGet('action_time');
+        static::assertNotNull($columnActionTime);
 
-        $columnActionTime->setComment("A tested column");
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setComment('A tested column');
+        static::assertTrue($Updater->install());
         $this->dot();
 
         $columnActionTime->setComment(); // null
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $columnActionTime->setComment("Integration Tested Column");
-        $this->assertTrue($Updater->install());
+        $columnActionTime->setComment('Integration Tested Column');
+        static::assertTrue($Updater->install());
         $this->dot();
     }
 
@@ -308,18 +317,18 @@ class IntegrationTest extends TestCase
      */
     private function subTestForeignKeys(Updater $Updater): void
     {
-        $tableSessions = $Updater->tableGet("sessions");
-        $this->assertNotNull($tableSessions);
+        $tableSessions = $Updater->tableGet('sessions');
+        static::assertNotNull($tableSessions);
 
-        $tableSessionsColumnToken = $tableSessions->columnGet("token");
-        $this->assertNotNull($tableSessionsColumnToken);
+        $tableSessionsColumnToken = $tableSessions->columnGet('token');
+        static::assertNotNull($tableSessionsColumnToken);
 
-        $tableSessionsColumnToken->addForeignKey("accounts.login");
-        $this->assertTrue($Updater->install());
+        $tableSessionsColumnToken->addForeignKey('accounts.login');
+        static::assertTrue($Updater->install());
         $this->dot();
 
-        $tableSessionsColumnToken->dropForeignKey("accounts.login");
-        $this->assertTrue($Updater->install());
+        $tableSessionsColumnToken->dropForeignKey('accounts.login');
+        static::assertTrue($Updater->install());
         $this->dot();
 
     }
@@ -330,32 +339,31 @@ class IntegrationTest extends TestCase
      */
     private function subTestUniqueIndexes(Updater $Updater): void
     {
-        $lastActionTable = $Updater->tableGet("last_action");
-        $this->assertNotNull($lastActionTable);
+        $lastActionTable = $Updater->tableGet('last_action');
+        static::assertNotNull($lastActionTable);
 
-        $columnActionTime = $lastActionTable->columnGet("action_time");
-        $this->assertNotNull($columnActionTime);
+        $columnActionTime = $lastActionTable->columnGet('action_time');
+        static::assertNotNull($columnActionTime);
 
         $columnActionTime->setUnique();
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
         $columnActionTime->setUnique(false);
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
         $columnActionTime->setUnique();
-        $this->assertTrue($Updater->install());
+        static::assertTrue($Updater->install());
         $this->dot();
     }
 
 
     private function dot(): void
     {
-        echo ".";
+        echo '.';
     }
 
     /**
      * @throws MkSQLException
-     * @throws ReflectionException
      */
     private function subTestBaseRepoAndEntity(PDO $pdo): void
     {
@@ -372,17 +380,17 @@ class IntegrationTest extends TestCase
              * @noinspection SqlWithoutWhere
              * @noinspection UnknownInspectionInspection
              */
-            $pdo->exec(sprintf("DELETE FROM %s", $table->getName()));
+            $pdo->exec(sprintf('DELETE FROM %s', $table->getName()));
         }
 
         $auction1 = Auction::create();
-        $auction1->name = "First Auction";
+        $auction1->name = 'First Auction';
 
         $auction1->auctionItems[0] = AuctionItem::create();
-        $auction1->auctionItems[0]->name = "Auction Item One";
+        $auction1->auctionItems[0]->name = 'Auction Item One';
 
         $auction1->auctionItems[1] = AuctionItem::create();
-        $auction1->auctionItems[1]->name = "Auction Item Two";
+        $auction1->auctionItems[1]->name = 'Auction Item Two';
 
         $this->assertRowCountInTable($pdo, Auction::getTableName(), 0);
         $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 0);
@@ -393,13 +401,13 @@ class IntegrationTest extends TestCase
         $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 2);
 
         $auction2 = Auction::create();
-        $auction2->name = "Second Auction";
+        $auction2->name = 'Second Auction';
 
         $auction2->auctionItems[0] = AuctionItem::create();
-        $auction2->auctionItems[0]->name = "Auction Item One";
+        $auction2->auctionItems[0]->name = 'Auction Item One';
 
         $auction2->auctionItems[1] = AuctionItem::create();
-        $auction2->auctionItems[1]->name = "Auction Item Two";
+        $auction2->auctionItems[1]->name = 'Auction Item Two';
 
         $this->assertRowCountInTable($pdo, Auction::getTableName(), 1);
         $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 2);
@@ -425,114 +433,118 @@ class IntegrationTest extends TestCase
 
         /** @var Auction[] $auctionList1 */
         $auctionList1 = $auctionRepository->getAll(Auction::class);
-        $this->assertCount(2, $auctionList1);
+        static::assertCount(2, $auctionList1);
+        $this->dot();
 
         /** @var Auction $fetchedAuction1 */
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
 
-        /* dump($auction1);
-         dumpe($fetchedAuction1);*/
-
-        $this->assertEquals($auction1, $fetchedAuction1);
-        $this->assertNotSame($auction1, $fetchedAuction1);
+        static::assertEquals($auction1, $fetchedAuction1);
+        static::assertNotSame($auction1, $fetchedAuction1);
+        $this->dot();
 
         /** @var Auction $fetchedAuction2 */
         $fetchedAuction2 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction2->id);
 
-        $this->assertEquals($auction2, $fetchedAuction2);
-        $this->assertNotSame($auction2, $fetchedAuction2);
+        static::assertEquals($auction2, $fetchedAuction2);
+        static::assertNotSame($auction2, $fetchedAuction2);
+        $this->dot();
 
         /** @var AuctionItem[] $auctionItemsOfAuction1 */
         $auctionItemsOfAuction1 = $auctionRepository->getResultsByKey(
-            AuctionItem::class, "auction", $fetchedAuction1->id
+            AuctionItem::class, 'auction', $fetchedAuction1->id
         );
 
-        $this->assertEquals($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
-        $this->assertNotSame($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
+        static::assertEquals($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
+        static::assertNotSame($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
+        $this->dot();
 
         /** @var Auction $fetchedAuctionByName1 */
         $fetchedAuctionByName1 = $auctionRepository->getResultByKey(
-            Auction::class, "name", "First Auction"
+            Auction::class, 'name', 'First Auction'
         );
 
-        $this->assertEquals($auction1, $fetchedAuctionByName1);
-        $this->assertNotSame($auction1, $fetchedAuctionByName1);
+        static::assertEquals($auction1, $fetchedAuctionByName1);
+        static::assertNotSame($auction1, $fetchedAuctionByName1);
+        $this->dot();
 
         /** @var Auction $fetchedAuctionByName2 */
         $fetchedAuctionByName2 = $auctionRepository->getResultByKey(
-            Auction::class, "name", "Second Auction"
+            Auction::class, 'name', 'Second Auction'
         );
 
-        $this->assertEquals($auction2, $fetchedAuctionByName2);
-        $this->assertNotSame($auction2, $fetchedAuctionByName2);
-        $this->assertEquals($fetchedAuction2, $fetchedAuctionByName2);
-        $this->assertNotSame($fetchedAuction2, $fetchedAuctionByName2);
-        $this->assertEquals($fetchedAuction2, $auction2);
-        $this->assertNotSame($fetchedAuction2, $auction2);
+        static::assertEquals($auction2, $fetchedAuctionByName2);
+        static::assertNotSame($auction2, $fetchedAuctionByName2);
+        static::assertEquals($fetchedAuction2, $fetchedAuctionByName2);
+        static::assertNotSame($fetchedAuction2, $fetchedAuctionByName2);
+        static::assertEquals($fetchedAuction2, $auction2);
+        static::assertNotSame($fetchedAuction2, $auction2);
+        $this->dot();
 
         /** @var AuctionItem[] $allAuctionItems */
         $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
 
         $allAuctionItems[0]->whenSold = LocalDateTime::of(
-            2020, 9, 1, 12, 0, 0
+            2020, 9, 1, 12
         );
 
         $allAuctionItems[1]->whenSold = LocalDateTime::of(
-            2020, 9, 1, 12, 0, 0
+            2020, 9, 1, 12
         );
 
         $allAuctionItems[2]->whenSold = LocalDateTime::of(
-            2021, 9, 1, 12, 0, 0
+            2021, 9, 1, 12
         );
 
         $auctionRepository->save($allAuctionItems);
 
-        /* foreach($allAuctionItems as $auctionItem) {
-             dump($auctionItem->whenSold);
-         }*/
-
-        $this->assertSame(
+        static::assertSame(
             [
                 'Auction Item One',
                 'Auction Item Two',
             ],
             $auctionRepository->distinctValues(
-                AuctionItem::class, "name"
+                AuctionItem::class, 'name'
             )
         );
+        $this->dot();
 
         $this->assertExceptionThrown(
             \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class,
             function () use ($auctionRepository) {
                 $auctionRepository->distinctValues(
-                    AuctionItem::class, "nonExisting"
+                    AuctionItem::class, 'nonExisting'
                 );
             }
         );
+        $this->dot();
 
-        $this->assertEquals(
+        static::assertEquals(
             [
                 LocalDateTime::of(
-                    2020, 9, 1, 12, 0, 0
+                    2020, 9, 1, 12
                 ),
                 LocalDateTime::of(
-                    2021, 9, 1, 12, 0, 0
+                    2021, 9, 1, 12
                 ),
                 null,
             ],
             $auctionRepository->distinctValues(
-                AuctionItem::class, "whenSold"
+                AuctionItem::class, 'whenSold'
             )
         );
+        $this->dot();
+
+
     }
 
     private function assertRowCountInTable(PDO $pdo, string $tableName, int $assertCount): void
     {
-        $statement = $pdo->query("SELECT * FROM " . $tableName);
+        $statement = $pdo->query('SELECT * FROM ' . $tableName);
 
         if ($statement === false) {
             throw new AssertionFailedError(
-                "No result returned!"
+                'No result returned!'
             );
         }
 
@@ -540,7 +552,7 @@ class IntegrationTest extends TestCase
 
         if ($fetch === false) {
             throw new AssertionFailedError(
-                "No result returned!"
+                'No result returned!'
             );
         }
 
@@ -556,6 +568,7 @@ class IntegrationTest extends TestCase
         }
 
         $this->addToAssertionCount(1);
+        $this->dot();
     }
 
 
@@ -573,32 +586,49 @@ class IntegrationTest extends TestCase
 
         $updater = new Updater($pdo);
 
-        $hello = $updater->tableCreate("hello");
-        $hello->columnCreate("world", "text");
+        $hello = $updater->tableCreate('hello');
+        $hello->columnCreate('world', 'text');
 
         $updater->install();
 
-        $startingCalls = Measure::structureTableList()["hello"]["calls"];
+        $startingCalls = Measure::structureTableList()['hello']['calls'];
 
-        $this->assertSame(
-            $startingCalls, Measure::structureTableList()["hello"]["calls"]
+        static::assertSame(
+            $startingCalls, Measure::structureTableList()['hello']['calls']
         );
+        $this->dot();
 
 
         $updater->install();
 
-        $this->assertSame(
-            $startingCalls, Measure::structureTableList()["hello"]["calls"]
+        static::assertSame(
+            $startingCalls, Measure::structureTableList()['hello']['calls']
         );
+        $this->dot();
 
-        $hello->columnCreate("new_one");
+        $hello->columnCreate('new_one');
 
         $updater->install();
 
-        $this->assertSame(
-            $startingCalls + 1, Measure::structureTableList()["hello"]["calls"]
+        static::assertSame(
+            $startingCalls + 1, Measure::structureTableList()['hello']['calls']
+        );
+        $this->dot();
+
+
+    }
+
+    private function subTestCircularReference(PDO $pdo): void
+    {
+        $updater = new Updater($pdo);
+
+        $this->assertExceptionThrown(
+            CircularReferenceDetectedException::class,
+            function () use ($updater) {
+                $updater->use(ReferencingEntityOne::class);
+            }
         );
 
-
+        $this->dot();
     }
 }

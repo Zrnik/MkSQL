@@ -1,4 +1,5 @@
-<?php
+<?php declare(strict_types=1);
+
 /*
  * Zrník.eu | MkSQL
  * User: Programátor
@@ -12,6 +13,12 @@ use Zrnik\MkSQL\Table;
 
 class ColumnDescription
 {
+
+    public function __construct()
+    {
+        $this->default = null;
+    }
+
     /**
      * @var bool
      */
@@ -48,9 +55,9 @@ class ColumnDescription
     public array $foreignKeys = [];
 
     /**
-     * @var mixed
+     * @var mixed|null
      */
-    public $default = null;
+    public mixed $default;
 
     /**
      * @var string

@@ -1,16 +1,19 @@
 <?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL;
 
 use JetBrains\PhpStorm\Pure;
-use ReflectionClass;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Tracy\Measure;
-use Zrnik\MkSQL\Utilities\Reflection;
 
 
 class Table
@@ -85,7 +88,7 @@ class Table
     //endregion
 
     //region Primary Key
-    private string $primaryKeyName = "id";
+    private string $primaryKeyName = 'id';
 
     /**
      * Returns a primary key name
@@ -116,7 +119,7 @@ class Table
     }
 
 
-    private string $primaryKeyType = "int";
+    private string $primaryKeyType = 'int';
 
     /**
      * Returns a primary key name
@@ -136,10 +139,8 @@ class Table
         $oldPrimaryKeyType = $this->primaryKeyType;
         $this->primaryKeyType = Utils::confirmType($newPrimaryKeyType);
 
-        // If i have parent a parent Updater, i need to find all references to this table
+        // If I have a parent Updater, I need to find all references to this table
         // and replace foreign keys to still point to this table...
-        //
-        // its mainly for integration test...
 
         $parent = $this->getParent();
 
@@ -163,8 +164,13 @@ class Table
      * @throws ColumnDefinitionExists
      * @throws PrimaryKeyAutomaticException
      * @throws InvalidArgumentException
+     * @noinspection ParameterDefaultValueIsNotNullInspection
      */
-    public function columnCreate(string $columnName, ?string $columnType = "int", bool $rewrite = false): Column
+    public function columnCreate(
+        string  $columnName,
+        ?string $columnType = 'int',
+        bool    $rewrite = false,
+    ): Column
     {
         $column = new Column($columnName, $columnType);
         return $this->columnAdd($column, $rewrite);
@@ -194,7 +200,7 @@ class Table
 
         $column->setParent($this);
 
-        // setParent can fail, we dont want to add the
+        // setParent can fail, we don't want to add the
         // column when that happen, so we need to have it below!
         $this->columns[$column->getName()] = $column;
 
@@ -272,6 +278,6 @@ class Table
             $hashData[$column->getName()] = $column->getHashData();
         }
 
-        return hash("sha256", (string) var_export($hashData,true));
+        return hash('sha256', (string) var_export($hashData,true));
     }
 }

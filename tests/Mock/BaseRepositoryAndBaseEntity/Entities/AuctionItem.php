@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
@@ -20,10 +25,10 @@ class AuctionItem extends BaseEntity
     public ?int $id = null;
 
     #[ForeignKey(Auction::class)]
-    #[ColumnName("theAuctionIRelateTo")]
+    #[ColumnName('theAuctionIRelateTo')]
     public ?Auction $auction;
 
-    #[ColumnType("varchar(64)")]
+    #[ColumnType('varchar(64)')]
     public string $name;
 
     #[CustomType(BooleanTypeTestingOnlyConverter::class)]

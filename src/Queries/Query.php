@@ -1,8 +1,8 @@
-<?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 06.08.2020 7:41
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
 namespace Zrnik\MkSQL\Queries;
@@ -81,6 +81,7 @@ class Query
 
     /**
      * @param PDO $pdo
+     * @param Updater $updater
      * @return bool
      */
     public function execute(PDO $pdo, Updater $updater): bool
@@ -122,7 +123,7 @@ class Query
      * @param string $reason
      * @return $this
      */
-    public function setReason(string $reason = ""): Query
+    public function setReason(string $reason = ''): Query
     {
         $this->reason = $reason;
         return $this;

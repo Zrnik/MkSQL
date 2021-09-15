@@ -1,57 +1,59 @@
 <?php declare(strict_types=1);
 
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.08.2020 15:45
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Table;
+use Zrnik\PHPUnit\Exceptions;
 
 class TableTest extends TestCase
 {
+    use Exceptions;
 
     /**
      * @throws Exception
      */
     public function testConstructor(): void
     {
-        new Table("something");
-        new Table("This_is_Fine_150");
-        $this->addToAssertionCount(1); //Its OK
+        new Table('something');
+        new Table('This_is_Fine_150');
+        $this->addToAssertionCount(1); // It's OK
 
-        try {
-            new Table("no spaces");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() {
+                new Table('no spaces');
+            }
+        );
 
-        try {
-            new Table("no_special_characters!");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() {
+                new Table('no_special_characters!');
+            }
+        );
 
-        try {
-            new Table("no_special_characters?");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() {
+                new Table('no_special_characters?');
+            }
+        );
 
-        try {
-            new Table("no.dots");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() {
+                new Table('no.dots');
+            }
+        );
 
     }
 
@@ -63,42 +65,39 @@ class TableTest extends TestCase
      */
     public function testColumnCreate(): void
     {
-        $TestedTable = new Table("testedTable");
-        $TestedTable->columnCreate("testedColumn");
-        $TestedTable->columnCreate("anotherColumn");
+        $TestedTable = new Table('testedTable');
+        $TestedTable->columnCreate('testedColumn');
+        $TestedTable->columnCreate('anotherColumn');
         $this->addToAssertionCount(1);
 
-
-        try {
-            $TestedTable->columnCreate("invalid.column.name");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
-
-
-        try {
-            $TestedTable->columnCreate("id");
-            throw new Exception("Expected exception " . PrimaryKeyAutomaticException::class . " not thrown!");
-        } catch (PrimaryKeyAutomaticException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() use ($TestedTable) {
+                $TestedTable->columnCreate('invalid.column.name');
+            }
+        );
 
 
-        try {
-            $TestedTable->columnCreate("testedColumn");
-            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
-        } catch (ColumnDefinitionExists $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            PrimaryKeyAutomaticException::class,
+            function() use ($TestedTable) {
+                $TestedTable->columnCreate('id');
+            }
+        );
 
-        try {
-            $TestedTable->columnCreate("anotherColumn");
-            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
-        } catch (ColumnDefinitionExists $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            ColumnDefinitionExists::class,
+            function() use ($TestedTable) {
+                $TestedTable->columnCreate('testedColumn');
+            }
+        );
 
+        $this->assertExceptionThrown(
+            ColumnDefinitionExists::class,
+            function() use ($TestedTable) {
+                $TestedTable->columnCreate('anotherColumn');
+            }
+        );
     }
 
     /**
@@ -107,13 +106,13 @@ class TableTest extends TestCase
      */
     public function testColumnGet(): void
     {
-        $TestedTable = new Table("testedTable");
-        $TestedTable->columnCreate("testedColumn");
-        $TestedTable->columnCreate("anotherColumn");
+        $TestedTable = new Table('testedTable');
+        $TestedTable->columnCreate('testedColumn');
+        $TestedTable->columnCreate('anotherColumn');
 
-        $this->assertNotNull($TestedTable->columnGet("testedColumn"));
-        $this->assertNotNull($TestedTable->columnGet("anotherColumn"));
-        $this->assertNull($TestedTable->columnGet("unknownColumn"));
+        static::assertNotNull($TestedTable->columnGet('testedColumn'));
+        static::assertNotNull($TestedTable->columnGet('anotherColumn'));
+        static::assertNull($TestedTable->columnGet('unknownColumn'));
 
     }
 
@@ -123,48 +122,48 @@ class TableTest extends TestCase
      */
     public function testColumnList(): void
     {
-        $TestedTable = new Table("testedTable");
-        $TestedTable->columnCreate("testedColumn");
+        $TestedTable = new Table('testedTable');
+        $TestedTable->columnCreate('testedColumn');
 
-        $this->assertArrayHasKey(
-            "testedColumn",
+        static::assertArrayHasKey(
+            'testedColumn',
             $TestedTable->columnList()
         );
 
-        $this->assertArrayNotHasKey(
-            "anotherColumn",
+        static::assertArrayNotHasKey(
+            'anotherColumn',
             $TestedTable->columnList()
         );
 
-        $TestedTable->columnCreate("anotherColumn");
+        $TestedTable->columnCreate('anotherColumn');
 
-        $this->assertArrayHasKey(
-            "testedColumn",
+        static::assertArrayHasKey(
+            'testedColumn',
             $TestedTable->columnList()
         );
 
-        $this->assertArrayHasKey(
-            "anotherColumn",
+        static::assertArrayHasKey(
+            'anotherColumn',
             $TestedTable->columnList()
         );
 
-        $this->assertIsObject($TestedTable->columnList()["testedColumn"]);
-        $this->assertIsObject($TestedTable->columnList()["anotherColumn"]);
+        static::assertIsObject($TestedTable->columnList()['testedColumn']);
+        static::assertIsObject($TestedTable->columnList()['anotherColumn']);
     }
 
     public function testPrimaryKeyName(): void
     {
         //Private property wrapper
-        $TestedTable = new Table("testedTable");
-        $this->assertSame(
-            "id",
+        $TestedTable = new Table('testedTable');
+        static::assertSame(
+            'id',
             $TestedTable->getPrimaryKeyName()
         );
 
-        $TestedTable->setPrimaryKeyName("testing_id");
+        $TestedTable->setPrimaryKeyName('testing_id');
 
-        $this->assertSame(
-            "testing_id",
+        static::assertSame(
+            'testing_id',
             $TestedTable->getPrimaryKeyName()
         );
     }
@@ -172,15 +171,15 @@ class TableTest extends TestCase
 
     public function testGetName(): void
     {
-        $Table = new Table("NameThisTableDefinitelyHas");
-        $this->assertSame(
-            "NameThisTableDefinitelyHas",
+        $Table = new Table('NameThisTableDefinitelyHas');
+        static::assertSame(
+            'NameThisTableDefinitelyHas',
             $Table->getName()
         );
 
-        $Table = new Table("And_another");
-        $this->assertSame(
-            "And_another",
+        $Table = new Table('And_another');
+        static::assertSame(
+            'And_another',
             $Table->getName()
         );
     }
@@ -192,8 +191,8 @@ class TableTest extends TestCase
      */
     public function testColumnAdd(): void
     {
-        $Table = new Table("testedTable");
-        $ColumnToAdd = new Column("existing_column");
+        $Table = new Table('testedTable');
+        $ColumnToAdd = new Column('existing_column');
 
         $Table->columnAdd($ColumnToAdd);
         $this->addToAssertionCount(1);
@@ -202,28 +201,27 @@ class TableTest extends TestCase
 
         $col = $ColumnToAdd->endColumn();
 
-        $this->assertNotNull($col);
+        static::assertNotNull($col);
 
-        $this->assertSame(
-            "testedTable",
+        static::assertSame(
+            'testedTable',
             $col->getName()
         );
 
-        $this->assertNotNull(
-            $Table->columnGet("existing_column")
+        static::assertNotNull(
+            $Table->columnGet('existing_column')
         );
 
-        $this->assertNull(
-            $Table->columnGet("random_column_that_doesnt_exist")
+        static::assertNull(
+            $Table->columnGet('random_column_that_doesnt_exist')
         );
 
         //cannot add twice :)
-        try {
-            $Table->columnAdd($ColumnToAdd);
-            throw new Exception("Expected exception " . ColumnDefinitionExists::class . " not thrown!");
-        } catch (ColumnDefinitionExists $_) {
-            $this->addToAssertionCount(1);
-        }
-
+        $this->assertExceptionThrown(
+            ColumnDefinitionExists::class,
+            function() use ($Table, $ColumnToAdd) {
+                $Table->columnAdd($ColumnToAdd);
+            }
+        );
     }
 }

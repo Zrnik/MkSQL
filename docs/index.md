@@ -1,4 +1,4 @@
 # MkSQL Documentation Index
 
-- [Introduction and Requirements (../readme.md)](../readme.md)
+- [Introduction and Requirements (../readme.md)](../README.md)
 - [Usage Examples (usage.md)](usage.md)

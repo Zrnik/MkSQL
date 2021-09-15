@@ -1,4 +1,10 @@
-<?php declare(strict_types=1);
+<?php /** @noinspection PropertyInitializationFlawsInspection */
+declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock;
 
@@ -9,25 +15,25 @@ class PDO extends \PDO
     /**
      * @var mixed
      */
-    private $_expectedQuery = null;
+    private mixed $_expectedQuery = null;
     /**
      * @var mixed
      */
-    private $_expectParams = null;
+    private mixed $_expectParams = null;
     /**
      * @var mixed
      */
-    private $_mockResults = null;
+    private mixed $_mockResults = null;
 
     public function __construct()
     {
-        parent::__construct("sqlite::memory:", null, null, null);
+        parent::__construct('sqlite::memory:');
     }
 
     public function getAttribute($attribute)
     {
-        if ($attribute === PDO::ATTR_DRIVER_NAME) {
-            return "mysql";
+        if ($attribute === self::ATTR_DRIVER_NAME) {
+            return 'mysql';
         }
         return parent::getAttribute($attribute);
     }
@@ -57,6 +63,7 @@ class PDO extends \PDO
      * @param mixed $query
      * @param array<mixed>|null $options
      * @return PDOStatement<mixed>
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public function prepare(mixed $query, array $options = NULL): PDOStatement
     {

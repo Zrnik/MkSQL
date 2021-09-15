@@ -1,15 +1,12 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | AgronaroWebsite  
- * User: Programátor
- * Date: 19.10.2020 9:17
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 namespace Zrnik\MkSQL\Queries;
 
-
-use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Table;
 
 class QueryInfo

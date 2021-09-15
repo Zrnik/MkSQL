@@ -1,13 +1,11 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.08.2020 16:56
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-
 namespace Mock;
-
 
 use PDO;
 use Zrnik\MkSQL\Column;
@@ -43,11 +41,14 @@ class MockSQLMaker_ExistingTable_Second implements IQueryMaker
         // Create Definition
         $updater = new Updater($pdo);
         //Referenced Table
-        $updater->tableCreate("existing_1");
+        $updater->tableCreate('existing_1');
 
-        $table = $updater->tableCreate("existing_2");
-        $colParent = $table->columnCreate("parent")->setUnique()->setNotNull()->addForeignKey("existing_1.id");
-        $colCreate = $table->columnCreate("create_time");
+        /** @noinspection UselessUnsetInspection */
+        unset($table);
+
+        $table = $updater->tableCreate('existing_2');
+        $colParent = $table->columnCreate('parent')->setUnique()->setNotNull()->addForeignKey('existing_1.id');
+        $colCreate = $table->columnCreate('create_time');
         $Description->table = $table;
 
         // Add Columns to Definition

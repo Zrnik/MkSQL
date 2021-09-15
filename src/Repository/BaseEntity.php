@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL\Repository;
 
@@ -9,12 +14,11 @@ use ReflectionException;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
+use Zrnik\MkSQL\Exceptions\CircularReferenceDetectedException;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
-use Zrnik\MkSQL\Exceptions\InvalidEntityOrderException;
 use Zrnik\MkSQL\Exceptions\InvalidTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
-use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
@@ -31,6 +35,11 @@ use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Reflection;
+use function array_key_exists;
+use function count;
+use function in_array;
+use function is_array;
+use function is_string;
 
 abstract class BaseEntity
 {
@@ -72,12 +81,12 @@ abstract class BaseEntity
     }
 
     /**
-     * TODO: Test this!
      * @param string $propertyName
      * @return ReflectionProperty|null
      * @throws ReflectionFailedException
      */
-    public static function propertyReflection(string $propertyName): ?ReflectionProperty {
+    public static function propertyReflection(string $propertyName): ?ReflectionProperty
+    {
         $reflection = static::getReflectionClass(static::class);
         return Reflection::classGetProperty($reflection, $propertyName);
     }
@@ -98,7 +107,6 @@ abstract class BaseEntity
     //region Array
     /**
      * @return array<mixed>
-     * @throws ReflectionException
      * @throws InvalidArgumentException
      * @throws PrimaryKeyDefinitionException
      * @throws ReflectionFailedException
@@ -170,7 +178,6 @@ abstract class BaseEntity
     /**
      * @throws ReflectionFailedException
      * @throws InvalidArgumentException
-     * @throws ReflectionException
      * @throws PrimaryKeyDefinitionException
      */
     public function updateRawData(): void
@@ -266,7 +273,6 @@ abstract class BaseEntity
 
             // 4. If we have a "CustomType" set, we will convert
             // it with it!
-
             $propertyValue = static::customTypeDeserialize(
                 $propertyValue, $reflectionProperty
             );
@@ -278,6 +284,11 @@ abstract class BaseEntity
                         static::class, $propertyName
                     )
                 );
+            }
+
+
+            if ($propertyValue !== null && ($intrinsicType instanceof ReflectionNamedType) && $intrinsicType->isBuiltin()) {
+                settype($propertyValue, $intrinsicType->getName());
             }
 
             // 4. We rewrite the actual value:
@@ -421,7 +432,6 @@ abstract class BaseEntity
      * @return string
      * @throws InvalidArgumentException
      * @throws PrimaryKeyDefinitionException
-     * @throws ReflectionException
      * @throws ReflectionFailedException
      * @throws UnableToResolveTypeException
      */
@@ -459,7 +469,7 @@ abstract class BaseEntity
             );
         }
 
-        if(!$primaryKeyReflectionProperty->hasDefaultValue() || $primaryKeyReflectionProperty->getDefaultValue() !== null) {
+        if (!$primaryKeyReflectionProperty->hasDefaultValue() || $primaryKeyReflectionProperty->getDefaultValue() !== null) {
             throw new PrimaryKeyDefinitionException(
                 sprintf(
                     "Type of primary key for entity '%s' must have null as its default value!",
@@ -494,7 +504,6 @@ abstract class BaseEntity
      * @return string
      * @throws InvalidArgumentException
      * @throws PrimaryKeyDefinitionException
-     * @throws ReflectionException
      * @throws ReflectionFailedException
      * @throws UnableToResolveTypeException
      */
@@ -513,7 +522,7 @@ abstract class BaseEntity
             $reflectionProperty, CustomType::class
         );
 
-        if($attributeCustomType !== null) {
+        if ($attributeCustomType !== null) {
             $typeConverter = CustomTypeConverter::initialize(
                 Reflection::attributeGetArgument($attributeCustomType), $reflectionProperty
             );
@@ -591,7 +600,7 @@ abstract class BaseEntity
             /** @var BaseEntity $foreignClassName */
             $foreignClassName = Reflection::attributeGetArgument($foreignKeyAttribute);
             $keys[] = sprintf(
-                "%s.%s",
+                '%s.%s',
                 $foreignClassName::getTableName(),
                 $foreignClassName::getPrimaryKeyName()
             );
@@ -628,7 +637,7 @@ abstract class BaseEntity
      * @throws InvalidArgumentException
      */
     public static function customTypeSerialize(
-        mixed $propertyValue,
+        mixed              $propertyValue,
         ReflectionProperty $reflectionProperty
     ): mixed
     {
@@ -650,23 +659,21 @@ abstract class BaseEntity
 
     /**
      * @param Updater $updater
-     * @throws ReflectionException
-     * @throws RequiredClassAttributeMissingException
-     * @throws MkSQLException
-     * @throws MissingForeignKeyDefinitionInEntityException
+     * @param string[] $baseEntitiesWeHaveAlreadySeen
      */
-    public static function hydrateUpdater(Updater $updater): void
+    public static function hydrateUpdater(Updater $updater, array $baseEntitiesWeHaveAlreadySeen = []): void
     {
         $reflection = static::getReflectionClass(static::class);
 
-        $table = $updater->tableCreate(self::getTableName($reflection));
+        $table = $updater->tableCreate(self::getTableName($reflection), true);
 
         $table->setPrimaryKeyName(self::getPrimaryKeyName($reflection));
         $table->setPrimaryKeyType(self::getPrimaryKeyType($reflection));
 
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         // Columns:
-        foreach ($reflection->getProperties() as $property) {
+        foreach ($properties as $property) {
 
             //region Primary key is handled, if its primary key, skip it
             if (Reflection::propertyHasAttribute($property, PrimaryKey::class)) {
@@ -715,21 +722,34 @@ abstract class BaseEntity
             //endregion
 
             //region Check if referenced foreign key was previously defined (else it will result in an error!)
+
+            /**
+             * Instead of returning error, we will hydrate updater with the sub-class.
+             * We also need to look for infinite recursion and trow error only in that case.
+             */
+
             $foreignKeyAttribute = Reflection::propertyGetAttribute($property, ForeignKey::class);
+
+
             if ($foreignKeyAttribute !== null) {
 
                 $referencedEntityName = Reflection::attributeGetArgument($foreignKeyAttribute);
+
                 /** @var BaseEntity $referencedEntity */
                 $referencedEntity = $referencedEntityName;
-                $referencedTableName = $referencedEntity::getTableName();
-                $updaterTable = $updater->tableGet($referencedTableName);
 
-                if ($updaterTable === null) {
-                    throw new InvalidEntityOrderException(
-                        static::class, $referencedEntityName
+                if (in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)) {
+                    throw new CircularReferenceDetectedException(
+                        static::class, $property->getName()
                     );
                 }
+
+                $referencedEntity::hydrateUpdater(
+                    $updater,
+                    [...$baseEntitiesWeHaveAlreadySeen, static::class]
+                );
             }
+
             //endregion
 
             $column = $table->columnCreate(
@@ -765,6 +785,7 @@ abstract class BaseEntity
     public function setPrimaryKeyValue(mixed $newPrimaryKeyValue): void
     {
         $primaryKeyPropertyName = self::getPrimaryKeyReflectionProperty()->getName();
+        settype($newPrimaryKeyValue, self::getPrimaryKeyType()); // Transfer the type, so we don't get TypeError
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
         foreach ($this->getSubEntities() as $subEntity) {

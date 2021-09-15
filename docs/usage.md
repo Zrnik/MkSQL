@@ -11,8 +11,8 @@ an **important information** about `PRIMARY KEY` and **cloning columns**!
 
 If you are using this in your project you should not 
 call `Zrnik\MkSQL\Updater::intall();` method more than 
-once per table per runtime to save resources. This is only recommendation, 
-its not a mandatory thing. 
+once per table, per runtime to save resources. This is only recommendation, 
+it's not a mandatory thing. 
 
 Example:
 
@@ -255,7 +255,7 @@ $Sessions->columnCreate("account_id")
 
 $Sessions->columnCreate("token", "varchar(100)");
 
-// As column already has parent "accounts", we need to clone it
+// As column already has a parent "accounts", we need to clone it
 // (cloning will create new instance without parent)
 $Sessions->columnAdd(clone $sortColumn);
 ```

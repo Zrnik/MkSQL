@@ -1,9 +1,15 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL;
 
 use Nette\Utils\Strings;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use function strtolower;
 
 class Utils
 {
@@ -13,10 +19,10 @@ class Utils
      * @var string[]
      */
     private static array $_defaultAllowedCharacters = [
-        "A", "a", "B", "b", "C", "c", "D", "d", "E", "e", "F", "f", "G", "g", "H", "h", "I", "i", "J", "j",
-        "K", "k", "L", "l", "M", "m", "N", "n", "O", "o", "P", "p", "Q", "q", "R", "r", "S", "s", "T", "t",
-        "U", "u", "V", "v", "W", "w", "X", "x", "Y", "y", "Z", "z",
-        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "_"
+        'A', 'a', 'B', 'b', 'C', 'c', 'D', 'd', 'E', 'e', 'F', 'f', 'G', 'g', 'H', 'h', 'I', 'i', 'J', 'j',
+        'K', 'k', 'L', 'l', 'M', 'm', 'N', 'n', 'O', 'o', 'P', 'p', 'Q', 'q', 'R', 'r', 'S', 's', 'T', 't',
+        'U', 'u', 'V', 'v', 'W', 'w', 'X', 'x', 'Y', 'y', 'Z', 'z',
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_'
     ];
     /**
      * List of banned words in comments & default values!
@@ -25,8 +31,8 @@ class Utils
      * @var string[]
      */
     private static array $_Forbidden = [
-        "NOT NULL", "DEFAULT", "CREATE TABLE", "CONSTRAINT",
-        "REFERENCES", "CREATE UNIQUE INDEX", "PRIMARY KEY"
+        'NOT NULL', 'DEFAULT', 'CREATE TABLE', 'CONSTRAINT',
+        'REFERENCES', 'CREATE UNIQUE INDEX', 'PRIMARY KEY'
     ];
 
     /**
@@ -37,7 +43,7 @@ class Utils
      */
     public static function internalTestCommentsError(string $name): string
     {
-        return static::confirmName($name, ["/", "*", "-"]);
+        return static::confirmName($name, ['/', '*', '-']);
     }
 
     /**
@@ -52,14 +58,20 @@ class Utils
     private static function confirmName(string $name, array $AdditionalAllowed = []): string
     {
         // Comments are not allowed obviously :)
-        if (Strings::contains($name, "--") || Strings::contains($name, "/*") || Strings::contains($name, "*/"))
-            throw new InvalidArgumentException("Comment found in SQL query!");
+        if (Strings::contains($name, '--') || Strings::contains($name, '/*') || Strings::contains($name, '*/')) {
+            {
+                throw new InvalidArgumentException('Comment found in SQL query!');
+            }
+        }
 
         // Remove allowed characters, if the string isn't empty, it contains invalid characters!
         $Allowed = array_merge(static::$_defaultAllowedCharacters, $AdditionalAllowed);
 
-        if (str_replace($Allowed, "", $name) !== "")
-            throw new InvalidArgumentException("Argument '" . $name . "' contains invalid characters!");
+        if (str_replace($Allowed, '', $name) !== '') {
+            {
+                throw new InvalidArgumentException("Argument '" . $name . "' contains invalid characters!");
+            }
+        }
 
         // "It's a kind of fall-trough" - Freddie
         return Strings::toAscii($name);
@@ -98,7 +110,7 @@ class Utils
      */
     public static function confirmType(string $type): string
     {
-        return static::confirmName(str_replace(" ", "", $type), ["(", ")", ","]);
+        return static::confirmName(str_replace(' ', '', $type), ['(', ')', ',']);
     }
 
     /**
@@ -111,8 +123,11 @@ class Utils
      */
     public static function confirmKeyName(string $keyName, int $maxLen = 64): string
     {
-        if (Strings::length($keyName) > $maxLen)
-            return substr(md5($keyName), 0, min(32, $maxLen));
+        if (Strings::length($keyName) > $maxLen) {
+            {
+                return substr(md5($keyName), 0, min(32, $maxLen));
+            }
+        }
         return static::confirmName($keyName);
     }
 
@@ -125,13 +140,15 @@ class Utils
      */
     public static function confirmForeignKeyTarget(string $keyTarget): string
     {
-        $keyTarget = static::confirmName($keyTarget, ["."]);
+        $keyTarget = static::confirmName($keyTarget, ['.']);
 
-        if (!Strings::contains($keyTarget, "."))
+        if (!Strings::contains($keyTarget, '.')) {
             throw new InvalidArgumentException("Invalid foreign key target '" . $keyTarget . "'. Dot is missing.");
+        }
 
-        if (substr_count($keyTarget, '.') > 1)
+        if (substr_count($keyTarget, '.') > 1) {
             throw new InvalidArgumentException("Invalid foreign key target '" . $keyTarget . "'. Too many dots.");
+        }
 
         return $keyTarget;
     }
@@ -148,18 +165,20 @@ class Utils
      */
     public static function confirmComment(?string $name): ?string
     {
-        if ($name === null)
+        if ($name === null) {
             return null;
+        }
 
-        return static::checkForbiddenWords(static::confirmName($name, [",", ".", " "]));
+        return static::checkForbiddenWords(static::confirmName($name, [',', '.', ' ']));
     }
 
     /**
-     * Fall trough checking for banned words in string.
+     * Fall through checking for banned words in string.
      * Case Insensitive
      *
      * @param string $text
      * @return string
+     * @throws InvalidArgumentException
      */
     public static function checkForbiddenWords(string $text): string
     {
@@ -167,8 +186,9 @@ class Utils
             if (Strings::contains(
                 strtolower($text),
                 strtolower($ForbiddenWord)
-            ))
-                throw new \InvalidArgumentException("Forbidden word '" . strtolower($ForbiddenWord) . "' encountered!");
+            )) {
+                throw new InvalidArgumentException("Forbidden word '" . strtolower($ForbiddenWord) . "' encountered!");
+            }
         }
 
         return $text;

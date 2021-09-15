@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
 
@@ -12,7 +17,7 @@ class NullableStringTypeConverter extends CustomTypeConverter
      */
     public function serialize(mixed $value): mixed
     {
-        return $this->assertType($value, "string");
+        return $this->assertType($value, 'string');
     }
 
     public function deserialize(mixed $value): ?string
@@ -22,6 +27,6 @@ class NullableStringTypeConverter extends CustomTypeConverter
 
     public function getDatabaseType(): string
     {
-        return "text";
+        return 'text';
     }
 }

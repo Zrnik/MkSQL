@@ -1,11 +1,9 @@
 <?php declare(strict_types=1);
-
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.08.2020 15:47
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
@@ -41,10 +39,10 @@ class UpdaterTest extends TestCase
     public function testTableGet(): void
     {
         $Updater = new Updater($this->createPDO());
-        $Updater->tableCreate("someTable");
+        $Updater->tableCreate('someTable');
 
-        $this->assertNotNull($Updater->tableGet("someTable"));
-        $this->assertNull($Updater->tableGet("differentNonExistingTable"));
+        static::assertNotNull($Updater->tableGet('someTable'));
+        static::assertNull($Updater->tableGet('differentNonExistingTable'));
 
     }
 
@@ -56,7 +54,7 @@ class UpdaterTest extends TestCase
         $Updater = new Updater($this->createPDO());
 
         //No problem with adding table now
-        $Table = new Table("someTable");
+        $Table = new Table('someTable');
         $Updater->tableAdd($Table);
         $this->addToAssertionCount(1); //Created (because no exception)
 
@@ -77,14 +75,14 @@ class UpdaterTest extends TestCase
         $Updater = new Updater($this->createPDO());
 
         //No problem with adding table now
-        $Updater->tableCreate("someTable");
+        $Updater->tableCreate('someTable');
         $this->addToAssertionCount(1); //Created (because no exception)
 
         //Now it exists, it should throw an exception
         $this->assertExceptionThrown(
             TableDefinitionExists::class,
             function () use ($Updater) {
-                $Updater->tableCreate("someTable");
+                $Updater->tableCreate('someTable');
             }
         );
     }
@@ -97,12 +95,12 @@ class UpdaterTest extends TestCase
     {
         $Updater = new Updater($this->createPDO());
 
-        $this->assertSame(
+        static::assertSame(
             [],
             $Updater->tableList()
         );
 
-        $Updater->tableCreate("someTable");
+        $Updater->tableCreate('someTable');
 
 
         /**
@@ -112,25 +110,25 @@ class UpdaterTest extends TestCase
         $tableList = $Updater->tableList();
 
         /** @phpstan-ignore-next-line */
-        $this->assertArrayHasKey(
-            "someTable",
+        static::assertArrayHasKey(
+            'someTable',
             $tableList
         );
 
-        $this->assertIsObject($tableList["someTable"]);
+        static::assertIsObject($tableList['someTable']);
 
-        $Updater->tableCreate("anotherTable");
+        $Updater->tableCreate('anotherTable');
 
         $tableList = $Updater->tableList();
 
         /** @phpstan-ignore-next-line */
-        $this->assertArrayHasKey(
-            "someTable",
+        static::assertArrayHasKey(
+            'someTable',
             $tableList
         );
 
-        $this->assertArrayHasKey(
-            "anotherTable",
+        static::assertArrayHasKey(
+            'anotherTable',
             $tableList
         );
 

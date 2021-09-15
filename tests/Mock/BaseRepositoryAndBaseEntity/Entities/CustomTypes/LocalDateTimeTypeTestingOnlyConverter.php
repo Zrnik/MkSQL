@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
 
@@ -29,7 +34,7 @@ class LocalDateTimeTypeTestingOnlyConverter extends CustomTypeConverter
 
     public function getDatabaseType(): string
     {
-        return "varchar(255)";
+        return 'varchar(255)';
     }
 
 }

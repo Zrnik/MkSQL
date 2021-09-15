@@ -1,8 +1,8 @@
-<?php
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 06.08.2020 7:55
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
 namespace Zrnik\MkSQL\Queries\Tables;

@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Mock\BaseRepositoryAndBaseEntity\Entities;
 
@@ -17,21 +22,21 @@ use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
 use Zrnik\MkSQL\Repository\BaseEntity;
 
-#[TableName("invoice_list")]
+#[TableName('invoice_list')]
 class Invoice extends BaseEntity
 {
     #[PrimaryKey]
     public ?int $invoiceId = null;
 
-    #[ColumnType("varchar(64)")]
+    #[ColumnType('varchar(64)')]
     #[Unique]
     #[NotNull]
     public string $invoiceToken;
 
-    #[ColumnType("char(3)")]
+    #[ColumnType('char(3)')]
     #[NotNull]
     #[DefaultValue]
-    public string $invoiceCurrency = "EUR";
+    public string $invoiceCurrency = 'EUR';
 
     #[CustomType(LocalDateTimeTypeTestingOnlyConverter::class)]
     #[NotNull]

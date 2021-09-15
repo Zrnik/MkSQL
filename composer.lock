@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "aff8a1e6bced5c33588e93d2e0f6d8c7",
+    "content-hash": "80771baf92fe973eabf623e08b2071b7",
     "packages": [
         {
             "name": "jetbrains/phpstorm-attributes",
@@ -2587,16 +2587,16 @@
         },
         {
             "name": "zrnik/phpunit-exceptions",
-            "version": "v0.0.1",
+            "version": "v0.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Zrnik/PHPUnit-Exceptions.git",
-                "reference": "e212a9c22804a96425423961a6543fbc3321eac5"
+                "reference": "fe0074951c0b1e68c53f050d6e099f93e016397b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/e212a9c22804a96425423961a6543fbc3321eac5",
-                "reference": "e212a9c22804a96425423961a6543fbc3321eac5",
+                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/fe0074951c0b1e68c53f050d6e099f93e016397b",
+                "reference": "fe0074951c0b1e68c53f050d6e099f93e016397b",
                 "shasum": ""
             },
             "require": {
@@ -2604,13 +2604,13 @@
                 "phpunit/phpunit": "^9"
             },
             "require-dev": {
-                "phpstan/phpstan": "^0.12"
+                "phpstan/phpstan": "^0.12",
+                "roave/security-advisories": "dev-latest"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "Zrnik\\PHPUnit\\": "src/",
-                    "Tests\\": "tests/"
+                    "Zrnik\\PHPUnit\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -2626,9 +2626,9 @@
             "description": "Trait for easier exception testing in PHPUnit.",
             "support": {
                 "issues": "https://github.com/Zrnik/PHPUnit-Exceptions/issues",
-                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.1"
+                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.2"
             },
-            "time": "2021-04-19T11:17:17+00:00"
+            "time": "2021-09-15T08:02:29+00:00"
         }
     ],
     "aliases": [],

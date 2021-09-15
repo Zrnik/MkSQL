@@ -1,13 +1,11 @@
 <?php declare(strict_types=1);
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 01.09.2020 10:55
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-
 namespace Mock;
-
 
 use PDO;
 use PDOException;
@@ -22,7 +20,7 @@ class PDOStatement extends \PDOStatement
     /**
      * @var mixed
      */
-    private $_mockResult = null;
+    private mixed $_mockResult;
 
     /**
      * PDOStatement constructor.
@@ -44,6 +42,7 @@ class PDOStatement extends \PDOStatement
      * @param mixed ...$args
      * @return mixed
      * @throws Throwable
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public function fetchAll($mode = PDO::FETCH_BOTH, ...$args): mixed
     {
@@ -51,16 +50,17 @@ class PDOStatement extends \PDOStatement
     }
 
     /**
-     * @param int|null $mode
+     * @param int $mode
      * @param int $cursorOrientation
      * @param int $cursorOffset
      * @return mixed
      * @throws Throwable
+     * @noinspection PhpMissingParentCallCommonInspection
      */
-    public function fetch(int $mode = null, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0): mixed
+    public function fetch($mode = PDO::FETCH_BOTH, $cursorOrientation = PDO::FETCH_ORI_NEXT, $cursorOffset = 0): mixed
     {
         if ($this->_mockResult !== null) {
-            if (is_object($this->_mockResult) && $this->_mockResult instanceof Throwable) {
+            if ($this->_mockResult instanceof Throwable) {
                 //echo PHP_EOL."Throwable Mock".PHP_EOL;
                 throw $this->_mockResult;
             }
@@ -75,6 +75,8 @@ class PDOStatement extends \PDOStatement
     /**
      * @param array<mixed>|null $params
      * @return bool
+     * @noinspection GrazieInspection
+     * @noinspection PhpMissingParentCallCommonInspection
      */
     public function execute(?array $params = null): bool
     {
@@ -83,13 +85,16 @@ class PDOStatement extends \PDOStatement
                 if (
                     !isset($params[$ExpectedIndex])
                     ||
-                    $params[$ExpectedIndex] != $ExpectedParam
-                )
+                    $params[$ExpectedIndex] !== $ExpectedParam
+                ) {
                     throw new PDOException(
-                        "Mock PDOStatement expected '" . $ExpectedIndex . "' 
-                    at index '" . $ExpectedParam . "' but got
-                     '" . ($params[$ExpectedIndex] ?? strval(null)) . "'."
+                        // This is kind of fucked up lol...
+                        sprintf(
+                            "Mock PDOStatement expected '%s' at index '%s', but got '%s' instead.",
+                            $ExpectedIndex, $ExpectedParam, ($params[$ExpectedIndex] ?? 'null')
+                        )
                     );
+                }
             }
         }
         return true;

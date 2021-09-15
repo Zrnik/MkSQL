@@ -1,4 +1,9 @@
-<?php
+<?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL\Tracy;
 
@@ -12,6 +17,7 @@ use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Table;
+use function count;
 
 /**
  * This is still a mess...
@@ -39,28 +45,29 @@ class Panel implements IBarPanel
     {
         $_IconStyle = [
             self::RESULT_UP2DATE => [
-                self::ICON => $this->loadSvg("database-checkmark.svg"),
+                self::ICON => $this->loadSvg('database-checkmark.svg'),
                 self::COLOR => 'darkgreen'
             ],
 
             self::RESULT_CHANGES => [
-                self::ICON => $this->loadSvg("database-error.svg"),
+                self::ICON => $this->loadSvg('database-error.svg'),
                 self::COLOR => 'orange'
             ],
 
             self::RESULT_ERROR => [
-                self::ICON => $this->loadSvg("database-error.svg"),
+                self::ICON => $this->loadSvg('database-error.svg'),
                 self::COLOR => 'red'
             ],
 
             self::RESULT_UNINITIALIZED => [
-                self::ICON => $this->loadSvg("database-checkmark.svg"),
+                self::ICON => $this->loadSvg('database-checkmark.svg'),
                 self::COLOR => 'navy'
             ],
         ];
 
-        if (!isset($_IconStyle[$style]))
-            throw new InvalidArgumentException("Invalid icon style!");
+        if (!isset($_IconStyle[$style])) {
+            throw new InvalidArgumentException('Invalid icon style!');
+        }
 
         return $_IconStyle[$style];
     }
@@ -89,7 +96,7 @@ class Panel implements IBarPanel
             throw new Exception(
                 sprintf(
                     "Icon file '%s' was not found, if you are using 'vendor'" .
-                    " directory cleaner, please add an exception to MkSQL package.",
+                    ' directory cleaner, please add an exception to MkSQL package.',
                     $assetsFolder . $svgName
                 )
             );
@@ -110,7 +117,7 @@ class Panel implements IBarPanel
      * @return array<mixed>
      */
     #[Pure]
-    #[ArrayShape([self::HAS_ERROR => "bool", self::HAS_CHANGES => "bool"])]
+    #[ArrayShape([self::HAS_ERROR => 'bool', self::HAS_CHANGES => 'bool'])]
     public function getResult(): array
     {
         $queries = Measure::getQueryModification();
@@ -155,20 +162,20 @@ class Panel implements IBarPanel
 
         $style = $this->getIconStyle($imgStyle);
 
-        $PanelElement = Html::el("span", [
-            "title" => "MkSQL Panel",
-            "style" => "fill: " . $style[self::COLOR],
+        $PanelElement = Html::el('span', [
+            'title' => 'MkSQL Panel',
+            'style' => 'fill: ' . $style[self::COLOR],
         ]);
 
         $PanelElement->addHtml($style[self::ICON]);
         $ContentElement = $PanelElement->addHtml(
-            Html::el("span", ["class" => "tracy-label"])
+            Html::el('span', ['class' => 'tracy-label'])
         );
 
         if (Measure::$Driver !== null) {
             $ContentElement->addText(static::convertToMs(Measure::getTotalSpeed()));
-            $ContentElement->addText(" ms");
-            $ContentElement->addText(" / ");
+            $ContentElement->addText(' ms');
+            $ContentElement->addText(' / ');
             $ContentElement->addText(Measure::queryCountModification());
         }
 
@@ -181,24 +188,24 @@ class Panel implements IBarPanel
      */
     private function headerElement(bool $success = true): Html
     {
-        $elem = Html::el("h1")
-            ->style("width", "100%");
-        $elem->addText("MkSQL");
+        $elem = Html::el('h1')
+            ->style('width', '100%');
+        $elem->addText('MkSQL');
 
-        $topRight =  Html::el("span")
-            ->style("float", "right")
-            ->style("font-size", "12px")
-            ->style("margin-right", "8px")
+        $topRight =  Html::el('span')
+            ->style('float', 'right')
+            ->style('font-size', '12px')
+            ->style('margin-right', '8px')
         ;
 
         if ($success) {
             $topRight
                 ->addText(static::convertToMs(Measure::getTotalSpeed()))
-                ->addText(" ms")
-                ->addText(" / ")
+                ->addText(' ms')
+                ->addText(' / ')
                 ->addText(Measure::queryCountModification());
         } else {
-            $topRight->addText("uninitialized");
+            $topRight->addText('uninitialized');
         }
 
         $elem->addHtml(
@@ -213,7 +220,7 @@ class Panel implements IBarPanel
     private function subPanelSpeed(): Html
     {
 
-        return Html::el("table")
+        return Html::el('table')
             /**
              * Row: Driver
              */
@@ -222,11 +229,11 @@ class Panel implements IBarPanel
                 Html::el('tr')
                     ->addHtml(
                         Html::el('th')
-                            ->setText("Driver:")
+                            ->setText('Driver:')
                     )
                     ->addHtml(
                         Html::el('td')
-                            ->style("font-weight", "bold")
+                            ->style('font-weight', 'bold')
                             ->setText(
                                 DriverType::getName(Measure::$Driver)
                             )
@@ -240,11 +247,11 @@ class Panel implements IBarPanel
                 Html::el('tr')
                     ->addHtml(
                         Html::el('th')
-                            ->setText("Speed:")
+                            ->setText('Speed:')
                     )
                     ->addHtml(
                         Html::el('td')
-                            ->style("font-weight", "bold")
+                            ->style('font-weight', 'bold')
                             ->setText(
                                 static::convertToMs(Measure::getTotalSpeed(), 3) . ' ms'
                             )
@@ -258,16 +265,16 @@ class Panel implements IBarPanel
                 Html::el('tr')
                     ->addHtml(
                         Html::el('th')
-                            ->setText("Queries:")
+                            ->setText('Queries:')
                     )
                     ->addHtml(
                         Html::el('td')
                             ->addHtml(
-                                Html::el("b")->setText(Measure::queryCountDescription())
+                                Html::el('b')->setText(Measure::queryCountDescription())
                             )
-                            ->addText(" + ")
+                            ->addText(' + ')
                             ->addHtml(
-                                Html::el("b")->setText(Measure::queryCountModification())
+                                Html::el('b')->setText(Measure::queryCountModification())
                             )
                     )
             );
@@ -282,32 +289,32 @@ class Panel implements IBarPanel
         $tables = Measure::structureTableCount();
         $columns = Measure::structureColumnCount();
 
-        $table = Html::el("table")
+        $table = Html::el('table')
             ->addHtml(
-                Html::el("tr")
+                Html::el('tr')
                     ->addHtml(
-                        Html::el("th")
-                            ->setText("Table Name")
+                        Html::el('th')
+                            ->setText('Table Name')
                     )
                     ->addHtml(
-                        Html::el("th", ["style" => ["width" => "5%"]])
-                            ->setText("Prim.")
+                        Html::el('th', ['style' => ['width' => '5%']])
+                            ->setText('Prim.')
                     )
                     ->addHtml(
-                        Html::el("th", ["style" => ["width" => "5%"]])
-                            ->setText("Cols")
+                        Html::el('th', ['style' => ['width' => '5%']])
+                            ->setText('Cols')
                     )
                     ->addHtml(
-                        Html::el("th", ["style" => ["width" => "5%"]])
-                            ->setText("Calls")
+                        Html::el('th', ['style' => ['width' => '5%']])
+                            ->setText('Calls')
                     )
                     ->addHtml(
-                        Html::el("th")
-                            ->setText("Speed")
+                        Html::el('th')
+                            ->setText('Speed')
                     )
                     ->addHtml(
-                        Html::el("th")
-                            ->setText("Details")
+                        Html::el('th')
+                            ->setText('Details')
                     )
 
             );
@@ -316,54 +323,61 @@ class Panel implements IBarPanel
             /**
              * @var Table $tableObject
              */
-            $tableObject = $_tableDefinition["objects"][0];
+            $tableObject = $_tableDefinition['objects'][0];
 
-            $totalCalls = $_tableDefinition["calls"];
+            $totalCalls = $_tableDefinition['calls'];
             $totalColumns = count(Measure::structureColumnList($tableObject->getName()??'unknown table'));
 
-            $table->addHtml(Html::el("tr")
+            $table->addHtml(Html::el('tr')
                 ->addHtml(
-                    Html::el("td")
+                    Html::el('td')
                         ->setHtml(
                             //Security: Replace the tag for already escaped html element!
                             $this->confirmString(
                                 str_replace(
-                                    "_",
-                                    "&ZeroWidthSpace;_",
-                                    Html::el()->setText($tableObject->getName() ?? 'unknown table')
+                                    '_',
+                                    '&ZeroWidthSpace;_',
+                                    Html::el()
+                                        ->setText(
+                                            $tableObject->getName() ?? 'unknown table'
+                                        )
+                                    ->render()
                                 )
                             )
                         )
                 )
                 ->addHtml(
-                    Html::el("td")
+                    Html::el('td')
                         ->setText($tableObject->getPrimaryKeyName())
                 )
                 ->addHtml(
-                    Html::el("td")
+                    Html::el('td')
                         ->setText($totalColumns)
                 )
                 ->addHtml(
-                    Html::el("td")
-                        ->style("color", ($totalCalls > 1 ? "maroon" : "black"))
+                    Html::el('td')
+                        ->style('color', ($totalCalls > 1 ? 'maroon' : 'black'))
                         ->setText($totalCalls)
-                        ->addText("x")
+                        ->addText('x')
                 )
                 ->addHtml(
-                    Html::el("td")
-                        ->style("font-weight", "bold")
+                    Html::el('td')
+                        ->style('font-weight', 'bold')
                         ->setText(
                             static::convertToMs(
                                 Measure::getTableTotalSpeed($tableObject->getName()),
                                 3
                             )
                         )
-                        ->addText(" ms")
+                        ->addText(' ms')
                 )
                 ->addHtml(
-                    Html::el("td")
+                    Html::el('td')
                         ->addHtml(
-                            $this->createToggleHandle("table-detail-" . $tableObject->getName(), "Detail")
+                            $this->createToggleHandle(
+                                'table-detail-' . $tableObject->getName(),
+                                Html::el()->setText('Detail')
+                            )
                         )
                 )
             );
@@ -373,15 +387,15 @@ class Panel implements IBarPanel
 
             //Speeds Detail:
             $elementDetail->addHtml(
-                Html::el("table")
+                Html::el('table')
                     ->addHtml(
-                        Html::el("tr")
+                        Html::el('tr')
                             ->addHtml(
-                                Html::el("th")
-                                    ->setText("Describe:")
+                                Html::el('th')
+                                    ->setText('Describe:')
                             )
                             ->addHtml(
-                                Html::el("td")
+                                Html::el('td')
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
@@ -391,17 +405,17 @@ class Panel implements IBarPanel
                                             3
                                         )
                                     )
-                                    ->addText(" ms")
+                                    ->addText(' ms')
                             )
                     )
                     ->addHtml(
-                        Html::el("tr")
+                        Html::el('tr')
                             ->addHtml(
-                                Html::el("th")
-                                    ->setText("Generate:")
+                                Html::el('th')
+                                    ->setText('Generate:')
                             )
                             ->addHtml(
-                                Html::el("td")
+                                Html::el('td')
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
@@ -411,17 +425,17 @@ class Panel implements IBarPanel
                                             3
                                         )
                                     )
-                                    ->addText(" ms")
+                                    ->addText(' ms')
                             )
                     )
                     ->addHtml(
-                        Html::el("tr")
+                        Html::el('tr')
                             ->addHtml(
-                                Html::el("th")
-                                    ->setText("Execute:")
+                                Html::el('th')
+                                    ->setText('Execute:')
                             )
                             ->addHtml(
-                                Html::el("td")
+                                Html::el('td')
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
@@ -431,17 +445,17 @@ class Panel implements IBarPanel
                                             3
                                         )
                                     )
-                                    ->addText(" ms")
+                                    ->addText(' ms')
                             )
                     )
                     ->addHtml(
-                        Html::el("tr")
+                        Html::el('tr')
                             ->addHtml(
-                                Html::el("th")
-                                    ->setText("Total:")
+                                Html::el('th')
+                                    ->setText('Total:')
                             )
                             ->addHtml(
-                                Html::el("td")
+                                Html::el('td')
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableTotalSpeed(
@@ -450,7 +464,7 @@ class Panel implements IBarPanel
                                             3
                                         )
                                     )
-                                    ->addText(" ms")
+                                    ->addText(' ms')
                             )
                     )
 
@@ -458,20 +472,20 @@ class Panel implements IBarPanel
             );
 
             //TODO: Make detail more readable...
-            $detailDataTable = Html::el("table");
+            $detailDataTable = Html::el('table');
 
             $detailDataTable->addHtml(
-                Html::el("tr")
+                Html::el('tr')
                     ->addHtml(
-                        Html::el("th", ["style" => "width: 25%;"])
-                            ->setText("Col. Name")
+                        Html::el('th', ['style' => 'width: 25%;'])
+                            ->setText('Col. Name')
                     )
                     ->addHtml(
-                        Html::el("th", ["style" => "width: 15%;"])
-                            ->setText("Type")
+                        Html::el('th', ['style' => 'width: 15%;'])
+                            ->setText('Type')
                     )
                     ->addHtml(
-                        Html::el("th", ["style" => "width: 60%;"])
+                        Html::el('th', ['style' => 'width: 60%;'])
                     )
             );
 
@@ -479,27 +493,27 @@ class Panel implements IBarPanel
             /** @var Column $columnObject */
             foreach (Measure::structureColumnList($tableObject->getName()??'unknown table') as $columnObject) {
                 $detailDataTable->addHtml(
-                    Html::el("tr", ["style" => ["background-color" => "rgba(0,200,255,0.1);"]])
+                    Html::el('tr', ['style' => ['background-color' => 'rgba(0,200,255,0.1);']])
                         ->addHtml(
-                            Html::el("td")
+                            Html::el('td')
                                 ->setText($columnObject->getName())
                         )
                         ->addHtml(
-                            Html::el("td")
+                            Html::el('td')
                                 ->setText($columnObject->getType())
                         )
                         ->addHtml(
-                            Html::el("td")
+                            Html::el('td')
                                 ->addHtml(
-                                    Html::el("table")
+                                    Html::el('table')
                                         ->addHtml(
-                                            Html::el("tr")
+                                            Html::el('tr')
                                                 ->addHtml(
-                                                    Html::el("th", ["style" => "width: 30%;"])
-                                                        ->setText("Not Null")
+                                                    Html::el('th', ['style' => 'width: 30%;'])
+                                                        ->setText('Not Null')
                                                 )
                                                 ->addHtml(
-                                                    Html::el("td", ["style" => "width: 70%;"])
+                                                    Html::el('td', ['style' => 'width: 70%;'])
                                                         ->addHtml(
                                                             static::yesNo($columnObject->getNotNull())
                                                         )
@@ -507,13 +521,13 @@ class Panel implements IBarPanel
 
                                         )
                                         ->addHtml(
-                                            Html::el("tr")
+                                            Html::el('tr')
                                                 ->addHtml(
-                                                    Html::el("th")
-                                                        ->setText("Is Unique")
+                                                    Html::el('th')
+                                                        ->setText('Is Unique')
                                                 )
                                                 ->addHtml(
-                                                    Html::el("td")
+                                                    Html::el('td')
                                                         ->addHtml(
                                                             static::yesNo($columnObject->getUnique())
                                                         )
@@ -521,43 +535,43 @@ class Panel implements IBarPanel
 
                                         )
                                         ->addHtml(
-                                            Html::el("tr")
+                                            Html::el('tr')
                                                 ->addHtml(
-                                                    Html::el("th")
-                                                        ->setText("Default Value")
+                                                    Html::el('th')
+                                                        ->setText('Default Value')
                                                 )
                                                 ->addHtml(
-                                                    Html::el("td")
+                                                    Html::el('td')
                                                         ->addHtml(
-                                                            (($columnObject->getDefault() === null) ? "Unset" : Html::el("b")->addText("\"")->addText($columnObject->getDefault())->addText("\""))
+                                                            (($columnObject->getDefault() === null) ? 'Unset' : Html::el('b')->addText('"')->addText($columnObject->getDefault())->addText('"'))
                                                         )
                                                 )
 
                                         )
                                         ->addHtml(
-                                            Html::el("tr")
+                                            Html::el('tr')
                                                 ->addHtml(
-                                                    Html::el("th")
-                                                        ->setText("Comment")
+                                                    Html::el('th')
+                                                        ->setText('Comment')
                                                 )
                                                 ->addHtml(
-                                                    Html::el("td")
+                                                    Html::el('td')
                                                         ->addHtml(
-                                                            (($columnObject->getComment() === null) ? "Unset" : Html::el("b")->addText("\"")->addText($columnObject->getComment())->addText("\""))
+                                                            (($columnObject->getComment() === null) ? 'Unset' : Html::el('b')->addText('"')->addText($columnObject->getComment())->addText('"'))
                                                         )
                                                 )
 
                                         )
                                         ->addHtml(
-                                            Html::el("tr")
+                                            Html::el('tr')
                                                 ->addHtml(
-                                                    Html::el("th")
-                                                        ->setText("Foreign Keys")
+                                                    Html::el('th')
+                                                        ->setText('Foreign Keys')
                                                 )
                                                 ->addHtml(
-                                                    Html::el("td")
+                                                    Html::el('td')
                                                         ->addHtml(
-                                                            (count($columnObject->getForeignKeys()) === 0 ? "None" : Debugger::dump($columnObject->getForeignKeys(), true))
+                                                            (count($columnObject->getForeignKeys()) === 0 ? 'None' : Debugger::dump($columnObject->getForeignKeys(), true))
                                                         )
                                                 )
 
@@ -572,30 +586,20 @@ class Panel implements IBarPanel
 
             }
 
-
-            /*
-
-
-
-
-
-                $PanelHtml .= '<tr>';
-                $PanelHtml .= '<th>Foreign Keys</th>';
-                $PanelHtml .= '<td>' .  . '</td>';
-                $PanelHtml .= '</tr>';
-
-*/
-
-
             $elementDetail->addHtml($detailDataTable);
 
-            //Additional TR for the table stripes!
-            $table->addHtml(Html::el("tr"));
+            /**
+             * This is an additional <tr> element for the table stripes to alternate!
+             * @noinspection DisconnectedForeachInstructionInspection
+             * @noinspection GrazieInspection
+             */
+            $table->addHtml(Html::el('tr'));
+
             $table->addHtml(
                 $this->createToggleContainer(
-                    "table-detail-" . $tableObject->getName(),
-                    "tr",
-                    Html::el("td", ["colspan" => 6])
+                    'table-detail-' . $tableObject->getName(),
+                    'tr',
+                    Html::el('td', ['colspan' => 6])
                         ->addHtml($elementDetail)
                 )
             );
@@ -603,41 +607,41 @@ class Panel implements IBarPanel
         }
 
         $table->addHtml(
-            Html::el("tr")
+            Html::el('tr')
                 ->addHtml(
-                    Html::el("td", ["colspan" => 4, "style" => ["text-align" => "right"]])
-                        ->setText("Total:")
+                    Html::el('td', ['colspan' => 4, 'style' => ['text-align' => 'right']])
+                        ->setText('Total:')
                 )
                 ->addHtml(
-                    Html::el("th")
+                    Html::el('th')
                         ->setText(
                             static::convertToMs(
                                 Measure::getTableTotalSpeed(),
                                 3
                             )
                         )
-                        ->addText(" ms")
+                        ->addText(' ms')
                 )
                 ->addHtml(
-                    Html::el("td")
+                    Html::el('td')
                 )
         );
 
 
         return $this->createToggle(
-            "structure",
-            Html::el("")
-                ->addText("Structure")
-                ->addText(" ")
-                ->addText("(")
+            'structure',
+            Html::el('')
+                ->addText('Structure')
+                ->addText(' ')
+                ->addText('(')
                 ->addText($tables)
-                ->addText(" ")
-                ->addText("table" . static::s($tables))
-                ->addText(", ")
+                ->addText(' ')
+                ->addText('table' . static::s($tables))
+                ->addText(', ')
                 ->addText($columns)
-                ->addText(" ")
-                ->addText("column" . static::s($columns))
-                ->addText(")")
+                ->addText(' ')
+                ->addText('column' . static::s($columns))
+                ->addText(')')
             ,
             $table
         );
@@ -651,21 +655,21 @@ class Panel implements IBarPanel
     {
         $descriptionQueryList = Measure::getQueryDescription();
 
-        $table = Html::el("table");
+        $table = Html::el('table');
 
         $table->addHtml(
-            Html::el("tr")
+            Html::el('tr')
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("#")
+                    Html::el('th')
+                        ->setText('#')
                 )
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("Query")
+                    Html::el('th')
+                        ->setText('Query')
                 )
                 ->addHtml(
-                    Html::el("th style=\"width: 15%;\"")
-                        ->setText("Speed")
+                    Html::el('th style="width: 15%;"')
+                        ->setText('Speed')
                 )
         );
 
@@ -675,19 +679,19 @@ class Panel implements IBarPanel
             $idx++; //It's intentional to start from 1
 
             $table->addHtml(
-                Html::el("tr", ["style" => ["background-color" => ($queryInfo->isSuccess ? "rgba(0,255,0,0.1)" : "rgba(255,0,0,0.1)")]])
+                Html::el('tr', ['style' => ['background-color' => ($queryInfo->isSuccess ? 'rgba(0,255,0,0.1)' : 'rgba(255,0,0,0.1)')]])
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setText($idx)
                     )
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setText($queryInfo->querySql)
                     )
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setText(static::convertToMs($queryInfo->executionSpeed, 3))
-                            ->addText(" ms")
+                            ->addText(' ms')
                     )
             );
 
@@ -697,17 +701,17 @@ class Panel implements IBarPanel
 
         if (count($descriptionQueryList) === 0) {
             $table->addHtml(
-                Html::el("tr", ["style" => ["background-color" => "rgba(0,150,0,0.1)"]])
+                Html::el('tr', ['style' => ['background-color' => 'rgba(0,150,0,0.1)']])
                     ->addHtml(
-                        Html::el("td", [
-                            "colspan" => 3,
-                            "style" => [
-                                "color" => "darkgreen",
-                                "font-weight" => "bold",
-                                "text-align" => "center"
+                        Html::el('td', [
+                            'colspan' => 3,
+                            'style' => [
+                                'color' => 'darkgreen',
+                                'font-weight' => 'bold',
+                                'text-align' => 'center'
                             ]
                         ])
-                            ->setText("No queries found!")
+                            ->setText('No queries found!')
                     )
 
             );
@@ -715,32 +719,32 @@ class Panel implements IBarPanel
 
 
         $table->addHtml(
-            Html::el("tr")
+            Html::el('tr')
                 ->addHtml(
-                    Html::el("td colspan=2")
+                    Html::el('td colspan=2')
                 )
                 ->addHtml(
-                    Html::el("th")
+                    Html::el('th')
                         ->setText(static::convertToMs($execSpeedTotal, 3))
-                        ->addText(" ms")
+                        ->addText(' ms')
                 )
         );
 
         return $this->createToggle(
-            "query-panel-description",
-            Html::el("")
-                ->addText("Description queries")
-                ->addText(" ")
-                ->addText("(")
+            'query-panel-description',
+            Html::el()
+                ->addText('Description queries')
+                ->addText(' ')
+                ->addText('(')
                 ->addText(
                     static::convertToMs(
                         Measure::querySpeedDescription()
                     )
                 )
-                ->addText(" ms")
-                ->addText(" / ")
+                ->addText(' ms')
+                ->addText(' / ')
                 ->addText(Measure::queryCountDescription())
-                ->addText(")")
+                ->addText(')')
             ,
             $table
         );
@@ -753,37 +757,37 @@ class Panel implements IBarPanel
     {
         $modificationQueryList = Measure::getQueryModification();
 
-        $table = Html::el("table");
+        $table = Html::el('table');
 
         $table->addHtml(
-            Html::el("tr")
+            Html::el('tr')
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("Table")
+                    Html::el('th')
+                        ->setText('Table')
                 )
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("Column")
+                    Html::el('th')
+                        ->setText('Column')
                 )
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("Executed")
+                    Html::el('th')
+                        ->setText('Executed')
                 )
                 ->addHtml(
-                    Html::el("th")
-                        ->setText("Error")
+                    Html::el('th')
+                        ->setText('Error')
                 )
                 ->addHtml(
-                    Html::el("th style=\"width: 20%;\"")
-                        ->setText("Speed")
+                    Html::el('th style="width: 20%;"')
+                        ->setText('Speed')
                 )
         );
 
-        $idx = 0;
         $execSpeedTotal = 0;
         foreach ($modificationQueryList as $query) {
 
             $textColor = 'black';
+            /** @noinspection PhpUnusedLocalVariableInspection */
             $backgroundColor = 'rgba(0,0,0,0)';
 
             if ($query->executed) {
@@ -804,51 +808,51 @@ class Panel implements IBarPanel
 
 
             $table->addHtml(
-                Html::el("tr", [
-                    "style" => [
-                        "color" => $textColor,
-                        "background-color" => $backgroundColor
+                Html::el('tr', [
+                    'style' => [
+                        'color' => $textColor,
+                        'background-color' => $backgroundColor
                     ]
                 ])
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setText($query->getTable()->getName()??'unknown table')
                     )
                     ->addHtml(
-                        Html::el("td")
-                            ->setText(($query->getColumn() === null ? "-" : $query->getColumn()->getName()))
+                        Html::el('td')
+                            ->setText(($query->getColumn() === null ? '-' : $query->getColumn()->getName()))
                     )
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setHtml(
                                 static::yesNo($query->executed, $query->executed)
                             )
                     )
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setHtml(
                                 static::yesNoInverted($query->errorText !== null, $query->executed)
                             )
                     )
                     ->addHtml(
-                        Html::el("td")
+                        Html::el('td')
                             ->setText(static::convertToMs($query->speed, 3))
-                            ->addText(" ms")
+                            ->addText(' ms')
                     )
             );
 
 
             $table->addHtml(
-                Html::el("tr", [
-                    "style" => [
-                        "color" => $textColor,
-                        "background-color" => $backgroundColor
+                Html::el('tr', [
+                    'style' => [
+                        'color' => $textColor,
+                        'background-color' => $backgroundColor
                     ]
                 ])
                     ->addHtml(
-                        Html::el("td", ["colspan" => 5])
+                        Html::el('td', ['colspan' => 5])
                             ->addHtml(
-                                Html::el("b")
+                                Html::el('b')
                                     ->setText($query->getQuery()
                                     )
                             )
@@ -858,14 +862,14 @@ class Panel implements IBarPanel
 
 
             $table->addHtml(
-                Html::el("tr", [
-                    "style" => [
-                        "color" => $textColor,
-                        "background-color" => $backgroundColor
+                Html::el('tr', [
+                    'style' => [
+                        'color' => $textColor,
+                        'background-color' => $backgroundColor
                     ]
                 ])
                     ->addHtml(
-                        Html::el("td", ["colspan" => 5])
+                        Html::el('td', ['colspan' => 5])
                             ->setText($query->getReason())
                     )
 
@@ -875,14 +879,14 @@ class Panel implements IBarPanel
             if ($query->errorText !== null) {
 
                 $table->addHtml(
-                    Html::el("tr", [
-                        "style" => [
-                            "color" => $textColor,
-                            "background-color" => $backgroundColor
+                    Html::el('tr', [
+                        'style' => [
+                            'color' => $textColor,
+                            'background-color' => $backgroundColor
                         ]
                     ])
                         ->addHtml(
-                            Html::el("td", ["colspan" => 5])
+                            Html::el('td', ['colspan' => 5])
                                 ->setText($query->errorText)
                         )
 
@@ -896,17 +900,17 @@ class Panel implements IBarPanel
 
         if (count($modificationQueryList) === 0) {
             $table->addHtml(
-                Html::el("tr", ["style" => ["background-color" => "rgba(0,150,0,0.1)"]])
+                Html::el('tr', ['style' => ['background-color' => 'rgba(0,150,0,0.1)']])
                     ->addHtml(
-                        Html::el("td", [
-                            "colspan" => 5,
-                            "style" => [
-                                "color" => "darkgreen",
-                                "font-weight" => "bold",
-                                "text-align" => "center"
+                        Html::el('td', [
+                            'colspan' => 5,
+                            'style' => [
+                                'color' => 'darkgreen',
+                                'font-weight' => 'bold',
+                                'text-align' => 'center'
                             ]
                         ])
-                            ->setText("No queries found!")
+                            ->setText('No queries found!')
                     )
 
             );
@@ -914,32 +918,32 @@ class Panel implements IBarPanel
 
 
         $table->addHtml(
-            Html::el("tr")
+            Html::el('tr')
                 ->addHtml(
-                    Html::el("td colspan=4")
+                    Html::el('td colspan=4')
                 )
                 ->addHtml(
-                    Html::el("th")
+                    Html::el('th')
                         ->setText(static::convertToMs($execSpeedTotal, 3))
-                        ->addText(" ms")
+                        ->addText(' ms')
                 )
         );
 
         return $this->createToggle(
-            "query-panel-modification",
-            Html::el("")
-                ->addText("Modification queries")
-                ->addText(" ")
-                ->addText("(")
+            'query-panel-modification',
+            Html::el('')
+                ->addText('Modification queries')
+                ->addText(' ')
+                ->addText('(')
                 ->addText(
                     static::convertToMs(
                         Measure::querySpeedModification()
                     )
                 )
-                ->addText(" ms")
-                ->addText(" / ")
+                ->addText(' ms')
+                ->addText(' / ')
                 ->addText(Measure::queryCountModification())
-                ->addText(")")
+                ->addText(')')
             ,
             $table, false
         );
@@ -954,19 +958,17 @@ class Panel implements IBarPanel
 
         if (Measure::$Driver === null) {
 
-            $UninitializedHTML = Html::el("div", ["class" => "tracy-inner"]);
-            $Inner = $UninitializedHTML->addHtml(Html::el("div", ["class" => "tracy-inner-container"]));
+            $UninitializedHTML = Html::el('div', ['class' => 'tracy-inner']);
+            $Inner = $UninitializedHTML->addHtml(Html::el('div', ['class' => 'tracy-inner-container']));
 
             $Inner->addHtml(
                 $this->headerElement(false)
             );
 
-            return $UninitializedHTML;
+            return $UninitializedHTML->render();
         }
 
-        $panelSpeed = microtime(true);
-
-        $panelContent = Html::el("");
+        $panelContent = Html::el('');
 
         //Header:
         $panelContent->addHtml(
@@ -974,21 +976,21 @@ class Panel implements IBarPanel
         );
 
         //Tracy Inner
-        $panelContent->addHtml(Html::el("div", ["class" => "tracy-inner"])
+        $panelContent->addHtml(Html::el('div', ['class' => 'tracy-inner'])
             ->addHtml(
-                Html::el("div", ["class" => "tracy-inner-container"])
+                Html::el('div', ['class' => 'tracy-inner-container'])
                     ->addHtml(
                         $this->subPanelSpeed()
                     )
-                    ->addHtml(Html::el("br"))
+                    ->addHtml(Html::el('br'))
                     ->addHtml(
                         $this->subPanelStructure()
                     )
-                    ->addHtml(Html::el("br"))
+                    ->addHtml(Html::el('br'))
                     ->addHtml(
                         $this->subPanelDescription()
                     )
-                    ->addHtml(Html::el("br"))
+                    ->addHtml(Html::el('br'))
                     ->addHtml(
                         $this->subPanelModification()
                     )
@@ -1002,18 +1004,18 @@ class Panel implements IBarPanel
 
     /**
      * @param string $id
-     * @param string $header
+     * @param Html<Html> $header
      * @param bool $defaultHidden
      * @return Html<Html>
      */
-    private function createToggleHandle(string $id, string $header, bool $defaultHidden = true): Html
+    private function createToggleHandle(string $id, Html $header, bool $defaultHidden = true): Html
     {
         $id = static::createRealId($id);
 
-        return Html::el("a")
-            ->href("#" . $id)
-            ->class("tracy-toggle", true)
-            ->class("tracy-collapsed", $defaultHidden)
+        return Html::el('a')
+            ->href('#' . $id)
+            ->class('tracy-toggle', true)
+            ->class('tracy-collapsed', $defaultHidden)
             ->addHtml($header);
     }
 
@@ -1028,22 +1030,22 @@ class Panel implements IBarPanel
     {
         $id = static::createRealId($id);
 
-        return Html::el($elem, ["id" => $id])
-            ->class("tracy-collapsed", $defaultHidden)
+        return Html::el($elem, ['id' => $id])
+            ->class('tracy-collapsed', $defaultHidden)
             ->addHtml($content);
     }
 
 
     /**
      * @param string $id
-     * @param string $header
+     * @param Html<Html> $header
      * @param Html<Html> $content
      * @param bool $defaultHidden
      * @return Html<Html>
      */
-    private function createToggle(string $id, string $header, Html $content, bool $defaultHidden = true): Html
+    private function createToggle(string $id, Html $header, Html $content, bool $defaultHidden = true): Html
     {
-        return Html::el("")
+        return Html::el('')
 
             // Handle:
             ->addHtml(
@@ -1052,10 +1054,10 @@ class Panel implements IBarPanel
 
             // Content:
             ->addHtml(
-                $this->createToggleContainer($id, "div", $content, $defaultHidden)
+                $this->createToggleContainer($id, 'div', $content, $defaultHidden)
             )
             ->addHtml(
-                Html::el("br")
+                Html::el('br')
             );
     }
 
@@ -1093,33 +1095,19 @@ class Panel implements IBarPanel
     }
 
     /**
-     * Quer[y]/ Quer[ies]
-     * @param int $count
-     * @return string
-     * @noinspection SpellCheckingInspection
-     */
-    private static function ies(int $count): string
-    {
-        if ($count !== 1) {
-            return 'ies';
-        }
-        return 'y';
-    }
-
-    /**
      * @param bool $yesNo
      * @param bool $colors
      * @return Html<Html>
      */
     private static function yesNoInverted(bool $yesNo, bool $colors = true): Html
     {
-        $text = $yesNo ? "Yes" : "No";
-        $color = $yesNo ? "maroon" : "darkgreen";
+        $text = $yesNo ? 'Yes' : 'No';
+        $color = $yesNo ? 'maroon' : 'darkgreen';
 
-        $element = Html::el("b");
+        $element = Html::el('b');
 
         if ($colors) {
-            $element->style("color", $color);
+            $element->style('color', $color);
         }
 
         $element->setText($text);
@@ -1133,13 +1121,13 @@ class Panel implements IBarPanel
      */
     private static function yesNo(bool $yesNo, bool $colors = true): Html
     {
-        $text = $yesNo ? "Yes" : "No";
-        $color = $yesNo ? "darkgreen" : "maroon";
+        $text = $yesNo ? 'Yes' : 'No';
+        $color = $yesNo ? 'darkgreen' : 'maroon';
 
-        $element = Html::el("b");
+        $element = Html::el('b');
 
         if ($colors) {
-            $element->style("color", $color);
+            $element->style('color', $color);
         }
 
         $element->setText($text);

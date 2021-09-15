@@ -1,63 +1,68 @@
 <?php declare(strict_types=1);
 
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 31.08.2020 15:45
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
-
 
 use Mock\MockSQLMaker_ExistingTable_First;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Table;
 use Zrnik\MkSQL\Updater;
+use Zrnik\PHPUnit\Exceptions;
 
 class ColumnTest extends TestCase
 {
+    use Exceptions;
+
     /**
      * @throws Exception
      */
     public function testConstructor(): void
     {
-        new Column("tested");
+        new Column('tested');
         $this->addToAssertionCount(1);
 
-        new Column("tested", "text");
+        new Column('tested', 'text');
         $this->addToAssertionCount(1);
 
-        new Column("tested", "something(10, 20, 30)");
+        new Column('tested', 'something(10, 20, 30)');
         $this->addToAssertionCount(1);
 
-        try {
-            new Column("tested.table", "text");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
 
-        try {
-            new Column("tested", "text.value");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () {
+                new Column('tested.table', 'text');
+            }
+        );
+
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () {
+                new Column('tested', 'text.value');
+            }
+        );
     }
 
     public function testGetName(): void
     {
-        $tested1 = new Column("tested_column_1");
-        $this->assertSame(
-            "tested_column_1",
+        $tested1 = new Column('tested_column_1');
+        static::assertSame(
+            'tested_column_1',
             $tested1->getName()
         );
 
-        $tested2 = new Column("testing_different_value");
-        $this->assertSame(
-            "testing_different_value",
+        $tested2 = new Column('testing_different_value');
+        static::assertSame(
+            'testing_different_value',
             $tested2->getName()
         );
     }
@@ -69,45 +74,46 @@ class ColumnTest extends TestCase
     {
         $updater = new Updater(new \Mock\PDO());
 
-        $updater->tableCreate("accounts");
-        $sessions = $updater->tableCreate("sessions")
-            ->columnCreate("account");
+        $updater->tableCreate('accounts');
+        $sessions = $updater->tableCreate('sessions')
+            ->columnCreate('account');
 
-        $this->assertSame(
+        static::assertSame(
             [],
             $sessions->getForeignKeys()
         );
 
-        $sessions->addForeignKey("accounts.id");
+        $sessions->addForeignKey('accounts.id');
 
-        $this->assertSame(
+        static::assertSame(
             [
-                "accounts.id"
+                'accounts.id'
             ],
             $sessions->getForeignKeys()
         );
 
-        try {
-            $sessions->addForeignKey("double.dot.error");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($sessions) {
+                $sessions->addForeignKey('double.dot.error');
+            }
+        );
 
-        try {
-            $sessions->addForeignKey("no_dot_error");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($sessions) {
+                $sessions->addForeignKey('no_dot_error');
+            }
+        );
 
-        try {
-            //Already Defined Error
-            $sessions->addForeignKey("accounts.id");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException) {
-            $this->addToAssertionCount(1);
-        }
+
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($sessions) {
+                $sessions->addForeignKey('accounts.id');
+            }
+        );
+
     }
 
     /**
@@ -115,43 +121,45 @@ class ColumnTest extends TestCase
      */
     public function testComments(): void
     {
-        $column = new Column("tested");
+        $column = new Column('tested');
 
-        $this->assertNull($column->getComment());
+        static::assertNull($column->getComment());
 
-        $column->setComment("Hello World");
+        $column->setComment('Hello World');
 
-        $this->assertSame(
-            "Hello World",
+        static::assertSame(
+            'Hello World',
             $column->getComment()
         );
 
 
-        $column->setComment("Its possible to form sentences, even with comma.");
+        $column->setComment('Its possible to form sentences, even with comma.');
 
-        $this->assertSame(
-            "Its possible to form sentences, even with comma.",
+        static::assertSame(
+            'Its possible to form sentences, even with comma.',
             $column->getComment()
         );
 
         //No argument will reset (or when u set argument as null!)
         $column->setComment();
-        $this->assertNull($column->getComment());
+        static::assertNull($column->getComment());
 
-        // only  A-Z a-z 0-9 underscore comma space allowed!
-        try {
-            $column->setComment("It works!");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
 
-        try {
-            $column->setComment("Really?");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        // only A-Z, a-z, 0-9, underscore, comma and space are allowed!
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($column) {
+                $column->setComment('It works!');
+            }
+        );
+
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($column) {
+                $column->setComment('Really?');
+            }
+        );
+
     }
 
 
@@ -161,166 +169,164 @@ class ColumnTest extends TestCase
     public function testTypes(): void
     {
         //default type is INT!
-        $this->assertSame(
-            "int",
-            (new Column("hello"))->getType()
+        static::assertSame(
+            'int',
+            (new Column('hello'))->getType()
         );
 
         //It should save and then return it
-        $this->assertSame(
-            "longtext",
-            (new Column("hello", "longtext"))->getType()
+        static::assertSame(
+            'longtext',
+            (new Column('hello', 'longtext'))->getType()
         );
 
-        //allowed stuff and removed spaces
-        // az AZ 09 (),
-        $this->assertSame(
-            "something(10,11,12)",
-            (new Column("hello", "something (10, 11, 12) "))->getType()
+        // Only allowed stuff and removed spaces. (A-Z, a-z, 0-9, parenthesis and a comma)
+        static::assertSame(
+            'something(10,11,12)',
+            (new Column('hello', 'something (10, 11, 12) '))->getType()
         );
 
 
         //something invalid in type:
-        try {
-            new Column("hello", "world.invalid");
-            throw new Exception("Expected exception " . \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class . " not thrown!");
-        } catch (\Zrnik\MkSQL\Exceptions\InvalidArgumentException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () {
+                new Column('hello', 'world.invalid');
+            }
+        );
 
     }
 
     public function testNotNull(): void
     {
         //Only wraps public property...
-        $tested = new Column("tested");
+        $tested = new Column('tested');
 
-        $this->assertNotTrue($tested->getNotNull());
+        static::assertNotTrue($tested->getNotNull());
 
         $tested->setNotNull();
-        $this->assertTrue($tested->getNotNull());
+        static::assertTrue($tested->getNotNull());
 
         $tested->setNotNull(false);
-        $this->assertNotTrue($tested->getNotNull());
+        static::assertNotTrue($tested->getNotNull());
 
-        $tested->setNotNull(true);
-        $this->assertTrue($tested->getNotNull());
+        $tested->setNotNull();
+        static::assertTrue($tested->getNotNull());
     }
 
     public function testGetUnique(): void
     {
         //Only wraps public property...
-        $tested = new Column("tested");
+        $tested = new Column('tested');
 
-        $this->assertNotTrue($tested->getUnique());
+        static::assertNotTrue($tested->getUnique());
 
         $tested->setUnique();
-        $this->assertTrue($tested->getUnique());
+        static::assertTrue($tested->getUnique());
 
         $tested->setUnique(false);
-        $this->assertNotTrue($tested->getUnique());
+        static::assertNotTrue($tested->getUnique());
 
-        $tested->setUnique(true);
-        $this->assertTrue($tested->getUnique());
+        $tested->setUnique();
+        static::assertTrue($tested->getUnique());
     }
 
 
     public function testDefault(): void
     {
-        $column = new Column("tested");
+        $column = new Column('tested');
 
         //String or null
         //default = null
-        $this->assertNull($column->getDefault());
+        static::assertNull($column->getDefault());
 
         //Set string
-        $column->setDefault("Hello World");
+        $column->setDefault('Hello World');
 
-        $this->assertSame(
-            "Hello World",
+        static::assertSame(
+            'Hello World',
             $column->getDefault()
         );
 
         //No argument will reset (or when u set argument as null!)
         $column->setDefault();
-        $this->assertNull($column->getDefault());
+        static::assertNull($column->getDefault());
 
         //Default value can be anything, we leave it up to programmer.
 
         $column->setDefault(0);
-        $this->assertSame(
+        static::assertSame(
             0,
             $column->getDefault()
         );
 
         $column->setDefault(false);
-        $this->assertFalse(
+        static::assertFalse(
             $column->getDefault()
         );
 
         $column->setDefault(PHP_INT_MAX);
-        $this->assertSame(
+        static::assertSame(
             PHP_INT_MAX,
             $column->getDefault()
         );
 
         $column->setDefault(0.42069); //stoned nice
-        $this->assertSame(
+        static::assertSame(
             0.42069,
             $column->getDefault()
         );
     }
 
     /**
-     * @throws ColumnDefinitionExists
-     * @throws PrimaryKeyAutomaticException
+     * @throws MkSQLException
      */
     public function testSetParent(): void
     {
-        $table = new Table("RequiredAsParent");
-        $column = new Column("tested");
+        $table = new Table('RequiredAsParent');
+        $column = new Column('tested');
 
         //endColumn returns parent!
-        $this->assertNull($column->endColumn());
+        static::assertNull($column->endColumn());
 
         $column->setParent($table);
 
-        $this->assertSame(
-            "RequiredAsParent",
+        static::assertSame(
+            'RequiredAsParent',
             $column->endColumn()?->getName()
         );
 
 
-        $column = new Column("tested2");
-        $this->assertNull($column->endColumn());
+        $column = new Column('tested2');
+        static::assertNull($column->endColumn());
 
-        //table table addColumn will autoSet parent!
+        // table addColumn will autoSet parent!
         $table->columnAdd($column);
-        $this->assertSame(
-            "RequiredAsParent",
+        static::assertSame(
+            'RequiredAsParent',
             $column->endColumn()?->getName()
         );
 
         //and created column is automatically parented too
-        $this->assertSame(
-            "RequiredAsParent",
-            $table->columnCreate("new_auto_created_column")->endColumn()?->getName()
+        static::assertSame(
+            'RequiredAsParent',
+            $table->columnCreate('new_auto_created_column')->endColumn()?->getName()
         );
 
 
-        $table2 = new Table("RequiredAsParent2");
+        $table2 = new Table('RequiredAsParent2');
 
-        $columnToRewriteParent = new Column("tested3");
+        $columnToRewriteParent = new Column('tested3');
 
         $table->columnAdd($columnToRewriteParent);
 
         //Here i expect a logic exception!
-        try {
-            $table2->columnAdd($columnToRewriteParent);
-            throw new Exception("Expected exception " . LogicException::class . " not thrown!");
-        } catch (LogicException $_) {
-            $this->addToAssertionCount(1);
-        }
+        $this->assertExceptionThrown(
+            LogicException::class,
+            function () use ($table2, $columnToRewriteParent) {
+                $table2->columnAdd($columnToRewriteParent);
+            }
+        );
 
         // Cloning is OK, should not throw error!
         $table2->columnAdd(clone $columnToRewriteParent);
@@ -335,19 +341,19 @@ class ColumnTest extends TestCase
     public function testInstall(): void
     {
         //Get Mocked QueryMaker TableDefinition with prepared Tables:
-        $desc = MockSQLMaker_ExistingTable_First::describeTable(new \Mock\PDO(), new Table("null"));
+        $desc = MockSQLMaker_ExistingTable_First::describeTable(new \Mock\PDO(), new Table('null'));
 
-        $this->assertNotNull($desc);
+        static::assertNotNull($desc);
 
-        $column = $desc->table->columnGet("name");
+        $column = $desc->table->columnGet('name');
 
-        $this->assertNotNull($column);
+        static::assertNotNull($column);
 
         //Should not fail.
-        $QueriesToExecute = $column->install($desc, $desc->columnGet("name"));
+        $QueriesToExecute = $column->install($desc, $desc->columnGet('name'));
 
         //Mock SQLMakers should not create any queries!
-        $this->assertSame(
+        static::assertSame(
             [],
             $QueriesToExecute
         );

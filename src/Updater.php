@@ -1,16 +1,18 @@
 <?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL;
 
 use PDO;
 use PDOException;
-use ReflectionException;
 use Throwable;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
-use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
-use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
@@ -19,6 +21,8 @@ use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Utilities\Installable;
+use function array_key_exists;
+use function count;
 
 /**
  * @package Zrnik\MkSQL
@@ -57,6 +61,9 @@ class Updater
     /** @var array<string, Table> */
     private array $tables = [];
 
+    /** @var string[] */
+    private array $tablesInProgress = [];
+
     /**
      * @param string $tableName
      * @param bool $rewrite
@@ -66,6 +73,7 @@ class Updater
      */
     public function tableCreate(string $tableName, bool $rewrite = false): Table
     {
+        $this->tablesInProgress[] = $tableName;
         $newTable = new Table($tableName);
         return $this->tableAdd($newTable, $rewrite);
     }
@@ -84,6 +92,15 @@ class Updater
 
         $this->tables[$table->getName()] = $table;
         $table->setParent($this);
+
+        /** @var string|false $key */
+        $key = array_search($table->getName(), $this->tablesInProgress, true);
+
+        if ($key !== false) {
+            /** @var string $key */
+            unset($this->tablesInProgress[$key]);
+        }
+
         return $table;
     }
 
@@ -103,6 +120,33 @@ class Updater
     {
         return $this->tables[$tableName] ?? null;
     }
+
+    /**
+     * @param string $tableName
+     * @return bool
+     */
+    public function tableRemove(string $tableName): bool
+    {
+        $exists = array_key_exists($tableName, $this->tables);
+
+        if ($exists) {
+            unset($this->tables[$tableName]);
+        }
+
+        /** @var string|false $key */
+        $key = array_search($tableName, $this->tablesInProgress, true);
+
+        if ($key !== false) {
+            /**
+             * @var string $key
+             * @noinspection PhpRedundantVariableDocTypeInspection
+             */
+            unset($this->tablesInProgress[$key]);
+        }
+
+
+        return $exists;
+    }
     //endregion
 
     /**
@@ -113,7 +157,7 @@ class Updater
      */
     public function install(): bool
     {
-        if($this->installable !== null) {
+        if ($this->installable !== null) {
             throw new UnexpectedCall(
                 sprintf(
                     "Please, do not call '\$updater->install()' inside a '%s::install()' method, as its already handled by '%s'!",
@@ -149,7 +193,7 @@ class Updater
         if (!class_exists($QueryMakerClassCheck)) {
             throw new InvalidDriverException(
                 "Invalid driver '" . $driverName . "' for package 'Zrnik\\MkSQL' class 'Updater'. 
-                Allowed drivers: " . implode(", ", DriverType::getNames(false)));
+                Allowed drivers: " . implode(', ', DriverType::getNames(false)));
         }
 
         //endregion
@@ -159,9 +203,8 @@ class Updater
          */
         $QueryCommands = [];
 
-        foreach ($this->tables as $table)
-        {
-            if($this->isAlreadyProcessed($table)) {
+        foreach ($this->tables as $table) {
+            if ($this->isAlreadyProcessed($table)) {
                 continue;
             }
 
@@ -176,8 +219,8 @@ class Updater
             $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
             Measure::logTableSpeed(
-                $table->getName()??'unknown table',
-                Measure::TABLE_SPEED_DESCRIBE ,
+                $table->getName() ?? 'unknown table',
+                Measure::TABLE_SPEED_DESCRIBE,
                 microtime(true) - $table_speed_prepare
             );
 
@@ -186,13 +229,13 @@ class Updater
             /**
              * Create Queries:
              */
-            foreach($table->install($TableDescription) as $Command) {
+            foreach ($table->install($TableDescription) as $Command) {
                 $QueryCommands[] = $Command;
             }
 
             Measure::logTableSpeed(
-                $table->getName()??'unknown table',
-                Measure::TABLE_SPEED_GENERATE ,
+                $table->getName() ?? 'unknown table',
+                Measure::TABLE_SPEED_GENERATE,
                 microtime(true) - $table_speed_generate
             );
 
@@ -201,8 +244,7 @@ class Updater
         //region Query[] Executing
 
         $stopped = false;
-        if (count($QueryCommands) > 0)
-        {
+        if (count($QueryCommands) > 0) {
 
             /**
              * @var Query $QueryCommand
@@ -211,12 +253,9 @@ class Updater
 
                 $queryExecuteSpeed = microtime(true);
 
-                if($stopped)
-                {
+                if ($stopped) {
                     $QueryCommand->executed = false;
-                }
-                else
-                {
+                } else {
                     $QueryCommand->executed = true;
                     try {
                         $QueryCommand->execute($this->pdo, $this);
@@ -236,7 +275,7 @@ class Updater
                 $QueryCommand->speed = $queryExecuteSpeed;
 
                 Measure::logTableSpeed(
-                    $QueryCommand->getTable()->getName()??'unknown table',
+                    $QueryCommand->getTable()->getName() ?? 'unknown table',
                     Measure::TABLE_SPEED_EXECUTE,
                     $queryExecuteSpeed
                 );
@@ -262,7 +301,7 @@ class Updater
      */
     public function getDriverType(): mixed
     {
-        $driver =  DriverType::getValue(
+        $driver = DriverType::getValue(
             $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
             false
         );
@@ -287,8 +326,8 @@ class Updater
      */
     public function updateForeignKeys(Table $table, string $oldPrimaryKeyName): void
     {
-        $keyToRemove = $table->getName() . "." . $oldPrimaryKeyName;
-        $keyToAdd = $table->getName() . "." . $table->getPrimaryKeyName();
+        $keyToRemove = $table->getName() . '.' . $oldPrimaryKeyName;
+        $keyToAdd = $table->getName() . '.' . $table->getPrimaryKeyName();
 
         foreach ($this->tableList() as $Table) {
             foreach ($Table->columnList() as $Column) {
@@ -308,17 +347,13 @@ class Updater
     }
 
     /**
-     * @param class-string<BaseEntity> ...$baseEntities
-     * @throws MkSQLException
-     * @throws ReflectionException
-     * @throws MissingForeignKeyDefinitionInEntityException
+     * @param class-string<BaseEntity> $baseEntityClassName
      */
-    public function use(...$baseEntities): void
+    public function use(string $baseEntityClassName): void
     {
-        /** @var BaseEntity $baseEntityClassName */
-        foreach ($baseEntities as $baseEntityClassName) {
-            $baseEntityClassName::hydrateUpdater($this);
-        }
+        /** @var BaseEntity $baseEntityClassNameObject */
+        $baseEntityClassNameObject = $baseEntityClassName;
+        $baseEntityClassNameObject::hydrateUpdater($this);
     }
 
     /**
@@ -335,11 +370,11 @@ class Updater
     {
         $tableName = $table->getName();
 
-        if($tableName === null) {
+        if ($tableName === null) {
             return false;
         }
 
-        if(
+        if (
             !array_key_exists(
                 $tableName,
                 static::$processedTableIndication
@@ -348,11 +383,12 @@ class Updater
             return false;
         }
 
-        if(static::$processedTableIndication[$tableName] !== $table->getHashKey()) {
+        if (static::$processedTableIndication[$tableName] !== $table->getHashKey()) {
             return false;
         }
 
         return true;
     }
+
 
 }

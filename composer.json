@@ -25,7 +25,7 @@
       "composer phpstan",
       "composer phpunit"
     ],
-    "phpstan": "phpstan analyse",
+    "phpstan": "phpstan analyse  --memory-limit 1G",
     "phpunit": "phpunit --coverage-html ./temp/coverage",
     "phpunit:unit": "phpunit --testsuite unit",
     "phpunit:integration": "phpunit --testsuite integration"
@@ -44,7 +44,7 @@
     "phpstan/phpstan-phpunit": "^0.12",
     "nette/neon": "^3",
     "brick/date-time": "^0.3",
-    "zrnik/phpunit-exceptions": "^0.0.1"
+    "zrnik/phpunit-exceptions": "^0.0.2"
   },
   "autoload": {
     "psr-4": {

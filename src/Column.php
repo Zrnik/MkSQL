@@ -1,4 +1,9 @@
 <?php declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
+ */
 
 namespace Zrnik\MkSQL;
 
@@ -10,20 +15,24 @@ use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Queries\Tables\ColumnDescription;
 use Zrnik\MkSQL\Queries\Tables\TableDescription;
+use function count;
+use function gettype;
+use function in_array;
 
 class Column
 {
-
     /**
      * Column constructor.
      * @param string $columnName
      * @param string|null $columnType
      * @throws InvalidArgumentException
+     * @noinspection ParameterDefaultValueIsNotNullInspection
      */
-    public function __construct(string $columnName, ?string $columnType = "int")
+    public function __construct(string $columnName, ?string $columnType = 'int')
     {
-        if($columnType === null)
-            $columnType = "int";
+        if ($columnType === null) {
+            $columnType = 'int';
+        }
 
         $this->name = Utils::confirmColumnName($columnName);
         $this->setType($columnType);
@@ -60,10 +69,11 @@ class Column
      */
     public function setParent(Table $parent): void
     {
-        if ($this->parent !== null)
+        if ($this->parent !== null) {
             throw new LogicException(
                 "Column '" . $this->getName() . "' already has a parent '" . $this->getParent()?->getName() . "', consider cloning!"
             );
+        }
 
         $this->parent = $parent;
     }
@@ -154,7 +164,7 @@ class Column
     /**
      * @var mixed|null
      */
-    private $default = null;
+    private mixed $default;
 
     /**
      * Allowed types of default values.
@@ -162,9 +172,9 @@ class Column
      * @var string[]
      */
     private static array $_AllowedDefaultValues = [
-        "boolean", "integer",
-        "double", // float
-        "string", "NULL"
+        'boolean', 'integer',
+        'double', // float
+        'string', 'NULL'
     ];
 
     /**
@@ -173,16 +183,23 @@ class Column
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function setDefault($defaultValue = null): Column
+    public function setDefault(mixed $defaultValue = null): Column
     {
         $type = gettype($defaultValue);
 
-        if (!in_array($type, static::$_AllowedDefaultValues))
-            throw new InvalidArgumentException("Comment must be one of '" .
-                implode(", ", static::$_AllowedDefaultValues) . "'. Got '" . $type . "' instead!");
+        if (!in_array($type, static::$_AllowedDefaultValues)) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    "Comment must be one of '%s'. Got '%s' instead!",
+                    implode(', ', static::$_AllowedDefaultValues),
+                    $type
+                )
+            );
+        }
 
-        if ($type === "string")
+        if ($type === 'string') {
             $defaultValue = Utils::checkForbiddenWords($defaultValue);
+        }
 
         $this->default = $defaultValue;
         return $this;
@@ -195,7 +212,7 @@ class Column
      */
     public function getDefault(): mixed
     {
-        return $this->default;
+        return $this->default ?? null;
     }
     //endregion
 
@@ -250,7 +267,7 @@ class Column
      */
     public function setUnique(bool $Unique = true): Column
     {
-        if($this->unique !== $Unique) {
+        if ($this->unique !== $Unique) {
             $this->unique_index_handled = false;
         }
 
@@ -298,9 +315,14 @@ class Column
      */
     public function dropForeignKey(string $foreignKey): Column
     {
-        if (($key = array_search($foreignKey, $this->foreignKeys, true)) !== false) {
+        /** @var string|false $key */
+        $key = array_search($foreignKey, $this->foreignKeys, true);
+
+        if ($key !== false) {
+            /** @var string $key */
             unset($this->foreignKeys[$key]);
         }
+
         return $this;
     }
 
@@ -321,6 +343,7 @@ class Column
      * @param ColumnDescription|null $columnDescription
      * @return Query[]
      * @internal
+     * @noinspection PhpFunctionCyclomaticComplexityInspection
      */
     public function install(TableDescription $tableDescription, ?ColumnDescription $columnDescription): array
     {
@@ -329,21 +352,21 @@ class Column
         /**
          * @var IQueryMaker $queryMaker
          */
-        $queryMaker =  $tableDescription->queryMakerClass;
+        $queryMaker = $tableDescription->queryMakerClass;
 
         if ($columnDescription === null || !$columnDescription->columnExists) {
-            $Commands = array_merge($Commands, $queryMaker::createTableColumnQuery($tableDescription->table, $this, $tableDescription, $columnDescription)??[]);
+            $Commands = array_merge($Commands, $queryMaker::createTableColumnQuery($tableDescription->table, $this, $tableDescription, $columnDescription) ?? []);
 
             foreach ($this->getForeignKeys() as $foreignKey) {
-                $newCommands = $queryMaker::createForeignKey($tableDescription->table, $this, $foreignKey, $tableDescription, $columnDescription)??[];
-                foreach($newCommands as $newCommand) {
+                $newCommands = $queryMaker::createForeignKey($tableDescription->table, $this, $foreignKey, $tableDescription, $columnDescription) ?? [];
+                foreach ($newCommands as $newCommand) {
                     $Commands[] = $newCommand;
                 }
             }
 
             if ($this->getUnique()) {
                 $newCommands = $queryMaker::createUniqueIndexQuery($tableDescription->table, $this, $tableDescription, $columnDescription) ?? [];
-                foreach($newCommands as $newCommand) {
+                foreach ($newCommands as $newCommand) {
                     $Commands[] = $newCommand;
                 }
             }
@@ -352,26 +375,26 @@ class Column
 
             //Utils::typeEquals($desc->type, $this->getType())
             if (!$queryMaker::compareType($columnDescription->type, $this->getType())) {
-                $Reasons[] = "type different [" . $columnDescription->type . " != " . $this->getType() . "]";
+                $Reasons[] = 'type different [' . $columnDescription->type . ' != ' . $this->getType() . ']';
             }
 
             if ($columnDescription->notNull !== $this->getNotNull()) {
-                $Reasons[] = "not_null [is: " . ($columnDescription->notNull ? "yes" : "no") . " need:" . ($this->getNotNull() ? "yes" : "no") . "]";
+                $Reasons[] = 'not_null [is: ' . ($columnDescription->notNull ? 'yes' : 'no') . ' need:' . ($this->getNotNull() ? 'yes' : 'no') . ']';
             }
 
             //$desc->comment != $this->getComment()
             if (!$queryMaker::compareComment($columnDescription->comment, $this->getComment())) {
-                $Reasons[] = "comment [" . $columnDescription->comment . " != " . $this->getComment() . "]";
+                $Reasons[] = 'comment [' . $columnDescription->comment . ' != ' . $this->getComment() . ']';
             }
 
             if ($columnDescription->default !== $this->getDefault()) {
-                $Reasons[] = "default [" . $columnDescription->default . " !== " . $this->getDefault() . "]";
+                $Reasons[] = 'default [' . $columnDescription->default . ' !== ' . $this->getDefault() . ']';
             }
 
             if (count($Reasons) > 0) {
-                $Queries = $queryMaker::alterTableColumnQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription)??[];
+                $Queries = $queryMaker::alterTableColumnQuery($columnDescription->table, $columnDescription->column, $tableDescription, $columnDescription) ?? [];
 
-                $reasons = 'Reasons: ' . implode(", ", $Reasons);
+                $reasons = 'Reasons: ' . implode(', ', $Reasons);
 
                 foreach ($Queries as $alterQuery) {
                     $alterQuery->setReason($reasons);
@@ -384,8 +407,8 @@ class Column
             if (count($columnDescription->foreignKeys) > 0) {
                 foreach ($columnDescription->foreignKeys as $existingForeignKey => $foreignKeyName) {
                     if (!in_array($existingForeignKey, $this->getForeignKeys(), true)) {
-                        $rfkCommands = $queryMaker::removeForeignKey($columnDescription->table, $columnDescription->column, $foreignKeyName, $tableDescription, $columnDescription)??[];
-                        foreach($rfkCommands as $rfkCommand) {
+                        $rfkCommands = $queryMaker::removeForeignKey($columnDescription->table, $columnDescription->column, $foreignKeyName, $tableDescription, $columnDescription) ?? [];
+                        foreach ($rfkCommands as $rfkCommand) {
                             $Commands[] = $rfkCommand;
                         }
                     }
@@ -395,8 +418,8 @@ class Column
             //Foreign Keys to Add:
             foreach ($this->getForeignKeys() as $requiredForeignKey) {
                 if (!isset($columnDescription->foreignKeys[$requiredForeignKey])) {
-                    $alterationCommands = $queryMaker::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription)??[];
-                    foreach($alterationCommands as $command) {
+                    $alterationCommands = $queryMaker::createForeignKey($columnDescription->table, $columnDescription->column, $requiredForeignKey, $tableDescription, $columnDescription) ?? [];
+                    foreach ($alterationCommands as $command) {
                         $Commands[] = $command;
                     }
                 }
@@ -407,12 +430,12 @@ class Column
                 //Must be unique
                 if ($columnDescription->uniqueIndex === null) {
 
-                    $createUniqueIndexQueries =  $queryMaker::createUniqueIndexQuery(
-                        $columnDescription->table, $columnDescription->column,
-                        $tableDescription, $columnDescription
-                    )??[];
+                    $createUniqueIndexQueries = $queryMaker::createUniqueIndexQuery(
+                            $columnDescription->table, $columnDescription->column,
+                            $tableDescription, $columnDescription
+                        ) ?? [];
 
-                    foreach($createUniqueIndexQueries as $command) {
+                    foreach ($createUniqueIndexQueries as $command) {
                         $Commands[] = $command;
                     }
                 }
@@ -424,7 +447,7 @@ class Column
                         $columnDescription->table, $columnDescription->column,
                         $columnDescription->uniqueIndex, $tableDescription,
                         $columnDescription
-                    )??[]
+                    ) ?? []
                 );
             }
         }
@@ -450,14 +473,14 @@ class Column
     {
         $hashData = [];
         $reflection = new ReflectionClass($this);
-        foreach($reflection->getProperties() as $property) {
-            if($property->isStatic()) {
+        foreach ($reflection->getProperties() as $property) {
+            if ($property->isStatic()) {
                 continue;
             }
             $propName = $property->getName();
-            $propValue = $this->$propName;
+            $propValue = $this->$propName ?? 'null';
 
-            if(!is_scalar($propValue)) {
+            if (!is_scalar($propValue)) {
                 continue;
             }
 
