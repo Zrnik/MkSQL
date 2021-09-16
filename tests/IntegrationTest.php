@@ -56,7 +56,10 @@ class IntegrationTest extends TestCase
             $config['pass']
         );
 
-        $this->processTest($MySQL_PDO);
+        $MySQL_VersionStatement = $MySQL_PDO->query('select version();');
+        $MySQL_Version = $MySQL_VersionStatement === false ? '?' : $MySQL_VersionStatement->fetch()[0];
+
+        $this->processTest($MySQL_PDO, $MySQL_Version);
 
         // SQLite Integration:
         //$SQLite_PDO = new PDO("sqlite::memory:");
@@ -68,23 +71,23 @@ class IntegrationTest extends TestCase
         }
         $SQLiteFile = $tempDir . '/mksql_test.sqlite';
         $SQLite_PDO = new PDO(sprintf('sqlite:%s', $SQLiteFile));
-
-
-        $this->processTest($SQLite_PDO);
+        $SQLite_VersionStatement = $SQLite_PDO->query('select sqlite_version();');
+        $SQLite_Version = $SQLite_VersionStatement === false ? '?' : $SQLite_VersionStatement->fetch()[0];
+        $this->processTest($SQLite_PDO, $SQLite_Version);
     }
 
     /**
      * @param PDO $pdo
-     * @throws MkSQLException
+     * @param string $version
      */
-    private function processTest(PDO $pdo): void
+    private function processTest(PDO $pdo, string $version = ''): void
     {
         $Updater = new Updater($pdo);
         $this->addToAssertionCount(1);
 
         echo PHP_EOL . 'Testing "'
             . DriverType::getName($Updater->getDriverType()) .
-            '" Driver:' . PHP_EOL . '[';
+            '" Driver ['.$version.']:' . PHP_EOL . '[';
 
         static::assertNotNull($Updater->getDriverType());
         //echo "Processing Test with: " .  . PHP_EOL;
