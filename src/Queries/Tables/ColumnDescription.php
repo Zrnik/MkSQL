@@ -1,10 +1,11 @@
-<?php declare(strict_types=1);
-
-/*
- * Zrník.eu | MkSQL
- * User: Programátor
- * Date: 06.08.2020 7:55
+<?php /** @noinspection PropertyInitializationFlawsInspection */
+declare(strict_types=1);
+/**
+ * @author Štěpán Zrník <stepan.zrnik@gmail.com>
+ * @copyright Copyright (c) 2021, Štěpán Zrník
+ * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
+
 
 namespace Zrnik\MkSQL\Queries\Tables;
 
@@ -13,12 +14,6 @@ use Zrnik\MkSQL\Table;
 
 class ColumnDescription
 {
-
-    public function __construct()
-    {
-        $this->default = null;
-    }
-
     /**
      * @var bool
      */
@@ -57,7 +52,7 @@ class ColumnDescription
     /**
      * @var mixed|null
      */
-    public mixed $default;
+    public mixed $default = null;
 
     /**
      * @var string

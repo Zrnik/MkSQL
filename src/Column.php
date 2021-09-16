@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php /** @noinspection PropertyInitializationFlawsInspection */
+declare(strict_types=1);
 /**
  * @author Štěpán Zrník <stepan.zrnik@gmail.com>
  * @copyright Copyright (c) 2021, Štěpán Zrník
@@ -164,7 +165,7 @@ class Column
     /**
      * @var mixed|null
      */
-    private mixed $default;
+    private mixed $default = null;
 
     /**
      * Allowed types of default values.

@@ -25,6 +25,7 @@ use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
 use Zrnik\MkSQL\Exceptions\UnableToResolveTypeException;
 use Zrnik\MkSQL\Repository\Attributes\ColumnName;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
+use Zrnik\MkSQL\Repository\Attributes\Comment;
 use Zrnik\MkSQL\Repository\Attributes\CustomType;
 use Zrnik\MkSQL\Repository\Attributes\DefaultValue;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
@@ -607,6 +608,18 @@ abstract class BaseEntity
     }
     //endregion
 
+    //region Column `COMMENT`
+    #[Pure]
+    public static function columnComment(ReflectionProperty $property): mixed
+    {
+        $defaultValueAttr = Reflection::propertyGetAttribute($property, Comment::class);
+        if ($defaultValueAttr !== null) {
+            return Reflection::attributeGetArgument($defaultValueAttr);
+        }
+        return null;
+    }
+    //endregion
+
     //region Column `FOREIGN KEY(s)`
     /**
      * @param ReflectionProperty $property
@@ -785,6 +798,7 @@ abstract class BaseEntity
             $column->setNotNull(self::columnNotNull($property));
             $column->setUnique(self::columnUnique($property));
             $column->setDefault(self::columnDefaultValue($property));
+            $column->setComment(self::columnComment($property));
 
             foreach (self::columnForeignKeys($property) as $foreignKey) {
                 $column->addForeignKey($foreignKey);
@@ -811,7 +825,10 @@ abstract class BaseEntity
     {
         $primaryKeyPropertyName = self::getPrimaryKeyReflectionProperty()->getName();
         // TODO: Create tests for this, as it was a bug here!
-        settype($newPrimaryKeyValue, self::getIntrinsicPrimaryKeyType()); // Transfer the type, so we don't get TypeError
+        if($newPrimaryKeyValue !== null) {
+            // Transfer the type, so we don't get TypeError
+            settype($newPrimaryKeyValue, self::getIntrinsicPrimaryKeyType());
+        }
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
         foreach ($this->getSubEntities() as $subEntity) {

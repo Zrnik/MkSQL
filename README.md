@@ -1,39 +1,45 @@
 # MkSQL
 
-### Warning!
-**You are currently looking at *v0.7* documentation.**
-**There is not yet documentation for *v0.8*.**
-**For v0.8 and more you will need PHP 8+**
-
-/end warning
-
 ![GitHub](https://img.shields.io/github/license/zrnik/mksql)
+![PHP Version](https://img.shields.io/packagist/php-v/zrnik/mksql)
 ![Packagist Downloads](https://img.shields.io/packagist/dm/zrnik/mksql)
-![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql)  
+![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql)
 
-**MkSQL** is a tool for keeping your tables up to date with PHP code. 
-You can use it in your project or as a database preparation in 
-your integration tests.
+### What is it?
+*So, I just found out that the thing I created 
+is usually called an ORM.*
 
-It's a good tool for prototyping, so you can just change your code instead
-of fiddling with Adminer *(or PHPMyAdmin)*. I would not use it in production 
-to save precious resources on runtime. Better way is creating a standalone 
-script to run table update once when you upgrade and/or install your 
-application.
+**MkSQL** is a tool for keeping your tables up to 
+date with PHP code. It aims for a simple use cases,
+so it cannot handle very complex stuff. Explore the 
+docs to see what is possible.
 
-Documentation index is in [docs/index.md](docs/index.md)
+This package simply allows you to define entities, 
+that  represent your database tables, and automatically
+creates them for you.
+
+You can also skip the `ORM` part and use `Updater` class
+to create your database without any entities, instead
+of creating them with Adminer *(or PHPMyAdmin)*. 
+
+Documentation index is in [docs/index.md](docs/index.md) file.
 
 #### Requirements
+
+This package **requires** you to run it with PHP 8+, as it uses 
+the new stuff this version delivers. Mainly attributes and 
+promoted constructor properties.
+
 ```json 
 {
     "PHP": ">= 8",
     "ext-pdo": "*",
 
     "nette/utils": "^3.0",
+    "zrnik/enum": "^1",
+    
     "ext-iconv": "*",
-    "ext-intl": "*",
-
-    "zrnik/enum": "^1"
+    "ext-intl": "*"
 }
 ```
 
@@ -41,79 +47,18 @@ Documentation index is in [docs/index.md](docs/index.md)
 
 `composer require zrnik/mksql`
 
+Read more at [Installation and Configuration](docs/install-and-config.md) page.
+
 #### Supported Drivers: 
 
-- [✅ MySQL](https://www.mysql.com)
-
-- [✅ SQLite 3](https://www.sqlite.org/index.html) 
-
-#### Supported Features: 
-
-This library only supports basic features for creating the tables.
-
-##### Column:
-
-- Name
-- Type
-- `NULL` / `NOT NULL`
-- `DEFAULT`
-- `COMMENT` *(Not in SQLite)*
-- `UNIQUE INDEX`
-- `FOREIGN KEY`
-
-##### Table:
-
-- Name
-- `PRIMARY KEY` (defined automatically, see [docs/usage.md](docs/usage.md))
-
-#### Usage: 
-
-Example: 
-```php
-use \Zrnik\MkSQL\Updater;
-
-$pdo = new PDO("sqlite::memory:");
-$updater = new Updater($pdo);
-
-// Articles:
-$articles = $updater->tableCreate("articles");
-
-$articles->columnCreate("title","varchar(255)");
-
-$articles->columnCreate("url_slug","varchar(255)")
-    ->setNotNull()->setUnique();
-
-$articles->columnCreate("content","longtext");
-
-$articles->columnCreate("display_count","longtext")
-    ->setNotNull()->setDefault(0);
-
-// Comments:
-$comments = $updater->tableCreate("comments");
-
-$comments->columnCreate("author_name");
-
-$comments->columnCreate("author_email");
-
-$comments->columnCreate("article")
-    ->addForeignKey("articles.id");
-
-$comments->columnCreate("comment_text");
-
-//Then we install it:
-$updater->install();
-```
-
-For all the possible examples see [docs/usage.md](docs/usage.md).
-
-
+- [✅ MySQL](https://www.mysql.com) (Compatible with MariaDB)
+- [✅ SQLite 3](https://www.sqlite.org/index.html)
     
-#### [Tracy](https://tracy.nette.org/en/) Panel
+#### This package contains a [Tracy](https://tracy.nette.org/en/) panel
 
 Add this to your bootstrap file:
 ```php
-use \Zrnik\MkSQL\Tracy\Panel;
-Tracy\Debugger::getBar()->addPanel(new Panel());
+Tracy\Debugger::getBar()->addPanel(new \Zrnik\MkSQL\Tracy\Panel());
 ```
 
 Or, if you are using [Nette Framework](https://nette.org/en/), 

@@ -148,6 +148,7 @@
     <inspection_tool class="DuplicateArrayKeysInspection" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="MkSQL Source Code" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="DuplicatedCode" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
     <inspection_tool class="DynamicCallsToScopeIntrospectionInspection" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="MkSQL Source Code" level="WARNING" enabled="true" />
     </inspection_tool>

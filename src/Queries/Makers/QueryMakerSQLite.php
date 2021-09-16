@@ -443,9 +443,13 @@ class QueryMakerSQLite implements IQueryMaker
             $CreateSQL .= 'DEFAULT \'' . $column->getDefault() . '\' ';
         }
 
-        if ($column->getDefault() === null && $column->getNotNull()) {
+       /* if ($column->getDefault() === null && $column->getNotNull()) {
             $CreateSQL .= 'DEFAULT \'\' ';
-        }
+        }*/
+
+        /*if ($column->getDefault() === null && !$column->getNotNull()) {
+            $CreateSQL .= 'DEFAULT NULL ';
+        }*/
 
         //Null/NotNull
         $CreateSQL .= ($column->getNotNull() ? 'NOT ' : '') . 'NULL ';

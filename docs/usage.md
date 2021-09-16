@@ -1,4 +1,6 @@
-# Usage
+# DEPRECATED Usage
+
+**THIS FILE CONTAINS A VALID EXAMPLES, BUT ITS DEPRECATED AS A DOCS FILE**
 
 You can use this in three ways: fluently, object way or hybrid way. 
 Examples of those usages are after `Usage in Model or Factory` section.

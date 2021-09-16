@@ -176,6 +176,20 @@ class Table
         return $this->columnAdd($column, $rewrite);
     }
 
+    public function columnCreateForeign(string $columnName, Table $targetTable): Column
+    {
+        return $this->columnCreate(
+            $columnName, $targetTable->getPrimaryKeyType()
+        )
+            ->addForeignKey(
+                sprintf(
+                    '%s.%s',
+                    $targetTable->getName(),
+                    $targetTable->getPrimaryKeyName(),
+                )
+            );
+    }
+
     /**
      * @param Column $column
      * @param bool $rewrite
@@ -280,4 +294,6 @@ class Table
 
         return hash('sha256', (string) var_export($hashData,true));
     }
+
+
 }
