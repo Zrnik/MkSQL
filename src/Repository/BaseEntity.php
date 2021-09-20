@@ -16,6 +16,7 @@ use ReflectionProperty;
 use ReflectionUnionType;
 use Zrnik\MkSQL\Exceptions\CircularReferenceDetectedException;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
 use Zrnik\MkSQL\Exceptions\InvalidTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
@@ -741,9 +742,10 @@ abstract class BaseEntity
                         }
                         // We also check, if the type is also us, so we can use it with the repository!
                         $type = $foreignProperty->getType();
-                        if (($type instanceof ReflectionNamedType) && $type->getName() !== static::class) {
-                            throw new InvalidTypeException(
-                                static::class, $type->getName()
+                        if (($type instanceof ReflectionNamedType) && $type->getName() !== $foreignPropertyForeignKeyAttributeValue) {
+                            throw new InvalidPropertyTypeException(
+                                $foreignPropertyForeignKeyAttributeValue, $type->getName(),
+                                $reflection->getName(), $property->getName(),
                             );
                         }
                     }

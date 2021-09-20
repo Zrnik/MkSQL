@@ -6,6 +6,3 @@
 - [Factory Usage & Installable Class](usage-factory-installable.md)
 - [ORM Usage](usage-orm.md)
 - [Base Repository Usage](usage-base-repository.md)
-
-
-
