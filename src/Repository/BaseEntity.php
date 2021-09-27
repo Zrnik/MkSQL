@@ -842,8 +842,14 @@ abstract class BaseEntity
                 );
 
                 if ($foreignKeyAttribute !== null) {
-                    $subPropertyName = $subProperty->getName();
-                    $subEntity->$subPropertyName = $this;
+                    $foreignKeyAttributeClassType = Reflection::attributeGetArgument(
+                        $foreignKeyAttribute
+                    );
+
+                    if($foreignKeyAttributeClassType === static::class) {
+                        $subPropertyName = $subProperty->getName();
+                        $subEntity->$subPropertyName = $this;
+                    }
                 }
             }
         }
