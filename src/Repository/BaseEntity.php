@@ -17,7 +17,6 @@ use ReflectionUnionType;
 use Zrnik\MkSQL\Exceptions\CircularReferenceDetectedException;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
-use Zrnik\MkSQL\Exceptions\InvalidTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
@@ -485,7 +484,7 @@ abstract class BaseEntity
     }
 
     /**
-    /**
+     * /**
      * @param ReflectionClass<BaseEntity>|null $reflection
      * @return string
      */
@@ -699,8 +698,9 @@ abstract class BaseEntity
     /**
      * @param Updater $updater
      * @param string[] $baseEntitiesWeHaveAlreadySeen
+     * @param bool $isFetchArray
      */
-    public static function hydrateUpdater(Updater $updater, array $baseEntitiesWeHaveAlreadySeen = []): void
+    public static function hydrateUpdater(Updater $updater, array $baseEntitiesWeHaveAlreadySeen = [], bool $isFetchArray = false): void
     {
         $reflection = static::getReflectionClass(static::class);
 
@@ -710,6 +710,12 @@ abstract class BaseEntity
         $table->setPrimaryKeyType(self::getPrimaryKeyType($reflection));
 
         $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
+
+        /** @var array<class-string<BaseEntity>> $hydrateAfter */
+        $hydrateAfter = [];
+
+        /** @var array<class-string<BaseEntity>> $fetchArrayEntities */
+        $fetchArrayEntities = [];
 
         // Columns:
         foreach ($properties as $property) {
@@ -757,6 +763,8 @@ abstract class BaseEntity
                     );
                 }
 
+                $fetchArrayEntities[] = $subClassName;
+
                 continue;
             }
             //endregion
@@ -770,24 +778,17 @@ abstract class BaseEntity
 
             $foreignKeyAttribute = Reflection::propertyGetAttribute($property, ForeignKey::class);
 
-
             if ($foreignKeyAttribute !== null) {
 
                 $referencedEntityName = Reflection::attributeGetArgument($foreignKeyAttribute);
 
-                /** @var BaseEntity $referencedEntity */
-                $referencedEntity = $referencedEntityName;
-
-                if (in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)) {
+                if (!$isFetchArray && in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)) {
                     throw new CircularReferenceDetectedException(
                         static::class, $property->getName()
                     );
                 }
 
-                $referencedEntity::hydrateUpdater(
-                    $updater,
-                    [...$baseEntitiesWeHaveAlreadySeen, static::class]
-                );
+                $hydrateAfter[] = $referencedEntityName;
             }
 
             //endregion
@@ -806,6 +807,35 @@ abstract class BaseEntity
                 $column->addForeignKey($foreignKey);
             }
         }
+
+        $baseEntitiesWeHaveAlreadySeen[] = static::class;
+        foreach ($hydrateAfter as $hydrateEntityClassName) {
+
+            /** @var BaseEntity $hydrateEntity */
+            $hydrateEntity = $hydrateEntityClassName;
+
+            if($isFetchArray && in_array($hydrateEntityClassName, $baseEntitiesWeHaveAlreadySeen, true)) {
+                continue;
+            }
+
+            $hydrateEntity::hydrateUpdater(
+                $updater, $baseEntitiesWeHaveAlreadySeen
+            );
+
+            $baseEntitiesWeHaveAlreadySeen[] = $hydrateEntityClassName;
+        }
+
+        foreach($fetchArrayEntities as $fetchArrayEntityClassName) {
+
+            /** @var BaseEntity $fetchArrayEntity */
+            $fetchArrayEntity = $fetchArrayEntityClassName;
+
+            $fetchArrayEntity::hydrateUpdater(
+                $updater, $baseEntitiesWeHaveAlreadySeen, true
+            );
+        }
+
+
     }
 
     /**
@@ -827,7 +857,7 @@ abstract class BaseEntity
     {
         $primaryKeyPropertyName = self::getPrimaryKeyReflectionProperty()->getName();
         // TODO: Create tests for this, as it was a bug here!
-        if($newPrimaryKeyValue !== null) {
+        if ($newPrimaryKeyValue !== null) {
             // Transfer the type, so we don't get TypeError
             settype($newPrimaryKeyValue, self::getIntrinsicPrimaryKeyType());
         }
@@ -846,7 +876,7 @@ abstract class BaseEntity
                         $foreignKeyAttribute
                     );
 
-                    if($foreignKeyAttributeClassType === static::class) {
+                    if ($foreignKeyAttributeClassType === static::class) {
                         $subPropertyName = $subProperty->getName();
                         $subEntity->$subPropertyName = $this;
                     }

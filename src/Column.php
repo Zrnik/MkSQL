@@ -320,8 +320,7 @@ class Column
         $key = array_search($foreignKey, $this->foreignKeys, true);
 
         if ($key !== false) {
-            /** @var string $key */
-            unset($this->foreignKeys[$key]);
+            unset($this->foreignKeys[(string) $key]);
         }
 
         return $this;

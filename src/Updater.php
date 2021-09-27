@@ -97,8 +97,7 @@ class Updater
         $key = array_search($table->getName(), $this->tablesInProgress, true);
 
         if ($key !== false) {
-            /** @var string $key */
-            unset($this->tablesInProgress[$key]);
+            unset($this->tablesInProgress[(string) $key]);
         }
 
         return $table;

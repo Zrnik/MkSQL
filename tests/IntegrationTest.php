@@ -10,6 +10,7 @@ use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
+use Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
 use Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
 use Nette\Neon\Neon;
 use PHPUnit\Framework\AssertionFailedError;
@@ -128,8 +129,13 @@ class IntegrationTest extends TestCase
         $this->subTestBaseRepoAndEntity($pdo);
         $this->subTestCircularReference($pdo);
 
-
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
+
+        // #####################################
+        // ### Hydrate updater test: ###########
+        // #####################################
+
+        $this->subTestHydrateUpdater($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
     }
@@ -633,5 +639,32 @@ class IntegrationTest extends TestCase
         );
 
         $this->dot();
+    }
+
+    private function subTestHydrateUpdater(PDO $pdo): void
+    {
+        $updater = new Updater($pdo);
+        $updater->use(MainEntity::class);
+
+        $list = [];
+        foreach($updater->tableList() as $table) {
+            $list[] = $table->getName();
+        }
+
+        $neededTables = [
+            'MainEntity',
+            'FetchedEntity',
+            'FetchedEntityFromSubEntity',
+            'SubEntityFetchedEntity',
+            'SubEntityOne',
+            'SubEntityTwo'
+        ];
+
+        sort($list);
+        sort($neededTables);
+
+        static::assertSame(
+            $neededTables, $list
+        );
     }
 }

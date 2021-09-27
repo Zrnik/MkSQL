@@ -2,8 +2,6 @@
 
 namespace Examples\Accounts\Orm;
 
-use JetBrains\PhpStorm\ArrayShape;
-use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\Comment;
 use Zrnik\MkSQL\Repository\Attributes\NotNull;
