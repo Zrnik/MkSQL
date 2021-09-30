@@ -184,7 +184,7 @@ class Panel implements IBarPanel
 
     /**
      * @param bool $success
-     * @return Html<Html>
+     * @return Html
      */
     private function headerElement(bool $success = true): Html
     {
@@ -215,7 +215,7 @@ class Panel implements IBarPanel
     }
 
     /**
-     * @return Html<Html>
+     * @return Html
      */
     private function subPanelSpeed(): Html
     {
@@ -282,7 +282,7 @@ class Panel implements IBarPanel
 
 
     /**
-     * @return Html<Html>
+     * @return Html
      */
     private function subPanelStructure(): Html
     {
@@ -649,7 +649,7 @@ class Panel implements IBarPanel
 
 
     /**
-     * @return Html<Html>
+     * @return Html
      */
     private function subPanelDescription(): Html
     {
@@ -751,7 +751,7 @@ class Panel implements IBarPanel
     }
 
     /**
-     * @return Html<Html>
+     * @return Html
      */
     private function subPanelModification(): Html
     {
@@ -1004,9 +1004,9 @@ class Panel implements IBarPanel
 
     /**
      * @param string $id
-     * @param Html<Html> $header
+     * @param Html $header
      * @param bool $defaultHidden
-     * @return Html<Html>
+     * @return Html
      */
     private function createToggleHandle(string $id, Html $header, bool $defaultHidden = true): Html
     {
@@ -1022,9 +1022,9 @@ class Panel implements IBarPanel
     /**
      * @param string $id
      * @param string $elem
-     * @param Html<Html> $content
+     * @param Html $content
      * @param bool $defaultHidden
-     * @return Html<Html>
+     * @return Html
      */
     private function createToggleContainer(string $id, string $elem, Html $content, bool $defaultHidden = true): Html
     {
@@ -1038,10 +1038,10 @@ class Panel implements IBarPanel
 
     /**
      * @param string $id
-     * @param Html<Html> $header
-     * @param Html<Html> $content
+     * @param Html $header
+     * @param Html $content
      * @param bool $defaultHidden
-     * @return Html<Html>
+     * @return Html
      */
     private function createToggle(string $id, Html $header, Html $content, bool $defaultHidden = true): Html
     {
@@ -1097,7 +1097,7 @@ class Panel implements IBarPanel
     /**
      * @param bool $yesNo
      * @param bool $colors
-     * @return Html<Html>
+     * @return Html
      */
     private static function yesNoInverted(bool $yesNo, bool $colors = true): Html
     {
@@ -1117,7 +1117,7 @@ class Panel implements IBarPanel
     /**
      * @param bool $yesNo
      * @param bool $colors
-     * @return Html<Html>
+     * @return Html
      */
     private static function yesNo(bool $yesNo, bool $colors = true): Html
     {

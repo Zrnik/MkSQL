@@ -704,12 +704,11 @@ abstract class BaseEntity
     {
         $reflection = static::getReflectionClass(static::class);
 
-        $table = $updater->tableCreate(self::getTableName($reflection), true);
+        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
+        $table = $updater->tableCreate(self::getTableName($reflection), true);
         $table->setPrimaryKeyName(self::getPrimaryKeyName($reflection));
         $table->setPrimaryKeyType(self::getPrimaryKeyType($reflection));
-
-        $properties = $reflection->getProperties(ReflectionProperty::IS_PUBLIC);
 
         /** @var array<class-string<BaseEntity>> $hydrateAfter */
         $hydrateAfter = [];
@@ -824,6 +823,7 @@ abstract class BaseEntity
 
             $baseEntitiesWeHaveAlreadySeen[] = $hydrateEntityClassName;
         }
+
 
         foreach($fetchArrayEntities as $fetchArrayEntityClassName) {
 

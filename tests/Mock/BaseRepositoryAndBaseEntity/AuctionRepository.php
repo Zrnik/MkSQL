@@ -21,6 +21,5 @@ class AuctionRepository extends Installable
     protected function install(Updater $updater): void
     {
         $updater->use(Auction::class);
-        $updater->use(AuctionItem::class);
     }
 }

@@ -122,6 +122,13 @@ class IntegrationTest extends TestCase
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
 
+
+        // #####################################
+        // ### Hydrate updater test: ###########
+        // #####################################
+
+        $this->subTestHydrateUpdater($pdo);
+
         // #####################################
         // ### BaseRepoAndEntityTest: ##########
         // #####################################
@@ -131,11 +138,6 @@ class IntegrationTest extends TestCase
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
-        // #####################################
-        // ### Hydrate updater test: ###########
-        // #####################################
-
-        $this->subTestHydrateUpdater($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
     }
@@ -391,6 +393,9 @@ class IntegrationTest extends TestCase
              */
             $pdo->exec(sprintf('DELETE FROM %s', $table->getName()));
         }
+
+        $this->assertRowCountInTable($pdo, Auction::getTableName(), 0);
+        $this->assertRowCountInTable($pdo, AuctionItem::getTableName(), 0);
 
         $auction1 = Auction::create();
         $auction1->name = 'First Auction';
