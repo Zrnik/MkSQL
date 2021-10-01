@@ -21,6 +21,7 @@ use Zrnik\MkSQL\Queries\Tables\TableDescription;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Utilities\Installable;
+use Zrnik\MkSQL\Utilities\TableOrder;
 use function array_key_exists;
 use function count;
 
@@ -97,7 +98,7 @@ class Updater
         $key = array_search($table->getName(), $this->tablesInProgress, true);
 
         if ($key !== false) {
-            unset($this->tablesInProgress[(string) $key]);
+            unset($this->tablesInProgress[(string)$key]);
         }
 
         return $table;
@@ -202,7 +203,9 @@ class Updater
          */
         $QueryCommands = [];
 
-        foreach ($this->tables as $table) {
+        $sortedTables = TableOrder::doOrder($this->tables);
+
+        foreach ($sortedTables as $table) {
             if ($this->isAlreadyProcessed($table)) {
                 continue;
             }
@@ -247,6 +250,7 @@ class Updater
 
             /**
              * @var Query $QueryCommand
+             * @noinspection PhpRedundantVariableDocTypeInspection
              */
             foreach ($QueryCommands as $QueryCommand) {
 
@@ -388,6 +392,4 @@ class Updater
 
         return true;
     }
-
-
 }

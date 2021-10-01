@@ -188,12 +188,12 @@ class QueryMakerMySQL implements IQueryMaker
             (new Query($table, null))
                 ->setQuery(
                     sprintf(
-                        /** @lang */ 'ALTER TABLE %s CHANGE %s %s %s NOT NULL%s;',
+                    /** @lang */ 'ALTER TABLE %s CHANGE %s %s %s NOT NULL%s;',
                         $table->getName(),
-                        $oldKey,  $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
+                        $oldKey, $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
                         str_starts_with(strtolower($table->getPrimaryKeyType()), 'int') ? ' AUTO_INCREMENT' : ''
                     )
-                    /*"ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;"*/
+                /*"ALTER TABLE " . $table->getName() . " CHANGE " . $oldKey . " " . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT;"*/
                 )
                 ->setReason("Primary key '" . $table->getPrimaryKeyName() . "' required but '" . $oldKey . "' found.")
         ];
@@ -210,15 +210,15 @@ class QueryMakerMySQL implements IQueryMaker
             ->setQuery(
 
                 sprintf(
-                    /** @lang */ 'CREATE TABLE %s (%s %s NOT NULL %s PRIMARY KEY)',
+                /** @lang */ 'CREATE TABLE %s (%s %s NOT NULL %s PRIMARY KEY)',
                     $table->getName(), $table->getPrimaryKeyName(), $table->getPrimaryKeyType(),
                     str_starts_with(strtolower($table->getPrimaryKeyType()), 'int') ? ' AUTO_INCREMENT' : ''
                 )
-                /*
-                "CREATE TABLE " .
-                $table->getName()
-                . " (" . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT PRIMARY KEY)"
-                */
+            /*
+            "CREATE TABLE " .
+            $table->getName()
+            . " (" . $table->getPrimaryKeyName() . " " . $table->getPrimaryKeyType() . " NOT NULL AUTO_INCREMENT PRIMARY KEY)"
+            */
 
             )
             ->setReason("Table '" . $table->getName() . "' not found.");
@@ -340,7 +340,7 @@ class QueryMakerMySQL implements IQueryMaker
                 $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
             }
 
-            foreach($DropQueries as $dropQuery) {
+            foreach ($DropQueries as $dropQuery) {
                 $Queries[] = $dropQuery;
             }
         }
@@ -357,7 +357,7 @@ class QueryMakerMySQL implements IQueryMaker
                 $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
             }
 
-            foreach($CreateQueries??[] as $query) {
+            foreach ($CreateQueries ?? [] as $query) {
                 $Queries[] = $query;
             }
 

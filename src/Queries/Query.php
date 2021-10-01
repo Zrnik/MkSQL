@@ -74,7 +74,7 @@ class Query
         $this->referencedColumn = $column;
     }
 
-    public function getDriver() : ?int
+    public function getDriver(): ?int
     {
         return $this->driver;
     }

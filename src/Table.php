@@ -251,18 +251,18 @@ class Table
 
         if (!$desc->tableExists) {
             $createTableCommands = $desc->queryMakerClass::createTableQuery($this, $desc) ?? [];
-            foreach($createTableCommands as $createTableCommand) {
+            foreach ($createTableCommands as $createTableCommand) {
                 $commands[] = $createTableCommand;
             }
         }
 
         if ($desc->tableExists && $desc->primaryKeyName !== $this->getPrimaryKeyName()) {
             $newCommands = $desc->queryMakerClass::changePrimaryKeyQuery(
-                $desc->primaryKeyName,
-                $this, $desc
-            )??[];
+                    $desc->primaryKeyName,
+                    $this, $desc
+                ) ?? [];
 
-            foreach($newCommands as $newCommand) {
+            foreach ($newCommands as $newCommand) {
                 $commands[] = $newCommand;
             }
         }
@@ -276,23 +276,24 @@ class Table
 
             Measure::reportStructureColumn($this, $column);
 
-            foreach($column->install($desc, $desc->columnGet($column->getName())) as $command) {
+            foreach ($column->install($desc, $desc->columnGet($column->getName())) as $command) {
                 $commands[] = $command;
             }
         }
 
         return $commands;
     }
+
     //endregion
     public function getHashKey(): string
     {
         $hashData = [];
 
-        foreach($this->columnList() as $column) {
+        foreach ($this->columnList() as $column) {
             $hashData[$column->getName()] = $column->getHashData();
         }
 
-        return hash('sha256', (string) var_export($hashData,true));
+        return hash('sha256', (string)var_export($hashData, true));
     }
 
 

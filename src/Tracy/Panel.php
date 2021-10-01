@@ -92,7 +92,7 @@ class Panel implements IBarPanel
 
         $imageContent = @file_get_contents($assetsFolder . $svgName);
 
-        if($imageContent === false) {
+        if ($imageContent === false) {
             throw new Exception(
                 sprintf(
                     "Icon file '%s' was not found, if you are using 'vendor'" .
@@ -192,11 +192,10 @@ class Panel implements IBarPanel
             ->style('width', '100%');
         $elem->addText('MkSQL');
 
-        $topRight =  Html::el('span')
+        $topRight = Html::el('span')
             ->style('float', 'right')
             ->style('font-size', '12px')
-            ->style('margin-right', '8px')
-        ;
+            ->style('margin-right', '8px');
 
         if ($success) {
             $topRight
@@ -326,13 +325,13 @@ class Panel implements IBarPanel
             $tableObject = $_tableDefinition['objects'][0];
 
             $totalCalls = $_tableDefinition['calls'];
-            $totalColumns = count(Measure::structureColumnList($tableObject->getName()??'unknown table'));
+            $totalColumns = count(Measure::structureColumnList($tableObject->getName() ?? 'unknown table'));
 
             $table->addHtml(Html::el('tr')
                 ->addHtml(
                     Html::el('td')
                         ->setHtml(
-                            //Security: Replace the tag for already escaped html element!
+                        //Security: Replace the tag for already escaped html element!
                             $this->confirmString(
                                 str_replace(
                                     '_',
@@ -341,7 +340,7 @@ class Panel implements IBarPanel
                                         ->setText(
                                             $tableObject->getName() ?? 'unknown table'
                                         )
-                                    ->render()
+                                        ->render()
                                 )
                             )
                         )
@@ -399,7 +398,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName()??'unknown table',
+                                                $tableObject->getName() ?? 'unknown table',
                                                 Measure::TABLE_SPEED_DESCRIBE
                                             ),
                                             3
@@ -419,7 +418,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName()??'unknown table',
+                                                $tableObject->getName() ?? 'unknown table',
                                                 Measure::TABLE_SPEED_GENERATE
                                             ),
                                             3
@@ -439,7 +438,7 @@ class Panel implements IBarPanel
                                     ->setText(
                                         static::convertToMs(
                                             Measure::getTableSpeed(
-                                                $tableObject->getName()??'unknown table',
+                                                $tableObject->getName() ?? 'unknown table',
                                                 Measure::TABLE_SPEED_EXECUTE
                                             ),
                                             3
@@ -491,7 +490,7 @@ class Panel implements IBarPanel
 
 
             /** @var Column $columnObject */
-            foreach (Measure::structureColumnList($tableObject->getName()??'unknown table') as $columnObject) {
+            foreach (Measure::structureColumnList($tableObject->getName() ?? 'unknown table') as $columnObject) {
                 $detailDataTable->addHtml(
                     Html::el('tr', ['style' => ['background-color' => 'rgba(0,200,255,0.1);']])
                         ->addHtml(
@@ -816,7 +815,7 @@ class Panel implements IBarPanel
                 ])
                     ->addHtml(
                         Html::el('td')
-                            ->setText($query->getTable()->getName()??'unknown table')
+                            ->setText($query->getTable()->getName() ?? 'unknown table')
                     )
                     ->addHtml(
                         Html::el('td')
@@ -1136,7 +1135,7 @@ class Panel implements IBarPanel
 
     private function confirmString(mixed $possibleString): string
     {
-        return (string) $possibleString;
+        return (string)$possibleString;
     }
 
 

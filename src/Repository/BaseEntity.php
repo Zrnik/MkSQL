@@ -813,7 +813,7 @@ abstract class BaseEntity
             /** @var BaseEntity $hydrateEntity */
             $hydrateEntity = $hydrateEntityClassName;
 
-            if($isFetchArray && in_array($hydrateEntityClassName, $baseEntitiesWeHaveAlreadySeen, true)) {
+            if ($isFetchArray && in_array($hydrateEntityClassName, $baseEntitiesWeHaveAlreadySeen, true)) {
                 continue;
             }
 
@@ -825,7 +825,7 @@ abstract class BaseEntity
         }
 
 
-        foreach($fetchArrayEntities as $fetchArrayEntityClassName) {
+        foreach ($fetchArrayEntities as $fetchArrayEntityClassName) {
 
             /** @var BaseEntity $fetchArrayEntity */
             $fetchArrayEntity = $fetchArrayEntityClassName;

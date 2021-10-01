@@ -8,7 +8,6 @@
 namespace Mock\BaseRepositoryAndBaseEntity;
 
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
-use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;

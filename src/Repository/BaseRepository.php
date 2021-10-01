@@ -329,7 +329,7 @@ class BaseRepository
             $primaryKeyValue = $data[$baseEntity::getPrimaryKeyName()];
 
             foreach ($subElements as $subElementKey => $subElementProperties) {
-                if(array_key_exists($primaryKeyValue, $subElementProperties['data'])) {
+                if (array_key_exists($primaryKeyValue, $subElementProperties['data'])) {
                     $data[$subElementKey] = $subElementProperties['data'][$primaryKeyValue];
                 }
             }

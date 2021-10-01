@@ -10,6 +10,7 @@ use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
+use Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
 use Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
 use Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
 use Nette\Neon\Neon;
@@ -648,12 +649,22 @@ class IntegrationTest extends TestCase
 
     private function subTestHydrateUpdater(PDO $pdo): void
     {
-        $updater = new Updater($pdo);
-        $updater->use(MainEntity::class);
+        $updater1 = new Updater($pdo);
+        $updater1->use(MainEntity::class);
+        $updater1->install();
 
-        $list = [];
-        foreach($updater->tableList() as $table) {
-            $list[] = $table->getName();
+        $updater2 = new Updater($pdo);
+        $updater2->use(FetchedEntity::class);
+        $updater1->install();
+
+        $list1 = [];
+        foreach($updater1->tableList() as $table) {
+            $list1[] = $table->getName();
+        }
+
+        $list2 = [];
+        foreach($updater2->tableList() as $table) {
+            $list2[] = $table->getName();
         }
 
         $neededTables = [
@@ -665,11 +676,16 @@ class IntegrationTest extends TestCase
             'SubEntityTwo'
         ];
 
-        sort($list);
+        sort($list1);
+        sort($list2);
         sort($neededTables);
 
         static::assertSame(
-            $neededTables, $list
+            $neededTables, $list1
+        );
+
+        static::assertSame(
+            $neededTables, $list2
         );
     }
 }

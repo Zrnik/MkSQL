@@ -44,7 +44,7 @@ interface IQueryMaker
      */
     public static function changePrimaryKeyQuery(
         string $oldKey,
-        Table $table, ?TableDescription $oldTableDescription
+        Table  $table, ?TableDescription $oldTableDescription
     ): ?array;
 
     //endregion

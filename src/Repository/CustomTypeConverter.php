@@ -27,7 +27,7 @@ abstract class CustomTypeConverter
         //TODO: Cache the instances?
         $instance = new $className($property);
 
-        if(!($instance instanceof self)) {
+        if (!($instance instanceof self)) {
             throw new InvalidArgumentException(
                 sprintf(
                     "Class '%s' is not a '%s' descendant!",
@@ -53,7 +53,7 @@ abstract class CustomTypeConverter
      */
     protected function assertType(mixed $value, string $type): mixed
     {
-        if($value === null && $this->isNullable()) {
+        if ($value === null && $this->isNullable()) {
             return null;
         }
 
@@ -71,15 +71,15 @@ abstract class CustomTypeConverter
 
     private function isNullable(): bool
     {
-        if(BaseEntity::columnNotNull($this->property)) {
+        if (BaseEntity::columnNotNull($this->property)) {
             return false;
         }
 
         $type = $this->property->getType();
-        if(($type instanceof ReflectionNamedType) && !$type->allowsNull()) {
+        if (($type instanceof ReflectionNamedType) && !$type->allowsNull()) {
             return false;
         }
-        if(($type instanceof ReflectionUnionType) && !$type->allowsNull()) {
+        if (($type instanceof ReflectionUnionType) && !$type->allowsNull()) {
             return false;
         }
 

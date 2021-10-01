@@ -84,7 +84,7 @@ class QueryMakerSQLite implements IQueryMaker
 
                 foreach ($SQLiteTableData as $PartRow) {
 
-                    if(!array_key_exists('sql', $PartRow) || $PartRow['sql'] === null) {
+                    if (!array_key_exists('sql', $PartRow) || $PartRow['sql'] === null) {
                         continue;
                     }
 
@@ -280,10 +280,10 @@ class QueryMakerSQLite implements IQueryMaker
      * @throws InvalidArgumentException
      */
     public static function alterTableColumnQuery(
-        Table $table, Column $column,
-        ?TableDescription $oldTableDescription,
+        Table              $table, Column $column,
+        ?TableDescription  $oldTableDescription,
         ?ColumnDescription $columnDescription,
-        array $swapPrimaryKeyName = []
+        array              $swapPrimaryKeyName = []
     ): ?array
     {
         $alterTableQueryList = [];
@@ -403,15 +403,15 @@ class QueryMakerSQLite implements IQueryMaker
                 ->setQuery(
 
                     sprintf(
-                        /** @lang */ 'CREATE TABLE %s (%s %s constraint %s primary key %s) ',
-                        $table->getName(),  $table->getPrimaryKeyName(),
+                    /** @lang */ 'CREATE TABLE %s (%s %s constraint %s primary key %s) ',
+                        $table->getName(), $table->getPrimaryKeyName(),
                         self::fixPrimaryKeyType($table->getPrimaryKeyType()),
                         $primaryKeyName,
                         str_starts_with(strtolower(self::fixPrimaryKeyType($table->getPrimaryKeyType())), 'int') ? 'autoincrement' : ''
 
                     )
 
-                    //"CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " " . self::fixPrimaryKeyType($table->getPrimaryKeyType()) . " constraint " . $primaryKeyName . " primary key autoincrement);"
+                //"CREATE TABLE " . $table->getName() . " (" . $table->getPrimaryKeyName() . " " . self::fixPrimaryKeyType($table->getPrimaryKeyType()) . " constraint " . $primaryKeyName . " primary key autoincrement);"
 
                 )
                 ->setReason("Table '" . $table->getName() . "' not found.")

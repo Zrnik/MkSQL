@@ -58,7 +58,7 @@ class Measure
      */
     public static function logTableSpeed(string $tableName, int $type, float $speed): void
     {
-        if(!in_array($type, [
+        if (!in_array($type, [
             self::TABLE_SPEED_DESCRIBE,
             self::TABLE_SPEED_GENERATE,
             self::TABLE_SPEED_EXECUTE
@@ -66,11 +66,11 @@ class Measure
             throw new InvalidArgumentException("Invalid type '" . $type . "' for measurement!");
         }
 
-        if(!isset(static::$_tableSpeeds[$tableName])) {
+        if (!isset(static::$_tableSpeeds[$tableName])) {
             static::$_tableSpeeds[$tableName] = [];
         }
 
-        if(!isset(static::$_tableSpeeds[$tableName][$type])) {
+        if (!isset(static::$_tableSpeeds[$tableName][$type])) {
             static::$_tableSpeeds[$tableName][$type] = 0;
         }
 
@@ -79,11 +79,11 @@ class Measure
 
     public static function getTableSpeed(string $tableName, int $type): float
     {
-        if(!isset(static::$_tableSpeeds[$tableName])) {
+        if (!isset(static::$_tableSpeeds[$tableName])) {
             static::$_tableSpeeds[$tableName] = [];
         }
 
-        if(!isset(static::$_tableSpeeds[$tableName][$type])) {
+        if (!isset(static::$_tableSpeeds[$tableName][$type])) {
             static::$_tableSpeeds[$tableName][$type] = 0;
         }
 
@@ -94,15 +94,14 @@ class Measure
     {
         $speed = 0;
 
-        foreach(static::$_tableSpeeds as $tableName => $measurements)
-        {
-            if($checkedTable !== null && $checkedTable !== $tableName) {
+        foreach (static::$_tableSpeeds as $tableName => $measurements) {
+            if ($checkedTable !== null && $checkedTable !== $tableName) {
                 continue;
             }
 
-            $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_DESCRIBE);
-            $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_GENERATE);
-            $speed += static::getTableSpeed($tableName,self::TABLE_SPEED_EXECUTE);
+            $speed += static::getTableSpeed($tableName, self::TABLE_SPEED_DESCRIBE);
+            $speed += static::getTableSpeed($tableName, self::TABLE_SPEED_GENERATE);
+            $speed += static::getTableSpeed($tableName, self::TABLE_SPEED_EXECUTE);
         }
 
         return $speed;
@@ -153,7 +152,7 @@ class Measure
     {
         $speed = 0;
 
-        foreach(static::$_DescriptionQueries as $descQuery) {
+        foreach (static::$_DescriptionQueries as $descQuery) {
             $speed += $descQuery->executionSpeed;
         }
 
@@ -164,7 +163,7 @@ class Measure
     {
         $speed = 0;
 
-        foreach(static::$_ModificationQueries as $modQuery) {
+        foreach (static::$_ModificationQueries as $modQuery) {
             $speed += $modQuery->speed;
         }
 
