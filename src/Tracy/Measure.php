@@ -38,6 +38,23 @@ class Measure
     }
     //endregion
 
+    /**
+     * @return Query[]
+     */
+    #[Pure] public static function getErrors(): array
+    {
+
+        $errorQueries = [];
+
+        foreach (static::getQueryModification() as $query) {
+            if ($query->errorText !== null) {
+                $errorQueries[] = $query;
+            }
+        }
+
+        return $errorQueries;
+    }
+
     //region Table Speed
 
     public const TABLE_SPEED_DESCRIBE = 1;

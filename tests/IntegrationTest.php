@@ -1,4 +1,5 @@
 <?php declare(strict_types=1);
+
 /**
  * @author Štěpán Zrník <stepan.zrnik@gmail.com>
  * @copyright Copyright (c) 2021, Štěpán Zrník
@@ -89,7 +90,7 @@ class IntegrationTest extends TestCase
 
         echo PHP_EOL . 'Testing "'
             . DriverType::getName($Updater->getDriverType()) .
-            '" Driver ['.$version.']:' . PHP_EOL . '[';
+            '" Driver [' . $version . ']:' . PHP_EOL . '[';
 
         static::assertNotNull($Updater->getDriverType());
         //echo "Processing Test with: " .  . PHP_EOL;
@@ -122,6 +123,9 @@ class IntegrationTest extends TestCase
 
         // #7. Changes in UniqueIndexes
         $this->subTestUniqueIndexes($Updater);
+
+        // #8. Errors
+        $this->subTestErrors($Updater);
 
 
         // #####################################
@@ -368,6 +372,31 @@ class IntegrationTest extends TestCase
         $this->dot();
     }
 
+
+    private function subTestErrors(Updater $Updater): void
+    {
+        $tables = $Updater->tableList();
+
+        // Create error item (column name cannot be 'date')
+        $tables[array_keys($tables)[0]]->columnCreate(
+            'unique', 'int(11)'
+        );
+
+        $Updater->install();
+        $this->dot();
+
+        static::assertCount(1,Measure::getErrors());
+
+        // Remove the error from cache, so we can continue...
+        foreach (Measure::getQueryModification() as $qm) {
+            $qm->errorText = null;
+        }
+
+        foreach (Measure::getQueryDescription() as $qd) {
+            $qd->errorText = null;
+        }
+
+    }
 
     private function dot(): void
     {
@@ -658,12 +687,12 @@ class IntegrationTest extends TestCase
         $updater1->install();
 
         $list1 = [];
-        foreach($updater1->tableList() as $table) {
+        foreach ($updater1->tableList() as $table) {
             $list1[] = $table->getName();
         }
 
         $list2 = [];
-        foreach($updater2->tableList() as $table) {
+        foreach ($updater2->tableList() as $table) {
             $list2[] = $table->getName();
         }
 
@@ -688,4 +717,6 @@ class IntegrationTest extends TestCase
             $neededTables, $list2
         );
     }
+
+
 }
