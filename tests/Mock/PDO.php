@@ -6,7 +6,7 @@ declare(strict_types=1);
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock;
+namespace Tests\Mock;
 
 use PDOException;
 

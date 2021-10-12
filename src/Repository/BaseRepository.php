@@ -278,6 +278,7 @@ abstract class BaseRepository
      * @param FetchObjectStorage|null $fetchObjectStorage
      * @return BaseEntity[]
      * @noinspection PhpFunctionCyclomaticComplexityInspection
+     * @noinspection PhpComplexFunctionInspection
      */
     public function getResultsByKeys(
         string $baseEntityClassString, ?string $key = null,

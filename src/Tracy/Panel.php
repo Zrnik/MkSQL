@@ -88,7 +88,7 @@ class Panel implements IBarPanel
             return static::$_svgCache[$svgName];
         }
 
-        $assetsFolder = __DIR__ . '/../../assets/';
+        $assetsFolder = __DIR__ . '/assets/';
 
         $imageContent = @file_get_contents($assetsFolder . $svgName);
 

@@ -6,14 +6,21 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
+namespace Tests;
+
 use Brick\DateTime\LocalDateTime;
-use Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
-use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
-use Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
-use Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
-use Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
-use Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
-use Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
+use PDO;
+use Tests\Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
+use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
+use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
+use Tests\Mock\Bugs\DoubleRetrieve\Person;
+use Tests\Mock\Bugs\DoubleRetrieve\Reward;
 use Nette\Neon\Neon;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +29,7 @@ use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\CircularReferenceDetectedException;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
@@ -32,6 +40,7 @@ use Zrnik\MkSQL\Tracy\Panel;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
 use Zrnik\PHPUnit\Exceptions;
+use function count;
 
 class IntegrationTest extends TestCase
 {
@@ -140,6 +149,11 @@ class IntegrationTest extends TestCase
 
         $this->subTestBaseRepoAndEntity($pdo);
         $this->subTestCircularReference($pdo);
+
+        // #####################################
+        // ### Bug Tests: ######################
+        // #####################################
+        $this->subTestDoubleRetrieve($pdo);
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
@@ -528,6 +542,11 @@ class IntegrationTest extends TestCase
         /** @var AuctionItem[] $allAuctionItems */
         $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
 
+        static::assertNull(
+            $allAuctionItems[0]->auction?->auctionItems[0]->whenSold
+        );
+
+
         $allAuctionItems[0]->whenSold = LocalDateTime::of(
             2020, 9, 1, 12
         );
@@ -538,6 +557,15 @@ class IntegrationTest extends TestCase
 
         $allAuctionItems[2]->whenSold = LocalDateTime::of(
             2021, 9, 1, 12
+        );
+
+        static::assertNotNull(
+            $allAuctionItems[0]->auction?->auctionItems[0]->whenSold
+        );
+
+        static::assertSame(
+            $allAuctionItems[0]->whenSold,
+            $allAuctionItems[0]->auction->auctionItems[0]->whenSold,
         );
 
         $auctionRepository->save($allAuctionItems);
@@ -554,7 +582,7 @@ class IntegrationTest extends TestCase
         $this->dot();
 
         $this->assertExceptionThrown(
-            \Zrnik\MkSQL\Exceptions\InvalidArgumentException::class,
+            InvalidArgumentException::class,
             function () use ($auctionRepository) {
                 $auctionRepository->distinctValues(
                     AuctionItem::class, 'nonExisting'
@@ -563,19 +591,23 @@ class IntegrationTest extends TestCase
         );
         $this->dot();
 
+        $distinctValues = $auctionRepository->distinctValues(
+            AuctionItem::class, 'whenSold'
+        );
+
+        sort($distinctValues);
+
         static::assertEquals(
             [
+                null,
                 LocalDateTime::of(
                     2020, 9, 1, 12
                 ),
                 LocalDateTime::of(
                     2021, 9, 1, 12
                 ),
-                null,
             ],
-            $auctionRepository->distinctValues(
-                AuctionItem::class, 'whenSold'
-            )
+            $distinctValues
         );
         $this->dot();
 
@@ -621,7 +653,7 @@ class IntegrationTest extends TestCase
      * @throws InvalidDriverException
      * @throws UnexpectedCall
      * @throws ColumnDefinitionExists
-     * @throws \Zrnik\MkSQL\Exceptions\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @throws PrimaryKeyAutomaticException
      * @throws TableDefinitionExists
      */
@@ -716,6 +748,73 @@ class IntegrationTest extends TestCase
         static::assertSame(
             $neededTables, $list2
         );
+    }
+
+    private function subTestDoubleRetrieve(PDO $pdo): void
+    {
+        $repository = new DoubleRetrieveRepository($pdo);
+
+        //Clear Tables
+        foreach (array_reverse($repository->getTables()) as $table) {
+            /**
+             * @noinspection SqlWithoutWhere
+             * @noinspection UnknownInspectionInspection
+             */
+            $pdo->exec(sprintf('DELETE FROM %s', $table->getName()));
+        }
+
+        //region create data
+        $_acct1 = Person::create();
+        $_acct1->name = 'Account 1 - Winner';
+
+        $_acct2 = Person::create();
+        $_acct2->name = 'Account 2 - Reward Receiver';
+
+        $_acct3 = Person::create();
+        $_acct3->name = 'Account 3 - Winner';
+
+        $_acct4 = Person::create();
+        $_acct4->name = 'Account 4 - Reward Receiver';
+
+        $_acct1Entries = [];
+        $_acct3Entries = [];
+
+        $entry1 = AccountEntry::create();
+        $entry2 = AccountEntry::create();
+        $_acct1Entries[] = $entry1;
+        $_acct3Entries[] = $entry2;
+
+        $entry1->amount = 100;
+        $entry1->owner = $_acct1;
+        $entry1->rewards = [];
+
+        $entry2->amount = 100;
+        $entry2->owner = $_acct3;
+        $entry2->rewards = [];
+
+        $reward1 = Reward::create();
+        $entry1->rewards[] = $reward1;
+        $reward1->receiver = $_acct2;
+        $reward1->relatedEntry = $entry1;
+        $reward1->rewardAmount = 10;
+
+        $reward2 = Reward::create();
+        $entry2->rewards[] = $reward2;
+        $reward2->receiver = $_acct4;
+        $reward2->relatedEntry = $entry2;
+        $reward2->rewardAmount = 10;
+
+        $_acct1->accountEntries = $_acct1Entries;
+        $_acct2->accountEntries = [];
+        $_acct3->accountEntries = $_acct3Entries;
+        $_acct4->accountEntries = [];
+
+        $repository->save([$_acct1, $_acct2, $_acct3, $_acct4]);
+
+        //endregion
+
+
+
     }
 
 

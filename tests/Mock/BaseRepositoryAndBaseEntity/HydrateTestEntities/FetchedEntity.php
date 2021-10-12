@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities;
 
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;

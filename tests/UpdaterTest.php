@@ -5,7 +5,11 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
+namespace Tests;
+
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\PDO;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Table;
@@ -21,20 +25,20 @@ class UpdaterTest extends TestCase
      */
     public function testInstall(): void
     {
-        $this->assertNoExceptionThrown(function(){
+        $this->assertNoExceptionThrown(function () {
             $Updater = new Updater($this->createPDO());
             $Updater->install();
         });
     }
 
-    private function createPDO(): \Mock\PDO
+    private function createPDO(): PDO
     {
-        return new \Mock\PDO();
+        return new PDO();
     }
 
     /**
      * @throws TableDefinitionExists
-     * @throws \Zrnik\MkSQL\Exceptions\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function testTableGet(): void
     {

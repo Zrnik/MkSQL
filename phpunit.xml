@@ -1,6 +1,6 @@
 <phpunit bootstrap="tests/Bootstrap.php">
     <extensions>
-        <extension class="\Hooks\IntegrationErrorReport"/>
+        <extension class="\Tests\Hooks\IntegrationErrorReport"/>
     </extensions>
     <testsuites>
         <testsuite name="unit">

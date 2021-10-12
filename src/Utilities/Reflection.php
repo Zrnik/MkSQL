@@ -35,7 +35,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function classGetAttributes(ReflectionClass $reflection, string $attributeClassName): array
     {
         $attributes = [];
@@ -56,7 +55,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function classGetAttribute(ReflectionClass $reflection, string $attributeClassName): ?ReflectionAttribute
     {
         $attrs = self::classGetAttributes($reflection, $attributeClassName);
@@ -73,7 +71,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function attributeGetArgument(ReflectionAttribute $reflectionAttribute, int $index = 0): mixed
     {
         $args = $reflectionAttribute->getArguments();
@@ -101,7 +98,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function propertyGetAttribute(ReflectionProperty $reflectionProperty, string $attributeClassName): ?ReflectionAttribute
     {
         $attrs = self::propertyGetAttributes($reflectionProperty, $attributeClassName);
@@ -118,7 +114,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function propertyGetAttributes(ReflectionProperty $reflectionProperty, string $attributeClassName): array
     {
         $attributes = [];

@@ -5,6 +5,8 @@ namespace Zrnik\MkSQL\Utilities;
 use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Table;
+use function array_key_exists;
+use function in_array;
 
 class TableOrder
 {
@@ -49,7 +51,7 @@ class TableOrder
                         $requirements[$table->getName()] = [];
                     }
 
-                    if (!in_array($requiredTableName, $requirements[$table->getName()])) {
+                    if (!in_array($requiredTableName, $requirements[$table->getName()], true)) {
                         $requirements[$table->getName()][] = $requiredTableName;
                     }
                 }
@@ -101,7 +103,7 @@ class TableOrder
             }
         }
 
-        if (!in_array($tableName, $order)) {
+        if (!in_array($tableName, $order, true)) {
             $order[] = $tableName;
         }
 

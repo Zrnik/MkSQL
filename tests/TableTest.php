@@ -6,6 +6,9 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
+namespace Tests;
+
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
@@ -13,6 +16,7 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Table;
 use Zrnik\PHPUnit\Exceptions;
+
 
 class TableTest extends TestCase
 {

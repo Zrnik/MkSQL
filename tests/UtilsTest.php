@@ -5,6 +5,9 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
+namespace Tests;
+
+use Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Utils;
@@ -310,5 +313,4 @@ class UtilsTest extends TestCase
             );
         }
     }
-
 }

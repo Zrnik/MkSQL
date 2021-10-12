@@ -224,7 +224,10 @@ abstract class BaseEntity
             /** @var array<mixed> $data */
             $data = $iterable;
         } else {
-            /** @var array<mixed> $data */
+            /**
+             * @var array<mixed> $data
+             * @noinspection PhpParamsInspection
+             */
             $data = iterator_to_array($iterable);
         }
 
@@ -510,7 +513,6 @@ abstract class BaseEntity
     //endregion
 
     //region Column Name
-    #[Pure]
     public static function columnName(ReflectionProperty $reflectionProperty): string
     {
         $columnNameAttribute = Reflection::propertyGetAttribute($reflectionProperty, ColumnName::class);
@@ -597,7 +599,6 @@ abstract class BaseEntity
     //endregion
 
     //region Column `DEFAULT`
-    #[Pure]
     public static function columnDefaultValue(ReflectionProperty $property): mixed
     {
         $defaultValueAttr = Reflection::propertyGetAttribute($property, DefaultValue::class);
@@ -609,7 +610,6 @@ abstract class BaseEntity
     //endregion
 
     //region Column `COMMENT`
-    #[Pure]
     public static function columnComment(ReflectionProperty $property): mixed
     {
         $defaultValueAttr = Reflection::propertyGetAttribute($property, Comment::class);

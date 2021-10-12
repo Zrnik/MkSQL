@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities;
 
 use Zrnik\MkSQL\Repository\Attributes\ColumnName;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;

@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference;
 
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;

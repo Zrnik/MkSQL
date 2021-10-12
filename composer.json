@@ -48,8 +48,12 @@
   },
   "autoload": {
     "psr-4": {
-      "Zrnik\\MkSQL\\": "src/",
-      "Mock\\": "tests/Mock/",
+      "Zrnik\\MkSQL\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/",
       "Examples\\": "examples/"
     }
   },

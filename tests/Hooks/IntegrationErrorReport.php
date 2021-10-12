@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Hooks;
+namespace Tests\Hooks;
 
 
 use PHPUnit\Runner\AfterLastTestHook;

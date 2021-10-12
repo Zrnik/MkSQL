@@ -5,12 +5,12 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities;
 
 use Brick\DateTime\LocalDateTime;
-use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeTestingOnlyConverter;
-use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NonNullableStringTypeConverter;
-use Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NullableStringTypeConverter;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\LocalDateTimeTypeTestingOnlyConverter;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NonNullableStringTypeConverter;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes\NullableStringTypeConverter;
 use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\CustomType;
 use Zrnik\MkSQL\Repository\Attributes\DefaultValue;

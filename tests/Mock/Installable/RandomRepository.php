@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\Installable;
+namespace Tests\Mock\Installable;
 
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;

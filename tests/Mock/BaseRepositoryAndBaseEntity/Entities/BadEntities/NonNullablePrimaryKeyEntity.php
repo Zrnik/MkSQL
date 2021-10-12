@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities;
 
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;

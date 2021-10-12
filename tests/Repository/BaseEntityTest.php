@@ -5,19 +5,19 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Repository;
+namespace Tests\Repository;
 
 use Brick\DateTime\LocalDateTime;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingPrimaryKeyEntity;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingTableNameEntity;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MultiplePrimaryKeysDefined;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NonNullablePrimaryKeyEntity;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NullableButWithoutNullAsDefaultPrimaryKeyEntity;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\EntityNotPointingBack;
-use Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\MainEntity;
-use Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
-use Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
-use Mock\PDO;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingPrimaryKeyEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingTableNameEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MultiplePrimaryKeysDefined;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NonNullablePrimaryKeyEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NullableButWithoutNullAsDefaultPrimaryKeyEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\EntityNotPointingBack;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\MainEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
+use Tests\Mock\PDO;
 use PHPUnit\Framework\TestCase;
 use ReflectionNamedType;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;

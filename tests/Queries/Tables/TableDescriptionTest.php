@@ -5,10 +5,10 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Queries\Tables;
+namespace Tests\Queries\Tables;
 
-use Mock\MockSQLMaker_ExistingTable_First;
-use Mock\PDO;
+use Tests\Mock\MockSQLMaker_ExistingTable_First;
+use Tests\Mock\PDO;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;

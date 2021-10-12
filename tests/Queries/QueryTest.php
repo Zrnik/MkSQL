@@ -5,9 +5,9 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Queries;
+namespace Tests\Queries;
 
-use Mock\PDO;
+use Tests\Mock\PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Column;

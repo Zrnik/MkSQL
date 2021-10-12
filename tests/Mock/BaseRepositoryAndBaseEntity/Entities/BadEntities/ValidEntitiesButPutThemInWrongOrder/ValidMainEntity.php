@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\ValidEntitiesButPutThemInWrongOrder;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\ValidEntitiesButPutThemInWrongOrder;
 
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;

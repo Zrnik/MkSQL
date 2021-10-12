@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
 
 use Brick\DateTime\LocalDateTime;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;

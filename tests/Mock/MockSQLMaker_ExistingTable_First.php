@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock;
+namespace Tests\Mock;
 
 use PDO;
 use Zrnik\MkSQL\Column;

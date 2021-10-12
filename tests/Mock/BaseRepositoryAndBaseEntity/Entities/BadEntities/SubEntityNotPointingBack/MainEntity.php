@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack;
 
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;

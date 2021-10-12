@@ -5,11 +5,11 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity;
 
-use Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
-use Mock\BaseRepositoryAndBaseEntity\Entities\InvoiceItem;
-use Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\InvoiceItem;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;

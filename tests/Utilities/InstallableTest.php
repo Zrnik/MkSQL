@@ -5,11 +5,11 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Utilities;
+namespace Tests\Utilities;
 
-use Mock\Installable\DifferentRepository;
-use Mock\Installable\RandomRepository;
-use Mock\PDO;
+use Tests\Mock\Installable\DifferentRepository;
+use Tests\Mock\Installable\RandomRepository;
+use Tests\Mock\PDO;
 use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Utilities\Installable;

@@ -5,9 +5,9 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity;
 
-use Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;

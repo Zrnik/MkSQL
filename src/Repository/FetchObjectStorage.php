@@ -6,6 +6,9 @@ use Closure;
 
 class FetchObjectStorage
 {
+    /**
+     * @var array<string, BaseEntity>
+     */
     private array $entityStorage = [];
 
     /**
@@ -19,7 +22,7 @@ class FetchObjectStorage
         Closure $factory
     ): BaseEntity
     {
-        /** @var BaseEntity $object */
+        /** @var ?BaseEntity $object */
         $object = $this->getStoredObject($baseEntityClassName, $primaryKeyValue);
 
         if ($object === null) {
@@ -28,11 +31,6 @@ class FetchObjectStorage
 
         return $object;
     }
-
-    /*private function objectStored(string $baseEntityClassName, mixed $primaryKeyValue): bool
-    {
-        return $this->getStoredObject($baseEntityClassName, $primaryKeyValue) !== null;
-    }*/
 
     private function getStoredObject(string $baseEntityClassName, mixed $primaryKeyValue): ?BaseEntity
     {

@@ -5,7 +5,7 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-namespace Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
+namespace Tests\Mock\BaseRepositoryAndBaseEntity\Entities\CustomTypes;
 
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Repository\CustomTypeConverter;

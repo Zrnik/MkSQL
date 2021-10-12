@@ -6,8 +6,13 @@
  * @project MkSQL <https://github.com/Zrnik/MkSQL>
  */
 
-use Mock\MockSQLMaker_ExistingTable_First;
+namespace Tests;
+
+use Exception;
+use LogicException;
+use Tests\Mock\MockSQLMaker_ExistingTable_First;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
@@ -72,7 +77,7 @@ class ColumnTest extends TestCase
      */
     public function testForeignKeys(): void
     {
-        $updater = new Updater(new \Mock\PDO());
+        $updater = new Updater(new PDO());
 
         $updater->tableCreate('accounts');
         $sessions = $updater->tableCreate('sessions')
@@ -341,7 +346,7 @@ class ColumnTest extends TestCase
     public function testInstall(): void
     {
         //Get Mocked QueryMaker TableDefinition with prepared Tables:
-        $desc = MockSQLMaker_ExistingTable_First::describeTable(new \Mock\PDO(), new Table('null'));
+        $desc = MockSQLMaker_ExistingTable_First::describeTable(new PDO(), new Table('null'));
 
         static::assertNotNull($desc);
 
