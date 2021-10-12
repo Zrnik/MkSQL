@@ -18,7 +18,7 @@ use function array_key_exists;
 use function count;
 use function is_array;
 
-class BaseRepository
+abstract class BaseRepository
 {
 
     public function __construct(protected PDO $pdo)
@@ -32,8 +32,21 @@ class BaseRepository
 
     /**
      * @param BaseEntity|BaseEntity[] $entities
+     * @return string[]
      */
-    public function save(BaseEntity|array $entities): void
+    public function save(BaseEntity|array $entities): array
+    {
+        /** @var string[] $savedHashList */
+        $savedHashList = [];
+        $this->saveReal($entities, $savedHashList);
+        return $savedHashList;
+    }
+
+    /**
+     * @param BaseEntity|BaseEntity[] $entities
+     * @param string[] $savedHashList
+     */
+    public function saveReal(BaseEntity|array $entities, array &$savedHashList): void
     {
         if ($entities instanceof BaseEntity) {
             /** @var BaseEntity[] $entities */
@@ -54,22 +67,38 @@ class BaseRepository
         }
 
         if (count($insert) > 0) {
-            $this->insert($insert);
+            $this->insert($insert, $savedHashList);
         }
 
         if (count($update) > 0) {
-            $this->update($update);
+            $this->update($update, $savedHashList);
         }
     }
 
     /**
      * @param BaseEntity[] $entities
+     * @param string[] $savedHashList
      */
-    private function insert(array $entities): void
+    private function insert(array $entities, array &$savedHashList): void
     {
+        $subEntitiesToSave = [];
+
         foreach ($entities as $entity) {
 
             $data = $entity->toArray();
+
+            if ($entity->getPrimaryKeyValue() !== null) {
+                // Hello sir, I would like to inform you,
+                // that the process of saving already
+                // given a primary key value to you...
+
+                // would you mind do 'update'
+                // instead of 'saving'?
+
+                // Thank you very much!
+                $this->saveReal([$entity], $savedHashList);
+                continue;
+            }
 
             $sql = sprintf(
                 'INSERT INTO %s (%s) VALUES (%s)',
@@ -100,18 +129,26 @@ class BaseRepository
 
             $entity->setPrimaryKeyValue($this->pdo->lastInsertId());
 
-            $this->save($entity->getSubEntities());
+            $subEntities = $entity->getSubEntities($savedHashList);
+
+
+            foreach ($subEntities as $subEntity) {
+                $subEntitiesToSave[] = $subEntity;
+            }
 
             $entity->updateRawData();
         }
 
+        $this->saveReal($subEntitiesToSave, $savedHashList);
     }
 
     /**
      * @param BaseEntity[] $entities
+     * @param string[] $savedHashList
      */
-    private function update(array $entities): void
+    private function update(array $entities, array &$savedHashList): void
     {
+        $subEntitiesToSave = [];
 
         foreach ($entities as $entity) {
 
@@ -120,7 +157,10 @@ class BaseRepository
             $primaryKeyValue = $data[$primaryKeyName];
             unset($data[$primaryKeyName]);
 
-            //dump($data);
+            if ($primaryKeyValue === null) {
+                $this->saveReal([$entity], $savedHashList);
+                continue;
+            }
 
             $sql = sprintf(
             /** @lang */ 'UPDATE %s SET %s WHERE %s=%s',
@@ -133,8 +173,9 @@ class BaseRepository
                         },
                         array_keys($data)
                     )
-                )
-                , $primaryKeyName, ':' . $primaryKeyName
+                ),
+                $primaryKeyName,
+                ':' . $primaryKeyName
             );
 
             $statement = $this->pdo->prepare($sql);
@@ -143,25 +184,32 @@ class BaseRepository
 
             $statement->execute($data);
 
-            $this->save($entity->getSubEntities());
+            $subEntities = $entity->getSubEntities($savedHashList);
+
+            foreach ($subEntities as $subEntity) {
+                $subEntitiesToSave[] = $subEntity;
+                $savedHashList[] = $subEntity->hash();
+            }
 
             $entity->updateRawData();
         }
 
+        $this->saveReal($subEntitiesToSave, $savedHashList);
     }
 
 
     /**
      * @param string $baseEntityClassString
      * @param mixed $primaryKeyValue
+     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return ?BaseEntity
      */
-    public function getResultByPrimaryKey(string $baseEntityClassString, mixed $primaryKeyValue): ?BaseEntity
+    public function getResultByPrimaryKey(string $baseEntityClassString, mixed $primaryKeyValue, ?FetchObjectStorage $fetchObjectStorage = null): ?BaseEntity
     {
         /** @var BaseEntity $baseEntity */
         $baseEntity = $baseEntityClassString;
         $primaryKey = $baseEntity::getPrimaryKeyName();
-        return $this->getResultByKey($baseEntityClassString, $primaryKey, $primaryKeyValue);
+        return $this->getResultByKey($baseEntityClassString, $primaryKey, $primaryKeyValue, $fetchObjectStorage);
     }
 
     /**
@@ -181,11 +229,12 @@ class BaseRepository
      * @param string $baseEntityClassString
      * @param string $key
      * @param mixed $value
+     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return ?BaseEntity
      */
-    public function getResultByKey(string $baseEntityClassString, string $key, mixed $value): ?BaseEntity
+    public function getResultByKey(string $baseEntityClassString, string $key, mixed $value, ?FetchObjectStorage $fetchObjectStorage = null): ?BaseEntity
     {
-        $result = $this->getResultsByKeys($baseEntityClassString, $key, [$value]);
+        $result = $this->getResultsByKeys($baseEntityClassString, $key, [$value], 0, $fetchObjectStorage);
         if (count($result) > 0) {
             return $result[0];
         }
@@ -206,16 +255,19 @@ class BaseRepository
      * @param string $baseEntityClassString
      * @param string|null $key
      * @param mixed|null $value
+     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return BaseEntity[]
      */
-    public function getResultsByKey(string $baseEntityClassString, ?string $key = null, mixed $value = null): array
+    public function getResultsByKey(string $baseEntityClassString, ?string $key = null, mixed $value = null, ?FetchObjectStorage $fetchObjectStorage = null): array
     {
         if (is_array($value)) {
             throw new InvalidArgumentException("For array value, please use 'getResultsByKeys' method!");
         }
 
 
-        return $this->getResultsByKeys($baseEntityClassString, $key, $value === null ? [] : [$value]);
+        return $this->getResultsByKeys(
+            $baseEntityClassString, $key, $value === null ? [] : [$value], 0, $fetchObjectStorage
+        );
     }
 
     /**
@@ -223,13 +275,22 @@ class BaseRepository
      * @param string|null $key
      * @param array<mixed> $values
      * @param int $level
+     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return BaseEntity[]
      * @noinspection PhpFunctionCyclomaticComplexityInspection
      */
-    public function getResultsByKeys(string $baseEntityClassString, ?string $key = null, array $values = [], int $level = 0): array
+    public function getResultsByKeys(
+        string $baseEntityClassString, ?string $key = null,
+        array $values = [], int $level = 0,
+        ?FetchObjectStorage $fetchObjectStorage = null
+    ): array
     {
         /** @var BaseEntity $baseEntity */
         $baseEntity = $baseEntityClassString;
+
+        if($fetchObjectStorage === null) {
+            $fetchObjectStorage = new FetchObjectStorage();
+        }
 
         $tableName = $baseEntity::getTableName();
 
@@ -258,7 +319,7 @@ class BaseRepository
         }
 
         $statement = $this->pdo->prepare($sql);
-        //dump($values);
+
         $statement->execute($values);
         $results = $statement->fetchAll();
         if ($results === false) {
@@ -308,7 +369,7 @@ class BaseRepository
                 ];
 
                 $subResults = $this->getResultsByKeys(
-                    $subEntityClassName, $pointer, $usedPrimaryKeyList, $level + 1
+                    $subEntityClassName, $pointer, $usedPrimaryKeyList, $level + 1, $fetchObjectStorage
                 );
 
                 foreach ($subResults as $subResult) {
@@ -334,9 +395,18 @@ class BaseRepository
                 }
             }
 
-            $entity = $baseEntity::fromIterable(
-                $data
-            );
+            $entity =
+                $fetchObjectStorage->getObject(
+                    $baseEntityClassString, $primaryKeyValue,
+                    function() use ($baseEntity, $data) {
+                        return $baseEntity::fromIterable(
+                            $data
+                        );
+                    }
+                );
+
+
+
 
             foreach ($subElements as $subElementKey => $subElementProperties) {
                 $subElementEntityPointingPropertyName = $subElementProperties['pointingPropertyName'];
@@ -360,7 +430,7 @@ class BaseRepository
                             }
 
                             $entity->$propertyName = $this->getResultByPrimaryKey(
-                                $type->getName(), $entity->getRawData()[$columnName]
+                                $type->getName(), $entity->getRawData()[$columnName], $fetchObjectStorage
                             );
                         }
                     }

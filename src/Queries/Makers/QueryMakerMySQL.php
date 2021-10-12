@@ -333,7 +333,6 @@ class QueryMakerMySQL implements IQueryMaker
         //Remove Foreign Keys and then add them back after the index was removed!
         $Queries = [];
 
-        //var_dump($columnDescription->foreignKeys);
         foreach ($columnDescription?->foreignKeys as $foreignKeyName) {
             $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
             foreach ($DropQueries as $DropQuery) {

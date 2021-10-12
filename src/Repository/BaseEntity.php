@@ -845,8 +845,9 @@ abstract class BaseEntity
      */
     public function getPrimaryKeyValue(): mixed
     {
-        $primaryKeyPropertyName = self::getPrimaryKeyReflectionProperty()->getName();
-        return $this->$primaryKeyPropertyName;
+        $primaryKeyColumnName = static::getPrimaryKeyName();
+        $data = $this->toArray();
+        return $data[$primaryKeyColumnName];
     }
 
     /**
@@ -864,7 +865,6 @@ abstract class BaseEntity
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
         foreach ($this->getSubEntities() as $subEntity) {
-
             $subEntityReflection = static::getReflectionClass($subEntity);
             foreach ($subEntityReflection->getProperties() as $subProperty) {
                 $foreignKeyAttribute = Reflection::propertyGetAttribute(
@@ -883,20 +883,20 @@ abstract class BaseEntity
                 }
             }
         }
-
-
     }
 
     /**
+     * @param string[] $savedHashList
      * @return BaseEntity[]
      * @throws ReflectionFailedException
      */
-    public function getSubEntities(): array
+    public function getSubEntities(array $savedHashList = []): array
     {
         $reflection = self::getReflectionClass(static::class);
         $subEntities = [];
 
         foreach ($reflection->getProperties() as $property) {
+
             $fetchArrayAttr = Reflection::propertyGetAttribute($property, FetchArray::class);
             if ($fetchArrayAttr !== null) {
                 $propertyName = $property->getName();
@@ -905,10 +905,35 @@ abstract class BaseEntity
                     $subEntities[] = $subEntity;
                 }
             }
+
+            $foreignKeyAttr = Reflection::propertyGetAttribute($property, ForeignKey::class);
+            if ($foreignKeyAttr !== null) {
+                $propertyName = $property->getName();
+                $subEntities[] = $this->$propertyName;
+            }
         }
 
-        return $subEntities;
+        $allowedSubEntities = [];
+        /** @var BaseEntity $possibleSubEntity */
+        foreach ($subEntities as $possibleSubEntity) {
+            if (!in_array($possibleSubEntity->hash(), $savedHashList, true)) {
+                $allowedSubEntities[] = $possibleSubEntity;
+                $savedHashList[] = $possibleSubEntity->hash();
+            }
+        }
+
+        return $allowedSubEntities;
     }
 
-
+    public function hash(): string
+    {
+        return sprintf(
+            '%s-%s',
+            hash(
+                'sha256',
+                spl_object_hash($this)
+            ),
+            $this::getTableName()
+        );
+    }
 }
