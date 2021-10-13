@@ -504,6 +504,15 @@ class IntegrationTest extends TestCase
         /** @var Auction $fetchedAuction1 */
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
 
+
+        /*dump("------------------------------");
+        dump(
+            $pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+            false
+        );
+        dump($auction1);
+        dump($fetchedAuction1);*/
+
         static::assertEquals($auction1, $fetchedAuction1);
         static::assertNotSame($auction1, $fetchedAuction1);
         $this->dot();

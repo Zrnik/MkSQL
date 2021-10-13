@@ -37,6 +37,7 @@ use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
 use Zrnik\MkSQL\Updater;
+use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
 use Zrnik\MkSQL\Utilities\Reflection;
 use function array_key_exists;
 use function count;
@@ -911,11 +912,10 @@ abstract class BaseEntity implements JsonSerializable
     }
 
     /**
-     * @param string[] $savedHashList
      * @return BaseEntity[]
      * @throws ReflectionFailedException
      */
-    public function getSubEntities(array $savedHashList = []): array
+    public function getSubEntities(): array
     {
         $reflection = self::getReflectionClass(static::class);
         $subEntities = [];
@@ -938,16 +938,7 @@ abstract class BaseEntity implements JsonSerializable
             }
         }
 
-        $allowedSubEntities = [];
-        /** @var BaseEntity $possibleSubEntity */
-        foreach ($subEntities as $possibleSubEntity) {
-            if (!in_array($possibleSubEntity->hash(), $savedHashList, true)) {
-                $allowedSubEntities[] = $possibleSubEntity;
-                $savedHashList[] = $possibleSubEntity->hash();
-            }
-        }
-
-        return $allowedSubEntities;
+        return $subEntities;
     }
 
     public function hash(): string
@@ -1000,4 +991,22 @@ abstract class BaseEntity implements JsonSerializable
 
         return $result;
     }
+
+    public function fixSubEntityForeignKeys(): void
+    {
+        foreach(EntityReflection::getFetchArrayProperties($this) as $fetchArrayProperty) {
+            $propertyName = $fetchArrayProperty->getPropertyName();
+            /** @var BaseEntity $childEntity */
+            foreach($this->$propertyName as $childEntity) {
+                foreach(EntityReflection::getForeignKeys($childEntity) as $foreignKeyData) {
+                    $childEntityForeignKeyPropertyName = $foreignKeyData->getPropertyName();
+                    if($foreignKeyData->getTargetClassName() === self::class) {
+                        $childEntity->$childEntityForeignKeyPropertyName = $this;
+                    }
+                }
+            }
+        }
+        $this->updateRawData();
+    }
+
 }
