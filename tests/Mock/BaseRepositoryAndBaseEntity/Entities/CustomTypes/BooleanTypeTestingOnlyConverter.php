@@ -20,7 +20,7 @@ class BooleanTypeTestingOnlyConverter extends CustomTypeConverter
     public function serialize(mixed $value): int
     {
         /** @var bool $bool */
-        $bool = $this->assertType($value,get_debug_type(true));
+        $bool = $this->assertType($value, get_debug_type(true));
         return $bool ? 1 : 0;
     }
 

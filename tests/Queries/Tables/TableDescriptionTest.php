@@ -7,9 +7,9 @@
 
 namespace Tests\Queries\Tables;
 
+use PHPUnit\Framework\TestCase;
 use Tests\Mock\MockSQLMaker_ExistingTable_First;
 use Tests\Mock\PDO;
-use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;

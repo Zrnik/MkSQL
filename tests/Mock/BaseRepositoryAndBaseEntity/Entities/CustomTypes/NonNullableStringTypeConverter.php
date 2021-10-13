@@ -22,7 +22,7 @@ class NonNullableStringTypeConverter extends CustomTypeConverter
 
     public function deserialize(mixed $value): string
     {
-        return (string) $value;
+        return (string)$value;
     }
 
     public function getDatabaseType(): string

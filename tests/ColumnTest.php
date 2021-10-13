@@ -10,15 +10,15 @@ namespace Tests;
 
 use Exception;
 use LogicException;
-use Tests\Mock\MockSQLMaker_ExistingTable_First;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\MockSQLMaker_ExistingTable_First;
 use Tests\Mock\PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
+use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
-use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Table;
 use Zrnik\MkSQL\Updater;
 use Zrnik\PHPUnit\Exceptions;

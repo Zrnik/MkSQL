@@ -10,6 +10,9 @@
         <testsuite name="integration">
             <file>./tests/IntegrationTest.php</file>
         </testsuite>
+        <testsuite name="fetcher">
+            <directory>tests/Repository/Fetcher</directory>
+        </testsuite>
     </testsuites>
     <coverage>
         <include>

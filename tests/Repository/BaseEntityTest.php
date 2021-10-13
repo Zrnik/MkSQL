@@ -8,6 +8,8 @@
 namespace Tests\Repository;
 
 use Brick\DateTime\LocalDateTime;
+use PHPUnit\Framework\TestCase;
+use ReflectionNamedType;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingPrimaryKeyEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingTableNameEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MultiplePrimaryKeysDefined;
@@ -18,8 +20,6 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPoin
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
 use Tests\Mock\PDO;
-use PHPUnit\Framework\TestCase;
-use ReflectionNamedType;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;

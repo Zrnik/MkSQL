@@ -10,8 +10,8 @@ namespace Tests;
 use Exception;
 use JetBrains\PhpStorm\ArrayShape;
 use PHPUnit\Framework\TestCase;
-use Zrnik\MkSQL\Utils;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Utils;
 use Zrnik\PHPUnit\Exceptions;
 
 class UtilsTest extends TestCase
@@ -120,7 +120,7 @@ class UtilsTest extends TestCase
         foreach ($IncorrectValues as $TestedValue) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedValue) {
+                function () use ($TestedValue) {
                     Utils::confirmForeignKeyTarget($TestedValue);
                 }
             );
@@ -158,7 +158,7 @@ class UtilsTest extends TestCase
         foreach ($InvalidTypes as $TestedType) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedType) {
+                function () use ($TestedType) {
                     Utils::confirmType($TestedType);
                 }
             );
@@ -183,7 +183,7 @@ class UtilsTest extends TestCase
         foreach ($defaultERRValues as $TestedKey) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedKey) {
+                function () use ($TestedKey) {
                     Utils::confirmColumnName($TestedKey);
                 }
             );
@@ -238,7 +238,7 @@ class UtilsTest extends TestCase
         foreach ($defaultERRValues as $TestedKey) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedKey) {
+                function () use ($TestedKey) {
                     Utils::confirmTableName($TestedKey);
                 }
             );
@@ -274,7 +274,7 @@ class UtilsTest extends TestCase
         foreach ($InvalidComments as $TestedComment) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedComment) {
+                function () use ($TestedComment) {
                     Utils::confirmComment($TestedComment);
                 }
             );
@@ -307,7 +307,7 @@ class UtilsTest extends TestCase
         foreach ($KeysWithComments as $TestedComment) {
             $this->assertExceptionThrown(
                 InvalidArgumentException::class,
-                function() use ($TestedComment) {
+                function () use ($TestedComment) {
                     Utils::internalTestCommentsError($TestedComment);
                 }
             );

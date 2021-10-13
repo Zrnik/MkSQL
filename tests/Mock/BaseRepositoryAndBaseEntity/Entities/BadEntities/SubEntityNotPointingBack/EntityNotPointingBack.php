@@ -18,6 +18,4 @@ class EntityNotPointingBack extends BaseEntity
     public ?int $id = null;
 
 
-
-
 }

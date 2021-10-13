@@ -25,7 +25,7 @@ class LocalDateTimeTypeTestingOnlyConverter extends CustomTypeConverter
 
     public function deserialize(mixed $value): ?LocalDateTime
     {
-        if($value === null) {
+        if ($value === null) {
             return null;
         }
 

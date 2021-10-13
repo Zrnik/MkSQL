@@ -12,49 +12,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: "COMPOSER: Validate"
-      run: composer validate
+      - name: "COMPOSER: Validate"
+        run: composer validate
 
-    - name: "COMPOSER: Cache"
-      id: composer-cache
-      uses: actions/cache@v2
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      - name: "COMPOSER: Cache"
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
 
-    - name: "COMPOSER: Update (if not cached)"
-      if: steps.composer-cache.outputs.cache-hit != 'true'
-      run: composer install --prefer-dist --no-progress --no-suggest
+      - name: "COMPOSER: Update (if not cached)"
+        if: steps.composer-cache.outputs.cache-hit != 'true'
+        run: composer install --prefer-dist --no-progress --no-suggest
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+      # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
+      # Docs: https://getcomposer.org/doc/articles/scripts.md
 
-    - name: PHPStan
-      run: composer phpstan
+      - name: PHPStan
+        run: composer phpstan
 
-    - name: "PHPUnit: Unit"
-      run: composer phpunit:unit
+      - name: "PHPUnit: Unit"
+        run: composer phpunit:unit
 
-    - name: "Shutdown Ubuntu MySQL (SUDO)"
-      run: sudo service mysql stop
+      - name: "Shutdown Ubuntu MySQL (SUDO)"
+        run: sudo service mysql stop
 
-    - uses: mirromutth/mysql-action@v1.1
-      name: "Prepare MySQL"
-      with:
-        mysql database: 'mk_sql_test'
-        mysql root password: 'mk_sql_test'
+      - uses: mirromutth/mysql-action@v1.1
+        name: "Prepare MySQL"
+        with:
+          mysql database: 'mk_sql_test'
+          mysql root password: 'mk_sql_test'
 
-    # I hope this will fix it, the MySQL is not available immediately, so we must wait for it
-    # see: https://github.com/mirromutth/mysql-action/issues/10
-    - name: Wait for MySQL
-      run: |
-        while ! mysqladmin ping --host=127.0.0.1 --password=mk_sql_test --silent; do
-          sleep 1
-        done
+      # I hope this will fix it, the MySQL is not available immediately, so we must wait for it
+      # see: https://github.com/mirromutth/mysql-action/issues/10
+      - name: Wait for MySQL
+        run: |
+          while ! mysqladmin ping --host=127.0.0.1 --password=mk_sql_test --silent; do
+            sleep 1
+          done
 
-    - name: "PHPUnit: Integration"
-      run: composer phpunit:integration
+      - name: "PHPUnit: Integration"
+        run: composer phpunit:integration

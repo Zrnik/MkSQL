@@ -22,7 +22,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function classHasAttribute(ReflectionClass $reflection, string $attributeClassName): bool
     {
         return self::classGetAttribute($reflection, $attributeClassName) !== null;
@@ -85,7 +84,6 @@ class Reflection
      * @noinspection UnknownInspectionInspection
      * @noinspection PhpUnused
      */
-    #[Pure]
     public static function propertyHasAttribute(ReflectionProperty $reflectionProperty, string $attributeClassName): bool
     {
         return self::propertyGetAttribute($reflectionProperty, $attributeClassName) !== null;

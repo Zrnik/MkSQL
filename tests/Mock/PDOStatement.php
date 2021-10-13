@@ -88,7 +88,7 @@ class PDOStatement extends \PDOStatement
                     $params[$ExpectedIndex] !== $ExpectedParam
                 ) {
                     throw new PDOException(
-                        // This is kind of fucked up lol...
+                    // This is kind of fucked up lol...
                         sprintf(
                             "Mock PDOStatement expected '%s' at index '%s', but got '%s' instead.",
                             $ExpectedIndex, $ExpectedParam, ($params[$ExpectedIndex] ?? 'null')

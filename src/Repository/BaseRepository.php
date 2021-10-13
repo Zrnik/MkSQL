@@ -8,13 +8,9 @@
 namespace Zrnik\MkSQL\Repository;
 
 use PDO;
-use ReflectionNamedType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
-use Zrnik\MkSQL\Repository\Attributes\ColumnName;
-use Zrnik\MkSQL\Repository\Attributes\FetchArray;
-use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
+use Zrnik\MkSQL\Repository\Fetcher\Fetcher;
 use Zrnik\MkSQL\Utilities\Reflection;
-use function array_key_exists;
 use function count;
 use function is_array;
 
@@ -199,21 +195,20 @@ abstract class BaseRepository
 
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @param mixed $primaryKeyValue
-     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return ?BaseEntity
      */
-    public function getResultByPrimaryKey(string $baseEntityClassString, mixed $primaryKeyValue, ?FetchObjectStorage $fetchObjectStorage = null): ?BaseEntity
+    public function getResultByPrimaryKey(string $baseEntityClassString, mixed $primaryKeyValue): ?BaseEntity
     {
         /** @var BaseEntity $baseEntity */
         $baseEntity = $baseEntityClassString;
         $primaryKey = $baseEntity::getPrimaryKeyName();
-        return $this->getResultByKey($baseEntityClassString, $primaryKey, $primaryKeyValue, $fetchObjectStorage);
+        return $this->getResultByKey($baseEntityClassString, $primaryKey, $primaryKeyValue);
     }
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @param mixed $primaryKeyValue
      * @return BaseEntity[]
      */
@@ -226,15 +221,14 @@ abstract class BaseRepository
     }
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @param string $key
      * @param mixed $value
-     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return ?BaseEntity
      */
-    public function getResultByKey(string $baseEntityClassString, string $key, mixed $value, ?FetchObjectStorage $fetchObjectStorage = null): ?BaseEntity
+    public function getResultByKey(string $baseEntityClassString, string $key, mixed $value): ?BaseEntity
     {
-        $result = $this->getResultsByKeys($baseEntityClassString, $key, [$value], 0, $fetchObjectStorage);
+        $result = $this->getResultsByKeys($baseEntityClassString, $key, [$value]);
         if (count($result) > 0) {
             return $result[0];
         }
@@ -242,7 +236,7 @@ abstract class BaseRepository
     }
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @return BaseEntity[]
      */
     public function getAll(string $baseEntityClassString): array
@@ -252,13 +246,12 @@ abstract class BaseRepository
     }
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @param string|null $key
      * @param mixed|null $value
-     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return BaseEntity[]
      */
-    public function getResultsByKey(string $baseEntityClassString, ?string $key = null, mixed $value = null, ?FetchObjectStorage $fetchObjectStorage = null): array
+    public function getResultsByKey(string $baseEntityClassString, ?string $key = null, mixed $value = null): array
     {
         if (is_array($value)) {
             throw new InvalidArgumentException("For array value, please use 'getResultsByKeys' method!");
@@ -266,30 +259,31 @@ abstract class BaseRepository
 
 
         return $this->getResultsByKeys(
-            $baseEntityClassString, $key, $value === null ? [] : [$value], 0, $fetchObjectStorage
+            $baseEntityClassString, $key, $value === null ? [] : [$value]
         );
     }
 
     /**
-     * @param string $baseEntityClassString
+     * @param class-string<BaseEntity> $baseEntityClassString
      * @param string|null $key
      * @param array<mixed> $values
-     * @param int $level
-     * @param FetchObjectStorage|null $fetchObjectStorage
      * @return BaseEntity[]
      * @noinspection PhpFunctionCyclomaticComplexityInspection
      * @noinspection PhpComplexFunctionInspection
      */
     public function getResultsByKeys(
-        string $baseEntityClassString, ?string $key = null,
-        array $values = [], int $level = 0,
-        ?FetchObjectStorage $fetchObjectStorage = null
+        string  $baseEntityClassString,
+        ?string $key = null,
+        array   $values = [],
     ): array
     {
-        /** @var BaseEntity $baseEntity */
+        return (new Fetcher($this->getPdo()))->getResultsByKeys($baseEntityClassString, $key, $values);
+
+
+        /* * @var BaseEntity $baseEntity * /
         $baseEntity = $baseEntityClassString;
 
-        if($fetchObjectStorage === null) {
+        if ($fetchObjectStorage === null) {
             $fetchObjectStorage = new FetchObjectStorage();
         }
 
@@ -343,17 +337,18 @@ abstract class BaseRepository
             if ($fetchArrayAttribute !== null) {
 
                 $subEntityClassName = Reflection::attributeGetArgument($fetchArrayAttribute);
-                /** @var ?string $pointer */
+                /** @var ?string $pointer * /
                 $pointer = null;
                 $pointerProperty = null;
                 foreach (BaseEntity::getReflectionClass($subEntityClassName)->getProperties() as $subEntityProperty) {
                     $subEntityForeignKeyAttribute = Reflection::propertyGetAttribute($subEntityProperty, ForeignKey::class);
                     if (($subEntityForeignKeyAttribute !== null) && Reflection::attributeGetArgument($subEntityForeignKeyAttribute) === $baseEntityClassString) {
-                        $pointer = $subEntityProperty;
                         $pointerProperty = $subEntityProperty->getName();
                         $columnNamePointerAttribute = Reflection::propertyGetAttribute($subEntityProperty, ColumnName::class);
                         if ($columnNamePointerAttribute !== null) {
                             $pointer = Reflection::attributeGetArgument($columnNamePointerAttribute);
+                        } else {
+                            $pointer = $pointerProperty;
                         }
                     }
                 }
@@ -399,14 +394,12 @@ abstract class BaseRepository
             $entity =
                 $fetchObjectStorage->getObject(
                     $baseEntityClassString, $primaryKeyValue,
-                    function() use ($baseEntity, $data) {
+                    function () use ($baseEntity, $data) {
                         return $baseEntity::fromIterable(
                             $data
                         );
                     }
                 );
-
-
 
 
             foreach ($subElements as $subElementKey => $subElementProperties) {
@@ -416,10 +409,16 @@ abstract class BaseRepository
                 }
             }
 
-            if ($level === 0) {
-                // Is it level 0? Check if any `#[ForeignKey]` is unset, and if yes, fetch it!
+
+            /*if ($level !== 0) {
                 foreach ($entity::getReflectionClass($entity)->getProperties() as $reflectionProperty) {
-                    if (Reflection::propertyHasAttribute($reflectionProperty, ForeignKey::class) && !$reflectionProperty->isInitialized($entity)) {
+                    if (
+                        Reflection::propertyHasAttribute($reflectionProperty, ForeignKey::class)
+                        && !$reflectionProperty->isInitialized($entity)
+                    ) {
+
+                        //dump("Create Foreign Key " . $reflectionProperty->getName() );
+
                         $type = $reflectionProperty->getType();
                         if ($type instanceof ReflectionNamedType) {
                             $propertyName = $reflectionProperty->getName();
@@ -430,18 +429,68 @@ abstract class BaseRepository
                                 $columnName = Reflection::attributeGetArgument($columnNameAttribute) ?? $columnName;
                             }
 
-                            $entity->$propertyName = $this->getResultByPrimaryKey(
-                                $type->getName(), $entity->getRawData()[$columnName], $fetchObjectStorage
+                            $primaryKeyValueOfForeignKey = $entity->getRawData()[$columnName];
+                            $foreignKeyEntityBaseEntityClassName = $type->getName();
+
+
+                            $entity->$propertyName = $fetchObjectStorage->getObject(
+                                $foreignKeyEntityBaseEntityClassName, $primaryKeyValueOfForeignKey,
+                                function () use ($type, $primaryKeyValueOfForeignKey, $fetchObjectStorage) {
+                                    return $this->getResultByPrimaryKey(
+                                        $type->getName(), $primaryKeyValueOfForeignKey, $fetchObjectStorage
+                                    );
+                                }
                             );
+                        }
+                    }
+                }
+            }* /
+
+
+            // Is it level 0? Check if any `#[ForeignKey]` is unset, and if yes, fetch it!
+            foreach ($entity::getReflectionClass($entity)->getProperties() as $reflectionProperty) {
+                if (Reflection::propertyHasAttribute($reflectionProperty, ForeignKey::class) && !$reflectionProperty->isInitialized($entity)) {
+                    $type = $reflectionProperty->getType();
+                    if ($type instanceof ReflectionNamedType) {
+
+                        /** @var BaseEntity $foreignTypeBaseEntity * /
+                        $foreignTypeBaseEntity = $type->getName();
+
+                        $propertyName = $reflectionProperty->getName();
+                        $columnName = $reflectionProperty->getName();
+                        $columnNameAttribute = Reflection::propertyGetAttribute($reflectionProperty, ColumnName::class);
+
+
+
+                        if ($columnNameAttribute !== null) {
+                            $columnName = Reflection::attributeGetArgument($columnNameAttribute) ?? $columnName;
+                        }
+
+                        $primaryKeyValueOfForeignKey = $entity->getRawData()[$columnName];
+
+                        if ($level === 0) {
+                            $entity->$propertyName = $this->getResultByPrimaryKey(
+                                $type->getName(), $primaryKeyValueOfForeignKey, $fetchObjectStorage
+                            );
+                        } else {
+                            if ($fetchObjectStorage->hasObject($type->getName(), $primaryKeyValueOfForeignKey)) {
+                                $entity->$propertyName = $fetchObjectStorage->getStoredObject($type->getName(), $primaryKeyValueOfForeignKey);
+                            } else {
+                                // Only prepare:
+                                $entity->$propertyName = $foreignTypeBaseEntity::prepare($primaryKeyValueOfForeignKey);
+                                //dump('Skipped - notExists!');
+                            }
                         }
                     }
                 }
             }
 
+
             $resultEntities[] = $entity;
         }
 
-        return $resultEntities;
+        return $fetchObjectStorage->linkRecursiveObjects($resultEntities);
+        */
     }
 
     /**

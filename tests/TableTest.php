@@ -33,28 +33,28 @@ class TableTest extends TestCase
 
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() {
+            function () {
                 new Table('no spaces');
             }
         );
 
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() {
+            function () {
                 new Table('no_special_characters!');
             }
         );
 
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() {
+            function () {
                 new Table('no_special_characters?');
             }
         );
 
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() {
+            function () {
                 new Table('no.dots');
             }
         );
@@ -76,7 +76,7 @@ class TableTest extends TestCase
 
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() use ($TestedTable) {
+            function () use ($TestedTable) {
                 $TestedTable->columnCreate('invalid.column.name');
             }
         );
@@ -84,21 +84,21 @@ class TableTest extends TestCase
 
         $this->assertExceptionThrown(
             PrimaryKeyAutomaticException::class,
-            function() use ($TestedTable) {
+            function () use ($TestedTable) {
                 $TestedTable->columnCreate('id');
             }
         );
 
         $this->assertExceptionThrown(
             ColumnDefinitionExists::class,
-            function() use ($TestedTable) {
+            function () use ($TestedTable) {
                 $TestedTable->columnCreate('testedColumn');
             }
         );
 
         $this->assertExceptionThrown(
             ColumnDefinitionExists::class,
-            function() use ($TestedTable) {
+            function () use ($TestedTable) {
                 $TestedTable->columnCreate('anotherColumn');
             }
         );
@@ -223,7 +223,7 @@ class TableTest extends TestCase
         //cannot add twice :)
         $this->assertExceptionThrown(
             ColumnDefinitionExists::class,
-            function() use ($Table, $ColumnToAdd) {
+            function () use ($Table, $ColumnToAdd) {
                 $Table->columnAdd($ColumnToAdd);
             }
         );

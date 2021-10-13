@@ -7,10 +7,10 @@
 
 namespace Tests\Utilities;
 
+use PHPUnit\Framework\TestCase;
 use Tests\Mock\Installable\DifferentRepository;
 use Tests\Mock\Installable\RandomRepository;
 use Tests\Mock\PDO;
-use PHPUnit\Framework\TestCase;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Utilities\Installable;
 

@@ -5,8 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/spec" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" packagePrefix="Zrnik\MkSQL\" />
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" packagePrefix="Tests\" />
-      <sourceFolder url="file://$MODULE_DIR$/tests/Mock" isTestSource="false" packagePrefix="Mock\" />
-      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="false" packagePrefix="Examples\" />
+      <sourceFolder url="file://$MODULE_DIR$/examples" isTestSource="true" packagePrefix="Examples\" />
       <excludeFolder url="file://$MODULE_DIR$/temp" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/doctrine/instantiator" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/sebastian/cli-parser" />

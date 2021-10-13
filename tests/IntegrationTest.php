@@ -9,7 +9,10 @@
 namespace Tests;
 
 use Brick\DateTime\LocalDateTime;
+use Nette\Neon\Neon;
 use PDO;
+use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\TestCase;
 use Tests\Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
@@ -21,9 +24,6 @@ use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
 use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\Person;
 use Tests\Mock\Bugs\DoubleRetrieve\Reward;
-use Nette\Neon\Neon;
-use PHPUnit\Framework\AssertionFailedError;
-use PHPUnit\Framework\TestCase;
 use Tracy\Debugger;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
@@ -399,7 +399,7 @@ class IntegrationTest extends TestCase
         $Updater->install();
         $this->dot();
 
-        static::assertCount(1,Measure::getErrors());
+        static::assertCount(1, Measure::getErrors());
 
         // Remove the error from cache, so we can continue...
         foreach (Measure::getQueryModification() as $qm) {
@@ -659,7 +659,6 @@ class IntegrationTest extends TestCase
      */
     public function subTestSingleInstallForMultipleDefinedTables(PDO $pdo): void
     {
-
         $updater = new Updater($pdo);
 
         $hello = $updater->tableCreate('hello');
@@ -673,7 +672,6 @@ class IntegrationTest extends TestCase
             $startingCalls, Measure::structureTableList()['hello']['calls']
         );
         $this->dot();
-
 
         $updater->install();
 
@@ -689,9 +687,8 @@ class IntegrationTest extends TestCase
         static::assertSame(
             $startingCalls + 1, Measure::structureTableList()['hello']['calls']
         );
+
         $this->dot();
-
-
     }
 
     private function subTestCircularReference(PDO $pdo): void
@@ -767,6 +764,7 @@ class IntegrationTest extends TestCase
         $_acct1 = Person::create();
         $_acct1->name = 'Account 1 - Winner';
 
+
         $_acct2 = Person::create();
         $_acct2->name = 'Account 2 - Reward Receiver';
 
@@ -809,12 +807,20 @@ class IntegrationTest extends TestCase
         $_acct3->accountEntries = $_acct3Entries;
         $_acct4->accountEntries = [];
 
-        $repository->save([$_acct1, $_acct2, $_acct3, $_acct4]);
+        $accountList = [$_acct1, $_acct2, $_acct3, $_acct4];
+        $repository->save($accountList);
 
         //endregion
 
+        $retrieved = $repository->getAll(Person::class);
 
+        /** @var Person $account1 */
+        /** @var Person $account2 */
+        [$account1, $account2] = $retrieved;
 
+        $deepAccount2 = $account1->accountEntries[0]->rewards[0]->receiver;
+
+        static::assertSame($account2->id, $deepAccount2->id);
     }
 
 

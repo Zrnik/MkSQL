@@ -195,7 +195,19 @@ abstract class BaseEntity
 
     public static function create(): static
     {
-        return new static();
+        $entity = new static();
+
+        // We MUST initialize `FetchArray` properties as array!
+        $reflection = static::getReflectionClass($entity);
+        foreach ($reflection->getProperties() as $reflectionProperty) {
+            $fetchArrayAttribute = Reflection::propertyGetAttribute($reflectionProperty, FetchArray::class);
+            if ($fetchArrayAttribute !== null) {
+                $propertyName = $reflectionProperty->getName();
+                $entity->$propertyName = [];
+            }
+        }
+
+        return $entity;
     }
 
     /**
@@ -248,6 +260,7 @@ abstract class BaseEntity
             $reflectionPropertyName = $reflectionProperty->getName();
             $intrinsicType = $reflectionProperty->getType();
 
+
             // -1. If its `#[ForeignKey]`, we skip it, as it should be provided after
             // everything is fetched...
             if (Reflection::propertyHasAttribute($reflectionProperty, ForeignKey::class)) {
@@ -264,18 +277,28 @@ abstract class BaseEntity
             $propertyValue = $reflectionProperty->hasDefaultValue()
                 ? $reflectionProperty->getDefaultValue() : null;
 
-            // 2. If we have defined new default value in 'getDefaults',
+            // 2. If its `#[FetchArray]`, we initialize empty array!
+            if (
+                $propertyValue === null
+                && Reflection::propertyHasAttribute(
+                    $reflectionProperty, FetchArray::class
+                )
+            ) {
+                $propertyValue = [];
+            }
+
+            // 3. If we have defined new default value in 'getDefaults',
             // we override intrinsic default.
             if (array_key_exists($propertyName, $defaults)) {
                 $propertyValue = $defaults[$propertyName];
             }
 
-            // 3. If we have value in "data", we will use it!
+            // 4. If we have value in "data", we will use it!
             if (array_key_exists($propertyName, $data)) {
                 $propertyValue = $data[$propertyName];
             }
 
-            // 4. If we have a "CustomType" set, we will convert
+            // 5. If we have a "CustomType" set, we will convert
             // it with it!
             $propertyValue = static::customTypeDeserialize(
                 $propertyValue, $reflectionProperty
@@ -295,7 +318,7 @@ abstract class BaseEntity
                 settype($propertyValue, $intrinsicType->getName());
             }
 
-            // 4. We rewrite the actual value:
+            // 6. We rewrite the actual value:
             $obj->$reflectionPropertyName = $propertyValue;
         }
 

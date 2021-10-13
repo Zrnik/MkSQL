@@ -7,7 +7,6 @@
 
 namespace Zrnik\MkSQL\Repository;
 
-use JetBrains\PhpStorm\Pure;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
@@ -86,7 +85,6 @@ abstract class CustomTypeConverter
         return true;
     }
 
-    #[Pure]
     private function getKey(): string
     {
         return BaseEntity::columnName($this->property);

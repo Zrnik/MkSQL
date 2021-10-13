@@ -7,9 +7,9 @@
 
 namespace Tests\Queries;
 
-use Tests\Mock\PDO;
 use PDOException;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Queries\Query;
 use Zrnik\MkSQL\Table;
