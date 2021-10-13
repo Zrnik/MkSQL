@@ -10,11 +10,13 @@ namespace Tests;
 
 use Exception;
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\PDO;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Exceptions\ColumnDefinitionExists;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Table;
+use Zrnik\MkSQL\Updater;
 use Zrnik\PHPUnit\Exceptions;
 
 
@@ -227,5 +229,46 @@ class TableTest extends TestCase
                 $Table->columnAdd($ColumnToAdd);
             }
         );
+
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function () use ($Table) {
+                // Column name cannot be same as table name!
+                // why?
+                $Table->columnCreate($Table->getName());
+            }
+        );
+    }
+
+    public function testColumnCreateForeign(): void
+    {
+        $tableTarget = new Table('target');
+        $tableTarget->setPrimaryKeyName('primKey');
+
+        $pointTable = new Table('point');
+        $column = $pointTable->columnCreateForeign('tgt', $tableTarget);
+
+        static::assertSame(
+            [
+                0 => 'target.primKey'
+            ],
+            $column->getForeignKeys()
+        );
+    }
+
+    public function testGetParent():void {
+        $updater = new Updater(new PDO());
+        $tableNoParent = new Table('noParent');
+        $tableYesParent = $updater->tableCreate('yesParent');
+
+        static::assertNull($tableNoParent->getParent());
+        static::assertNotNull($tableYesParent->getParent());
+        static::assertEquals($updater, $tableYesParent->getParent());
+        static::assertSame($updater, $tableYesParent->getParent());
+
+        static::assertNotNull($tableYesParent->endTable());
+        static::assertEquals($updater, $tableYesParent->endTable());
+        static::assertSame($updater, $tableYesParent->endTable());
+
     }
 }

@@ -23,10 +23,15 @@ class FetchSql
     {
         $statement = $pdo->prepare($this->query);
         $statement->execute($this->values);
-        $results = $statement->fetchAll();
-        if ($results === false) {
-            return [];
-        }
-        return $results;
+        /**
+         * Since PHP 8.0 it never returns false
+         * @see https://www.php.net/manual/en/pdostatement.fetchall.php#refsect1-pdostatement.fetchall-changelog
+         * @noinspection PhpUnnecessaryLocalVariableInspection
+         *
+         * @var mixed[] $fetch
+         */
+        $fetch = $statement->fetchAll();
+
+        return $fetch;
     }
 }

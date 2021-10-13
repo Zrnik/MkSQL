@@ -18,6 +18,17 @@ class UtilsTest extends TestCase
 {
     use Exceptions;
 
+
+    public function testForbiddenWords(): void
+    {
+        $this->assertExceptionThrown(
+            InvalidArgumentException::class,
+            function() {
+                Utils::checkForbiddenWords('CONSTRAINT');
+            }
+        );
+    }
+
     /**
      * @throws Exception
      */

@@ -7,6 +7,7 @@
 
 namespace Zrnik\MkSQL\Utilities;
 
+use JetBrains\PhpStorm\Pure;
 use PDO;
 use PDOException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
@@ -25,10 +26,7 @@ abstract class Installable extends BaseRepository
      */
     private static array $_repositoriesInstalled = [];
 
-    /**
-     * @var Table[]
-     */
-    private array $tables = [];
+    private Updater $updater;
 
     /**
      * Installable constructor.
@@ -39,6 +37,7 @@ abstract class Installable extends BaseRepository
     {
         parent::__construct($pdo);
         $this->pdo = $this->getPdo();
+        $this->updater = new Updater($this->pdo);
         $this->executeInstallation();
     }
 
@@ -62,21 +61,18 @@ abstract class Installable extends BaseRepository
             return;
         }
 
-        // Create Updated
-        $updater = new Updater($this->pdo);
-        $updater->installable = static::class;
+        $this->updater->installable = static::class;
 
-        $this->install($updater);
+        $this->install($this->updater);
 
         self::$_repositoriesInstalled[static::class] = [];
-        foreach ($updater->tableList() as $table) {
+        foreach ($this->updater->tableList() as $table) {
             self::$_repositoriesInstalled[static::class][] = $table->getName();
         }
 
         // Process Updated
-        $updater->installable = null;
-        $updater->install();
-        $this->tables = $updater->tableList();
+        $this->updater->installable = null;
+        $this->updater->install();
     }
 
     public static function uninstallAll(PDO $pdo): void
@@ -102,9 +98,9 @@ abstract class Installable extends BaseRepository
     /**
      * @return Table[]
      */
-    public function getTables(): array
+    #[Pure] public function getTables(): array
     {
-        return $this->tables;
+        return $this->updater->tableList();
     }
 
 }

@@ -39,10 +39,6 @@ class TableOrder
         $requirements = [];
         foreach ($tables as $table) {
 
-            if ($table->getName() === null) {
-                continue;
-            }
-
             foreach ($table->columnList() as $column) {
                 foreach ($column->getForeignKeys() as $foreignKey) {
                     $requiredTableName = self::tableNameFromForeignKeyString($foreignKey);

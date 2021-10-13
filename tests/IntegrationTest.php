@@ -19,7 +19,6 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
-use Tests\Mock\BaseRepositoryAndBaseEntity\InvoiceRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
 use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\Person;
@@ -424,8 +423,9 @@ class IntegrationTest extends TestCase
     {
         // Only checks Installation (Base Entity)
         Installable::uninstallAll($pdo);
-        new InvoiceRepository($pdo); // Just for installation
+        new AuctionRepository($pdo); // Just for installation
         $this->addToAssertionCount(1);
+        Installable::uninstallAll($pdo);
 
         // Checks Base Repository
         $auctionRepository = new AuctionRepository($pdo);

@@ -23,7 +23,7 @@ class Table
      * @param string $tableName
      * @throws InvalidArgumentException
      */
-    public function __construct(string $tableName)
+    public function __construct(private string $tableName)
     {
         $this->tableName = Utils::confirmTableName($tableName);
     }
@@ -73,15 +73,14 @@ class Table
     //endregion
 
     //region Name
-    private string $tableName;
 
     /**
      * Returns name of the table.
      * The result is already checked and corrected in constructor.
      *
-     * @return string|null
+     * @return string
      */
-    public function getName(): ?string
+    public function getName(): string
     {
         return $this->tableName;
     }
@@ -176,6 +175,11 @@ class Table
         return $this->columnAdd($column, $rewrite);
     }
 
+    /**
+     * @param string $columnName
+     * @param Table $targetTable
+     * @return Column
+     */
     public function columnCreateForeign(string $columnName, Table $targetTable): Column
     {
         return $this->columnCreate(
@@ -257,10 +261,7 @@ class Table
         }
 
         if ($desc->tableExists && $desc->primaryKeyName !== $this->getPrimaryKeyName()) {
-            $newCommands = $desc->queryMakerClass::changePrimaryKeyQuery(
-                    $desc->primaryKeyName,
-                    $this, $desc
-                ) ?? [];
+            $newCommands = $desc->queryMakerClass::changePrimaryKeyQuery($desc->primaryKeyName, $this, $desc) ?? [];
 
             foreach ($newCommands as $newCommand) {
                 $commands[] = $newCommand;

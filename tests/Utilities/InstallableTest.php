@@ -8,14 +8,19 @@
 namespace Tests\Utilities;
 
 use PHPUnit\Framework\TestCase;
+use Tests\Mock\BaseRepositoryAndBaseEntity\CallingInstallInInstallableRepository;
 use Tests\Mock\Installable\DifferentRepository;
 use Tests\Mock\Installable\RandomRepository;
 use Tests\Mock\PDO;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
+use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Utilities\Installable;
+use Zrnik\PHPUnit\Exceptions;
 
 class InstallableTest extends TestCase
 {
+    use Exceptions;
+
     /**
      * @throws MkSQLException
      */
@@ -42,6 +47,15 @@ class InstallableTest extends TestCase
 
         $differentRepo1 = new DifferentRepository($pdo);
         static::assertTrue($differentRepo1->installed);
+
+        $this->assertExceptionThrown(
+            UnexpectedCall::class,
+            function () use ($pdo) {
+                new CallingInstallInInstallableRepository(
+                    $pdo
+                );
+            }
+        );
 
     }
 

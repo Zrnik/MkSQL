@@ -141,7 +141,7 @@ class Updater
              * @var string $key
              * @noinspection PhpRedundantVariableDocTypeInspection
              */
-            unset($this->tablesInProgress[$key]);
+            unset($this->tablesInProgress[$key]); // @codeCoverageIgnore
         }
 
 
@@ -177,7 +177,7 @@ class Updater
          * IQueryMaker class for it!
          */
         if ($this->getDriverType() === null) {
-            throw new InvalidDriverException("Driver type is 'NULL'!");
+            throw new InvalidDriverException("Driver type is 'NULL'!"); // @codeCoverageIgnore
         }
 
         $driverName = DriverType::getName($this->getDriverType());
@@ -191,11 +191,15 @@ class Updater
         $QueryMakerClassCheck = $QueryMakerClass;
 
         if (!class_exists($QueryMakerClassCheck)) {
+            // @codeCoverageIgnoreStart
             throw new InvalidDriverException(
-                "Invalid driver '" . $driverName . "' for package 'Zrnik\\MkSQL' class 'Updater'. 
-                Allowed drivers: " . implode(', ', DriverType::getNames(false)));
+                sprintf(
+                    "Invalid driver '%s' for package `zrnik/mksql` class '%s'\nAllowed drivers: '%s'.",
+                    $driverName, __CLASS__, implode('\', \'', DriverType::getNames(false))
+                )
+            );
+            // @codeCoverageIgnoreEnd
         }
-
         //endregion
 
         /**
@@ -372,10 +376,6 @@ class Updater
     private function isAlreadyProcessed(Table $table): bool
     {
         $tableName = $table->getName();
-
-        if ($tableName === null) {
-            return false;
-        }
 
         if (
             !array_key_exists(

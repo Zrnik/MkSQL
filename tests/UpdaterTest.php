@@ -25,10 +25,22 @@ class UpdaterTest extends TestCase
      */
     public function testInstall(): void
     {
-        $this->assertNoExceptionThrown(function () {
-            $Updater = new Updater($this->createPDO());
+        $Updater = new Updater(new \Pdo('sqlite::memory:'));
+
+        $this->assertNoExceptionThrown(function () use ($Updater) {
+            $Updater->tableCreate('exampleTable')->columnCreate('exampleColumn');
             $Updater->install();
         });
+
+        static::assertCount(1, $Updater->tableList());
+        $Updater->clear();
+        static::assertCount(0, $Updater->tableList());
+
+        $Updater->tableCreate('exampleTable')->columnCreate('exampleColumn');
+        $Updater->install();
+        static::assertCount(1, $Updater->tableList());
+        $Updater->tableRemove('exampleTable');
+        static::assertCount(0, $Updater->tableList());
     }
 
     private function createPDO(): PDO
