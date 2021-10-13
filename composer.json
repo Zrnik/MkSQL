@@ -26,7 +26,7 @@
       "composer phpunit"
     ],
     "phpstan": "phpstan analyse  --memory-limit 1G",
-    "phpunit": "phpunit --coverage-html ./temp/coverage",
+    "phpunit": "phpunit --coverage-html ./temp/coverage-html --coverage-xml ./temp/coverage-xml",
     "phpunit:unit": "phpunit --testsuite unit",
     "phpunit:integration": "phpunit --testsuite integration"
   },
