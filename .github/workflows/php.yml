@@ -24,7 +24,7 @@ jobs:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-
+            ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
 
       - name: "COMPOSER: Update (if not cached)"
         if: steps.composer-cache.outputs.cache-hit != 'true'
