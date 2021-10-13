@@ -8,9 +8,11 @@ use Tests\Repository\Fetcher\FetcherMock\Entities\Car;
 use Tests\Repository\Fetcher\FetcherMock\Entities\Manufacturer;
 use Tests\Repository\Fetcher\FetcherMock\Entities\Part;
 use Tests\Repository\Fetcher\FetcherMock\FetcherTestRepository;
+use Zrnik\PHPUnit\Exceptions;
 
 class FetcherTest extends TestCase
 {
+    use Exceptions;
 
     private static ?FetcherTestRepository $repository = null;
 
@@ -68,6 +70,19 @@ class FetcherTest extends TestCase
 
         static::assertNotNull($car2Fetched);
         static::assertSame($car2->id, $car2Fetched->id);
+
+
+        $json = $this->assertNoExceptionThrown(function() use ($manufacturer) {
+            return json_encode($manufacturer, JSON_THROW_ON_ERROR);
+        });
+
+        static::assertSame(
+            '{"id":2,"name":"Cheng Car"}',
+            $json
+        );
+
+
+
     }
 
     private function addPart(Car $car, string $partName): void

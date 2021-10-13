@@ -9,6 +9,8 @@ namespace Zrnik\MkSQL\Repository;
 
 use Attribute;
 use JetBrains\PhpStorm\Pure;
+use JsonException;
+use JsonSerializable;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -42,7 +44,7 @@ use function in_array;
 use function is_array;
 use function is_string;
 
-abstract class BaseEntity
+abstract class BaseEntity implements JsonSerializable
 {
     //region Reflection 'Cache'
     /**
@@ -958,5 +960,13 @@ abstract class BaseEntity
             ),
             $this::getTableName()
         );
+    }
+
+    /**
+     * @return mixed[]
+     */
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

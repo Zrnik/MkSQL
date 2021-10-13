@@ -9,6 +9,7 @@
 namespace Tests;
 
 use Brick\DateTime\LocalDateTime;
+use JsonException;
 use Nette\Neon\Neon;
 use PDO;
 use PHPUnit\Framework\AssertionFailedError;
@@ -821,6 +822,11 @@ class IntegrationTest extends TestCase
         $deepAccount2 = $account1->accountEntries[0]->rewards[0]->receiver;
 
         static::assertSame($account2->id, $deepAccount2->id);
+
+        $this->assertNoExceptionThrown(function() use ($retrieved) {
+            json_encode($retrieved, JSON_THROW_ON_ERROR);
+        });
+
     }
 
 
