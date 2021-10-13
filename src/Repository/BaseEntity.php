@@ -911,11 +911,10 @@ abstract class BaseEntity implements JsonSerializable
     }
 
     /**
-     * @param string[] $savedHashList
      * @return BaseEntity[]
      * @throws ReflectionFailedException
      */
-    public function getSubEntities(array $savedHashList = []): array
+    public function getSubEntities(): array
     {
         $reflection = self::getReflectionClass(static::class);
         $subEntities = [];
@@ -938,16 +937,7 @@ abstract class BaseEntity implements JsonSerializable
             }
         }
 
-        $allowedSubEntities = [];
-        /** @var BaseEntity $possibleSubEntity */
-        foreach ($subEntities as $possibleSubEntity) {
-            if (!in_array($possibleSubEntity->hash(), $savedHashList, true)) {
-                $allowedSubEntities[] = $possibleSubEntity;
-                $savedHashList[] = $possibleSubEntity->hash();
-            }
-        }
-
-        return $allowedSubEntities;
+        return $subEntities;
     }
 
     public function hash(): string
