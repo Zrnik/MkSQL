@@ -11,6 +11,7 @@ namespace Tests;
 use Brick\DateTime\LocalDateTime;
 use JsonException;
 use Nette\Neon\Neon;
+use Nette\Utils\Strings;
 use PDO;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
@@ -157,6 +158,11 @@ class IntegrationTest extends TestCase
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
+        // #####################################
+        // ### Json Tests: #####################
+        // #####################################
+
+        $this->subTestJsonSerialize($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
     }
@@ -822,11 +828,66 @@ class IntegrationTest extends TestCase
         $deepAccount2 = $account1->accountEntries[0]->rewards[0]->receiver;
 
         static::assertSame($account2->id, $deepAccount2->id);
+    }
 
-        $this->assertNoExceptionThrown(function() use ($retrieved) {
-            json_encode($retrieved, JSON_THROW_ON_ERROR);
+    /**
+     * @throws JsonException
+     */
+    public function subTestJsonSerialize(PDO $pdo): void
+    {
+
+        $auctionRepository = new AuctionRepository($pdo);
+
+        $auction = Auction::create();
+        $auction->name = 'JSON Auction';
+
+        $item1 = AuctionItem::create();
+        $item1->auction = $auction;
+        $item1->name = 'item1';
+
+        $item2 = AuctionItem::create();
+        $item2->auction = $auction;
+        $item2->name = 'item2';
+
+        $auctionRepository->save($auction);
+        $auctionRepository->save($item1);
+        $auctionRepository->save($item2);
+
+
+        $retrieved = $auctionRepository->getResultByKey(Auction::class, 'id', $auction->id);
+
+        $json = $this->assertNoExceptionThrown(function () use ($retrieved) {
+            return json_encode($retrieved, JSON_THROW_ON_ERROR);
         });
 
+        $expectedString = sprintf('
+            {
+                "id": %s,
+                "name": "JSON Auction",
+                "auctionItems": [
+                    {
+                        "id": %s,
+                        "auction": %s,
+                        "name": "item1",
+                        "sold": 0,
+                        "whenSold": null
+                    },
+                    {
+                        "id": %s,
+                        "auction": %s,
+                        "name": "item2",
+                        "sold": 0,
+                        "whenSold": null
+                    }
+                ]
+            }
+        ', $auction->id, $item1->id, $auction->id, $item2->id, $auction->id
+        );
+
+        $expectedJson = json_encode(json_decode($expectedString, true, 512, JSON_THROW_ON_ERROR), JSON_THROW_ON_ERROR);
+
+        static::assertSame($expectedJson, $json);
+        static::assertEquals($expectedJson, $json);
     }
 
 

@@ -967,6 +967,37 @@ abstract class BaseEntity implements JsonSerializable
      */
     public function jsonSerialize(): array
     {
-        return $this->toArray();
+        $result = [];
+
+        $data = $this->toArray();
+
+        // Add 'FetchArray' values:
+        $reflection = self::getReflectionClass($this);
+        foreach($reflection->getProperties() as $property) {
+
+            $fetchArrayAttribute = Reflection::propertyGetAttribute(
+                $property, FetchArray::class
+            );
+
+            if($fetchArrayAttribute !== null) {
+                $propertyName = $property->getName();
+                $result[$propertyName] = $this->$propertyName;
+            } else {
+                $dataKey = $property->getName();
+
+                $reflectionProperty = self::propertyReflection($dataKey);
+                if($reflectionProperty !== null) {
+                    $columnNameAttribute = Reflection::propertyGetAttribute($reflectionProperty, ColumnName::class);
+                    if($columnNameAttribute !== null) {
+                        $dataKey = Reflection::attributeGetArgument($columnNameAttribute) ?? $dataKey;
+                    }
+                }
+
+                $result[$property->getName()] = $data[$dataKey];
+            }
+
+        }
+
+        return $result;
     }
 }
