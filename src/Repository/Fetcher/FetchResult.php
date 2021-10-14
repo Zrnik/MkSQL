@@ -3,9 +3,9 @@
 namespace Zrnik\MkSQL\Repository\Fetcher;
 
 use ReflectionProperty;
-use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\BaseEntity;
+use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
 use Zrnik\MkSQL\Utilities\Reflection;
 use function array_key_exists;
 use function count;
@@ -47,70 +47,51 @@ class FetchResult
 
 
         // 'Inject' foreign keys:
-        /**
-         * @var class-string<BaseEntity> $className
-         * @var BaseEntity[] $keyEntities
-         */
-        foreach ($entities as $className => $keyEntities) {
+        /** @var BaseEntity[] $keyEntities */
+        foreach ($entities as $keyEntities) {
             /**
              * @var BaseEntity $entity
              */
             foreach ($keyEntities as $entity) {
-                foreach (BaseEntity::getReflectionClass($className)->getProperties() as $reflectionProperty) {
-                    $propertyName = $reflectionProperty->getName();
-                    $foreignKeyAttribute = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
-                    if ($foreignKeyAttribute !== null) {
-                        $requiredClassName = Reflection::attributeGetArgument($foreignKeyAttribute);
-                        $requiredPrimaryKeyValue = $entity->getRawData()[$entity::columnName($reflectionProperty)];
-                        $entity->$propertyName = $entities[$requiredClassName][$requiredPrimaryKeyValue];
-                    }
+                foreach (EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
+                    $propertyName = $foreignKeyData->getPropertyName();
+                    $requiredClassName = $foreignKeyData->getTargetClassName();
+                    $requiredPrimaryKeyValue = $entity->getRawData()[$foreignKeyData->foreignKeyColumnName()];
+
+                    $entity->$propertyName = $entities[$requiredClassName][$requiredPrimaryKeyValue];
                 }
             }
         }
 
         // 'Inject' fetch array
         /**
-         * @var class-string<BaseEntity> $className
          * @var BaseEntity[] $keyEntities
          */
-        foreach ($entities as $className => $keyEntities) {
+        foreach ($entities as $keyEntities) {
             /**
              * @var BaseEntity $entity
              */
             foreach ($keyEntities as $entity) {
-                foreach (BaseEntity::getReflectionClass($className)->getProperties() as $reflectionProperty) {
-                    $propertyName = $reflectionProperty->getName();
-                    $fetchArrayAttribute = Reflection::propertyGetAttribute($reflectionProperty, FetchArray::class);
-                    if ($fetchArrayAttribute !== null) {
-                        $requiredClassName = Reflection::attributeGetArgument($fetchArrayAttribute);
+                foreach (EntityReflection::getFetchArrayProperties($entity) as $fetchArrayProperty) {
+                    $propertyName = $fetchArrayProperty->getPropertyName();
+                    $requiredClassName = $fetchArrayProperty->getTargetClassName();
 
+                    $pointerReflectionProperties = $this->findPropertyPointingTo($requiredClassName, $entity::class);
+                    $values = [];
 
-                        $pointerReflectionProperties = $this->findPropertyPointingTo($requiredClassName, $entity::class);
-                        $values = [];
+                    foreach ($pointerReflectionProperties as $pointerRp) {
+                        $pointerName = BaseEntity::columnName($pointerRp);
 
-                        //dump($entity::class . " needs all: " . $requiredClassName);
+                        if (array_key_exists($requiredClassName, $entities)) {
+                            foreach ($entities[$requiredClassName] as $row) {
+                                if ((string)$row->getRawData()[$pointerName] === (string)$entity->getPrimaryKeyValue()) {
 
-                        foreach ($pointerReflectionProperties as $pointerRp) {
-                            $pointerName = BaseEntity::columnName($pointerRp);
-                            //dump($pointerName);
-
-                            if (array_key_exists($requiredClassName, $entities)) {
-                                foreach ($entities[$requiredClassName] as $row) {
-                                    if ((string)$row->getRawData()[$pointerName] === (string)$entity->getPrimaryKeyValue()) {
-                                        //dump("FOUND:::");
-                                        //dump($row);
-                                        $values[$row->getPrimaryKeyValue()] = $row;
-                                    }
+                                    $values[$row->getPrimaryKeyValue()] = $row;
                                 }
                             }
-
-                            //dump("Where '".$pointerName."': " . $entity->getPrimaryKeyValue());
-                            //$values[] =
-                            // $entity->$propertyName[] = null;
-
                         }
-                        $entity->$propertyName = array_values($values);
                     }
+                    $entity->$propertyName = array_values($values);
                 }
             }
         }
@@ -247,14 +228,10 @@ class FetchResult
      */
     private function foreignKeyProperties(string $classString): array
     {
-        $reflection = BaseEntity::getReflectionClass($classString);
-
         $result = [];
-        foreach ($reflection->getProperties() as $reflectionProperty) {
-            $fkAttribute = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
-            if ($fkAttribute !== null) {
-                $result[$reflectionProperty->getName()] = Reflection::attributeGetArgument($fkAttribute);
-            }
+
+        foreach (EntityReflection::getForeignKeys($classString) as $foreignKeyData) {
+            $result[$foreignKeyData->getPropertyName()] = $foreignKeyData->getTargetClassName();
         }
 
         return $result;
@@ -266,22 +243,13 @@ class FetchResult
      */
     private function fetchArrayData(string $classString): array
     {
-        $reflection = BaseEntity::getReflectionClass($classString);
-
         $result = [];
 
-        foreach ($reflection->getProperties() as $reflectionProperty) {
-            $faAttribute = Reflection::propertyGetAttribute($reflectionProperty, FetchArray::class);
-            if ($faAttribute !== null) {
-
-                $fetchClassName = Reflection::attributeGetArgument($faAttribute);
-                $pointerReflectionProperties = $this->findPropertyPointingTo($fetchClassName, $classString);
-
-                foreach ($pointerReflectionProperties as $pointerReflectionProperty) {
-
-                    $result[] = $pointerReflectionProperty;
-
-                }
+        foreach (EntityReflection::getFetchArrayProperties($classString) as $fetchArrayData) {
+            $fetchClassName = $fetchArrayData->getTargetClassName();
+            $pointerReflectionProperties = $this->findPropertyPointingTo($fetchClassName, $classString);
+            foreach ($pointerReflectionProperties as $pointerReflectionProperty) {
+                $result[] = $pointerReflectionProperty;
             }
         }
 

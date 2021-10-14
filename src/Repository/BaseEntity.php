@@ -201,13 +201,9 @@ abstract class BaseEntity implements JsonSerializable
         $entity = new static();
 
         // We MUST initialize `FetchArray` properties as array!
-        $reflection = static::getReflectionClass($entity);
-        foreach ($reflection->getProperties() as $reflectionProperty) {
-            $fetchArrayAttribute = Reflection::propertyGetAttribute($reflectionProperty, FetchArray::class);
-            if ($fetchArrayAttribute !== null) {
-                $propertyName = $reflectionProperty->getName();
-                $entity->$propertyName = [];
-            }
+        foreach(EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
+            $propertyName = $fetchArrayData->getPropertyName();
+            $entity->$propertyName = [];
         }
 
         return $entity;
@@ -890,55 +886,17 @@ abstract class BaseEntity implements JsonSerializable
         }
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
-        foreach ($this->getSubEntities() as $subEntity) {
-            $subEntityReflection = static::getReflectionClass($subEntity);
-            foreach ($subEntityReflection->getProperties() as $subProperty) {
-                $foreignKeyAttribute = Reflection::propertyGetAttribute(
-                    $subProperty, ForeignKey::class
-                );
-
-                if ($foreignKeyAttribute !== null) {
-                    $foreignKeyAttributeClassType = Reflection::attributeGetArgument(
-                        $foreignKeyAttribute
-                    );
-
-                    if ($foreignKeyAttributeClassType === static::class) {
-                        $subPropertyName = $subProperty->getName();
-                        $subEntity->$subPropertyName = $this;
+        foreach(EntityReflection::getFetchArrayProperties($this) as $fetchArrayData) {
+            foreach(EntityReflection::getForeignKeys($fetchArrayData->getTargetClassName()) as $targetForeignKeyPropertyData) {
+                if(static::class === $targetForeignKeyPropertyData->getTargetClassName()) {
+                    $thisPropertyName = $fetchArrayData->getPropertyName();
+                    $targetPropertyName = $targetForeignKeyPropertyData->getPropertyName();
+                    foreach($this->$thisPropertyName as $value) {
+                        $value->$targetPropertyName = $this;
                     }
                 }
             }
         }
-    }
-
-    /**
-     * @return BaseEntity[]
-     * @throws ReflectionFailedException
-     */
-    public function getSubEntities(): array
-    {
-        $reflection = self::getReflectionClass(static::class);
-        $subEntities = [];
-
-        foreach ($reflection->getProperties() as $property) {
-
-            $fetchArrayAttr = Reflection::propertyGetAttribute($property, FetchArray::class);
-            if ($fetchArrayAttr !== null) {
-                $propertyName = $property->getName();
-                $entityList = $this->$propertyName;
-                foreach ($entityList as $subEntity) {
-                    $subEntities[] = $subEntity;
-                }
-            }
-
-            $foreignKeyAttr = Reflection::propertyGetAttribute($property, ForeignKey::class);
-            if ($foreignKeyAttr !== null) {
-                $propertyName = $property->getName();
-                $subEntities[] = $this->$propertyName;
-            }
-        }
-
-        return $subEntities;
     }
 
     public function hash(): string

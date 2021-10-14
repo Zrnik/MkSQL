@@ -83,7 +83,11 @@ class Fetcher
      * @param array<mixed> $values
      * @return FetchSql
      */
-    private function createFetchSql(string $baseEntityClassString, ?string $key = null, array $values = []): FetchSql
+    private function createFetchSql(
+        string $baseEntityClassString,
+        ?string $key = null,
+        array $values = []
+    ): FetchSql
     {
         /** @var BaseEntity $baseEntityForStaticUse */
         $baseEntityForStaticUse = $baseEntityClassString;

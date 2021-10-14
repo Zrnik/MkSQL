@@ -6,6 +6,7 @@ use JetBrains\PhpStorm\Pure;
 use ReflectionAttribute;
 use ReflectionProperty;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
+use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\Reflection;
 
 class FetchArrayData
@@ -27,6 +28,9 @@ class FetchArrayData
         return $this->reflectionProperty->getName();
     }
 
+    /**
+     * @return class-string<BaseEntity>
+     */
     public function getTargetClassName(): string
     {
         return Reflection::attributeGetArgument($this->reflectionAttribute);

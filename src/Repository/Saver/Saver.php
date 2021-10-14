@@ -105,22 +105,18 @@ class Saver
     }
 
     /**
+     * Sub entities (fetch array)
      * @param BaseEntity $entity
      * @return BaseEntity[]
      */
     private function subEntitiesOf(BaseEntity $entity): array
     {
-        $reflection = BaseEntity::getReflectionClass($entity);
-
         $subEntities = [];
 
-        foreach ($reflection->getProperties() as $property) {
-            $fetchArrayAttribute = Reflection::propertyGetAttribute($property, FetchArray::class);
-            if ($fetchArrayAttribute !== null) {
-                $propertyName = $property->getName();
-                foreach ($entity->$propertyName as $subEntity) {
-                    $subEntities[] = $subEntity;
-                }
+        foreach(EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
+            $propertyName = $fetchArrayData->getPropertyName();
+            foreach ($entity->$propertyName as $subEntity) {
+                $subEntities[] = $subEntity;
             }
         }
 
@@ -128,29 +124,23 @@ class Saver
     }
 
     /**
+     * Superior entities (foreign key)
      * @param BaseEntity $entity
      * @return BaseEntity[]
      */
     private function supEntitiesOf(BaseEntity $entity): array
     {
-        $reflection = BaseEntity::getReflectionClass($entity);
+        $superiorEntities = [];
 
-        $subEntities = [];
-
-        foreach ($reflection->getProperties() as $property) {
-
-            if (!$property->isInitialized($entity)) {
+        foreach(EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
+            $initialized = $foreignKeyData->getProperty()->isInitialized($entity);
+            if (!$initialized) {
                 continue;
             }
-
-            $foreignKeyAttribute = Reflection::propertyGetAttribute($property, ForeignKey::class);
-            if ($foreignKeyAttribute !== null) {
-                $propertyName = $property->getName();
-                $subEntities[] = $entity->$propertyName;
-            }
+            $propertyName = $foreignKeyData->getPropertyName();
+            // $superiorEntities[] = $entity->$propertyName;
         }
-
-        return $subEntities;
+        return $superiorEntities;
     }
 
     private function update(BaseEntity $entity): void

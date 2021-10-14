@@ -6,28 +6,48 @@ use JetBrains\PhpStorm\Pure;
 use ReflectionAttribute;
 use ReflectionProperty;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
+use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\Reflection;
 
 class ForeignKeyData
 {
     /**
-     * @param ReflectionProperty $propertyReflection
+     * @param ReflectionProperty $reflectionProperty
      * @param ReflectionAttribute<ForeignKey> $foreignKeyAttribute
      */
     public function __construct(
-        private ReflectionProperty $propertyReflection,
+        private ReflectionProperty $reflectionProperty,
         private ReflectionAttribute $foreignKeyAttribute,
     )
     { }
 
+    public function getProperty(): ReflectionProperty
+    {
+        return $this->reflectionProperty;
+    }
+
     #[Pure]
     public function getPropertyName(): string
     {
-        return $this->propertyReflection->getName();
+        return $this->getProperty()->getName();
     }
 
     public function getTargetClassName(): string
     {
         return Reflection::attributeGetArgument($this->foreignKeyAttribute);
     }
+
+    #[Pure] private function getEntityClassName(): string
+    {
+        return $this->getProperty()->getDeclaringClass()->getName();
+    }
+
+    public function foreignKeyColumnName(): string
+    {
+        /** @var BaseEntity $classNameForStaticUsage */
+        $classNameForStaticUsage = $this->getEntityClassName();
+        return $classNameForStaticUsage::columnName($this->getProperty());
+    }
+
+
 }

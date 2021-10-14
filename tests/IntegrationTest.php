@@ -165,6 +165,8 @@ class IntegrationTest extends TestCase
         $this->subTestJsonSerialize($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
+
+
     }
 
     private function dropAll(PDO $pdo): void
@@ -554,6 +556,13 @@ class IntegrationTest extends TestCase
         static::assertEquals($fetchedAuction2, $auction2);
         static::assertNotSame($fetchedAuction2, $auction2);
         $this->dot();
+
+        $fetchedAuctionItem = $auctionRepository->getResultByKey(
+            AuctionItem::class, 'id', $auction1->auctionItems[0]->id
+        );
+
+        static::assertEquals($auction1->auctionItems[0], $fetchedAuctionItem);
+        static::assertNotSame($auction1->auctionItems[0], $fetchedAuctionItem);
 
         /** @var AuctionItem[] $allAuctionItems */
         $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
