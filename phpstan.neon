@@ -1,5 +1,6 @@
 parameters:
 	level: max
+#	checkExplicitmixed: true
 	paths:
 		- src
 		- tests
@@ -8,3 +9,4 @@ parameters:
 includes:
     - vendor/phpstan/phpstan-phpunit/extension.neon
     - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon

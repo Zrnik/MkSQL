@@ -256,7 +256,8 @@ class TableTest extends TestCase
         );
     }
 
-    public function testGetParent():void {
+    public function testGetParent(): void
+    {
         $updater = new Updater(new PDO());
         $tableNoParent = new Table('noParent');
         $tableYesParent = $updater->tableCreate('yesParent');

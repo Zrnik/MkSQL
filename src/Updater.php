@@ -225,7 +225,7 @@ class Updater
             $TableDescription = $QueryMakerClass::describeTable($this->pdo, $table);
 
             Measure::logTableSpeed(
-                $table->getName() ?? 'unknown table',
+                $table->getName(),
                 Measure::TABLE_SPEED_DESCRIBE,
                 microtime(true) - $table_speed_prepare
             );
@@ -240,7 +240,7 @@ class Updater
             }
 
             Measure::logTableSpeed(
-                $table->getName() ?? 'unknown table',
+                $table->getName(),
                 Measure::TABLE_SPEED_GENERATE,
                 microtime(true) - $table_speed_generate
             );
@@ -282,7 +282,7 @@ class Updater
                 $QueryCommand->speed = $queryExecuteSpeed;
 
                 Measure::logTableSpeed(
-                    $QueryCommand->getTable()->getName() ?? 'unknown table',
+                    $QueryCommand->getTable()->getName(),
                     Measure::TABLE_SPEED_EXECUTE,
                     $queryExecuteSpeed
                 );

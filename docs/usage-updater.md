@@ -22,18 +22,18 @@ $a->setPrimaryKeyType("char(36)");
 $updater->install();
 ```
 
-And it's done! You now have an accounts table.
-It will look like this:
+And it's done! You now have an accounts table. It will look like this:
 
 ![updater-usage-1.php](./img/updater-usage-1.png)
 
 ***Wow*, where did the `id` column came from?**
 
-Table primary key is automatically generated for you. You can 
-modify its type and name with `$table->setPrimaryKeyName("newPkColumnName");`
-and `$a->setPrimaryKeyType("char(36)"); // uuid?` methods. 
+Table primary key is automatically generated for you. You can modify its type and name
+with `$table->setPrimaryKeyName("newPkColumnName");`
+and `$a->setPrimaryKeyType("char(36)"); // uuid?` methods.
 
 Example:
+
 ```php
 // File: /examples/updater-usage-2.php
 use Zrnik\MkSQL\Updater;
@@ -56,14 +56,12 @@ Result:
 
 ![updater-usage-2.php](./img/updater-usage-2.png)
 
-**Composite primary keys** are not, and will not be supported. First, 
-I have no idea what is the use for them and second, I don't have a
-slight idea how it could be implemented.
+**Composite primary keys** are not, and will not be supported. First, I have no idea what is the use for them and
+second, I don't have a slight idea how it could be implemented.
 
 ## Column cloning
 
-What if you want to have more tables with the same column definition?
-It might tempt you to write it like this:
+What if you want to have more tables with the same column definition? It might tempt you to write it like this:
 
 ```php
 // File: /examples/updater-usage-3-w.php
@@ -88,6 +86,7 @@ $updater->install();
 ```
 
 Result:
+
 ```
 LogicException: Column 'createDate' already has a parent 'shop_order', consider cloning!
 ```
@@ -116,13 +115,14 @@ $i->columnAdd(clone $multipleTableColumn); // and REMOVES the parent from it.
 $updater->install();
 ```
 
-Result: 
+Result:
 
 ![updater-usage-3-c.png](./img/updater-usage-3-c.png)
 
 ## Column properties
 
 You can define more stuff to the column. For example:
+
 - NOT NULL
 - Unique Index
 - Default Value
@@ -159,17 +159,15 @@ $a->columnCreate('administrator', 'tinyint(1)')
 $updater->install();
 ```
 
-Result: 
+Result:
 
 ![updater-usage-4.png](./img/updater-usage-4.png)
 
 ## Foreign Key
 
-Foreign key support is limited, you should aim the foreign key at
-another table's primary key, and it will constrain in from actions
-that would break the link. You cannot (yet?) change 
-`ON DELETE` and `ON UPDATE` behavior, so the default
-is used. 
+Foreign key support is limited, you should aim the foreign key at another table's primary key, and it will constrain in
+from actions that would break the link. You cannot (yet?) change
+`ON DELETE` and `ON UPDATE` behavior, so the default is used.
 
 For example, can link authentication token to the account like this:
 
@@ -203,11 +201,12 @@ $t->columnCreate('token', 'varchar')
 $updater->install();
 ```
 
-Result: 
+Result:
 
 ![updater-usage-5.png](./img/updater-usage-5.png)
 
-I guess that's everything that relates to the updater itself, you can continue to [Factory Usage & Installable Class](usage-factory-installable.md) page.
+I guess that's everything that relates to the updater itself, you can continue
+to [Factory Usage & Installable Class](usage-factory-installable.md) page.
 
 
 

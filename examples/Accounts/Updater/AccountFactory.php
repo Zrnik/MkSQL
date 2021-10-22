@@ -1,11 +1,13 @@
 <?php declare(strict_types=1);
 
 namespace Examples\Accounts\Updater;
+
 use Examples\Accounts\Installable\Account;
 use PDO;
 use Zrnik\MkSQL\Updater;
 
-class AccountFactory {
+class AccountFactory
+{
 
     private static bool $installed = false;
 
@@ -19,11 +21,11 @@ class AccountFactory {
         // If we create multiple 'AccountFactory' instances
         // (btw, you should not) we want it to be installed
         // only once.
-        if(static::$installed) {
+        if (self::$installed) {
             return;
         }
 
-        static::$installed = true;
+        self::$installed = true;
 
         $updater = new Updater($this->pdo);
 
@@ -38,21 +40,22 @@ class AccountFactory {
         $updater->install();
     }
 
-    public function getAccountById(int $id): ?Account {
+    public function getAccountById(int $id): ?Account
+    {
         $statement = $this->pdo->prepare('SELECT * FROM account WHERE id = :id');
         $statement->execute(['id' => $id]);
         $result = $statement->fetch(PDO::FETCH_ASSOC);
-        if($result === false) {
+        if ($result === false) {
             return null;
         }
         return Account::fromArray(iterator_to_array($result));
     }
 
-    public function saveAccount(Account $account): void {
-        if($account->id === null) {
+    public function saveAccount(Account $account): void
+    {
+        if ($account->id === null) {
             $this->createAccount($account);
-        }
-        else {
+        } else {
             $this->updateAccount($account);
         }
     }
@@ -65,12 +68,12 @@ class AccountFactory {
         unset($accountData['id']);
         $queryData = [];
 
-        foreach($accountData as $key => $value) {
+        foreach ($accountData as $key => $value) {
             $queryData[sprintf(':%s', $key)] = $value;
         }
 
         $statement->execute($queryData);
-        $account->id = (int) $this->pdo->lastInsertId();
+        $account->id = (int)$this->pdo->lastInsertId();
     }
 
     private function updateAccount(Account $account): void
@@ -80,7 +83,7 @@ class AccountFactory {
         $accountData = $account->toArray();
         $queryData = [];
 
-        foreach($accountData as $key => $value) {
+        foreach ($accountData as $key => $value) {
             $queryData[sprintf(':%s', $key)] = $value;
         }
 

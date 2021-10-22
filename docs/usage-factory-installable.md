@@ -1,11 +1,11 @@
 # Factory usage & Installable class
 
-There is definitely a class structure, that has a factory, which is
-creating for example account objects, then you have the account class,
-and probably some SQL file we must execute to install the table
-and make everything working. For a "little" example, it might look like this:
+There is definitely a class structure, that has a factory, which is creating for example account objects, then you have
+the account class, and probably some SQL file we must execute to install the table and make everything working. For a "
+little" example, it might look like this:
 
 *File: AccountFactory.php*
+
 ```php
 class AccountFactory {
 
@@ -64,7 +64,9 @@ class AccountFactory {
     }
 }
 ```
+
 *File: Account.php*
+
 ```php
 class Account
 {
@@ -102,7 +104,9 @@ class Account
     }
 }
 ```
+
 *File: AccountTable.sql* (your database installation file)
+
 ```sql
 CREATE TABLE `account` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -114,20 +118,16 @@ CREATE TABLE `account` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3
 ```
 
-That must be a pain to write so much stuff for each class 
-we would like to create. And I am not even talking about a
-case when you want to add new column to the account table,
-writing an alter query to the sql file and editing all the
+That must be a pain to write so much stuff for each class we would like to create. And I am not even talking about a
+case when you want to add new column to the account table, writing an alter query to the sql file and editing all the
 queries in save/fetch methods... Damn...
 
 So what can **MkSQL** help you with?
 
 ## Use updater instead of the `.sql` file!
 
-We can omit the `AccountTable.sql` entirely by using the updater. 
-File `Account.php` will stay the same for now 
-(more in the [ORM Usage](usage-orm.md) section),
-but we will change `AccountFactory.php` like this:
+We can omit the `AccountTable.sql` entirely by using the updater. File `Account.php` will stay the same for now
+(more in the [ORM Usage](usage-orm.md) section), but we will change `AccountFactory.php` like this:
 
 ```php
     private static bool $installed = false;
@@ -180,15 +180,12 @@ but we will change `AccountFactory.php` like this:
     }
 ```
 
-This helped two things, the table `account` is created automatically and
-is also automatically updated when you change it. It means we don't need
-to update database manually when we are updating our website. How about 
-adding new column to the `account` table now? Much better on the database
-side, but still pain.
+This helped two things, the table `account` is created automatically and is also automatically updated when you change
+it. It means we don't need to update database manually when we are updating our website. How about adding new column to
+the `account` table now? Much better on the database side, but still pain.
 
 Also, the code is still ugly and who would like to have additional property
-(`$installed`) in the factory? That's where `Installable` class is coming 
-to make our life little nicer...
+(`$installed`) in the factory? That's where `Installable` class is coming to make our life little nicer...
 
 New `AccountFactory` extending `Installable` class:
 
@@ -230,14 +227,11 @@ class AccountFactory extends Installable {
 }
 ```
 
-I mean, yeah, the installation of the database looks better, but still, when 
-we want to add another column to `account` table, we still must create the 
-property, modify `fromArray` and `toArray` methods, update `updateAccount`
-and `createAccount` method and create the column in `install` method. That's 
-still so much work, where you can make a mistake and spend even more time to
-find bugs. That's where ORM comes in, how about we could throw away 
-`getAccountById`, `saveAccount`, `createAccount`, `updateAccount` methods
-and reduce our `install` method to this:
+I mean, yeah, the installation of the database looks better, but still, when we want to add another column to `account`
+table, we still must create the property, modify `fromArray` and `toArray` methods, update `updateAccount`
+and `createAccount` method and create the column in `install` method. That's still so much work, where you can make a
+mistake and spend even more time to find bugs. That's where ORM comes in, how about we could throw away
+`getAccountById`, `saveAccount`, `createAccount`, `updateAccount` methods and reduce our `install` method to this:
 
 ```php
     protected function install(Updater $updater): void

@@ -19,7 +19,7 @@ class FetcherTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
-        static::$repository = new FetcherTestRepository(
+        self::$repository = new FetcherTestRepository(
             new PDO('sqlite::memory:')
         );
     }
@@ -35,12 +35,15 @@ class FetcherTest extends TestCase
      */
     public function testFetcher(): void
     {
-        static::assertNotNull(static::$repository);
+        static::assertNotNull(self::$repository);
 
         $tesla = Manufacturer::create();
         $tesla->name = 'Tesla';
 
-        static::$repository->save($tesla);
+        $c = Car::create();
+        $c->name = 'Model G';
+        $tesla->cars[] = $c;
+        self::$repository->save($tesla);
 
         $manufacturer = Manufacturer::create();
         $manufacturer->name = 'Cheng Car';
@@ -59,24 +62,25 @@ class FetcherTest extends TestCase
         $this->addPart($car2, 'wheels');
         $manufacturer->cars[] = $car2;
 
-        static::$repository->save($manufacturer);
+        self::$repository->save($manufacturer);
 
-        $car1Fetched = static::$repository->getCarById($car1->id ?? -1);
+        $car1Fetched = self::$repository->getCarById($car1->id ?? -1);
 
         static::assertNotNull($car1Fetched);
         static::assertSame($car1->id, $car1Fetched->id);
 
-        $car2Fetched = static::$repository->getCarById($car2->id ?? -1);
+        $car2Fetched = self::$repository->getCarById($car2->id ?? -1);
 
         static::assertNotNull($car2Fetched);
         static::assertSame($car2->id, $car2Fetched->id);
     }
 
-    private function addPart(Car $car, string $partName): void
+    private function addPart(Car $car, string $partName): Part
     {
         $newPart = Part::create();
         $newPart->car = $car;
         $newPart->name = $partName;
         $car->parts[] = $newPart;
+        return $newPart;
     }
 }

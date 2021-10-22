@@ -43,7 +43,7 @@ class Utils
      */
     public static function internalTestCommentsError(string $name): string
     {
-        return static::confirmName($name, ['/', '*', '-']);
+        return self::confirmName($name, ['/', '*', '-']);
     }
 
     /**
@@ -65,7 +65,7 @@ class Utils
         }
 
         // Remove allowed characters, if the string isn't empty, it contains invalid characters!
-        $Allowed = array_merge(static::$_defaultAllowedCharacters, $AdditionalAllowed);
+        $Allowed = array_merge(self::$_defaultAllowedCharacters, $AdditionalAllowed);
 
         if (str_replace($Allowed, '', $name) !== '') {
             {
@@ -86,7 +86,7 @@ class Utils
      */
     public static function confirmTableName(string $name): string
     {
-        return static::confirmName($name);
+        return self::confirmName($name);
     }
 
     /**
@@ -98,7 +98,7 @@ class Utils
      */
     public static function confirmColumnName(string $name): string
     {
-        return static::confirmName($name);
+        return self::confirmName($name);
     }
 
     /**
@@ -110,7 +110,7 @@ class Utils
      */
     public static function confirmType(string $type): string
     {
-        return static::confirmName(str_replace(' ', '', $type), ['(', ')', ',']);
+        return self::confirmName(str_replace(' ', '', $type), ['(', ')', ',']);
     }
 
     /**
@@ -128,7 +128,7 @@ class Utils
                 return substr(md5($keyName), 0, min(32, $maxLen));
             }
         }
-        return static::confirmName($keyName);
+        return self::confirmName($keyName);
     }
 
     /**
@@ -140,7 +140,7 @@ class Utils
      */
     public static function confirmForeignKeyTarget(string $keyTarget): string
     {
-        $keyTarget = static::confirmName($keyTarget, ['.']);
+        $keyTarget = self::confirmName($keyTarget, ['.']);
 
         if (!Strings::contains($keyTarget, '.')) {
             throw new InvalidArgumentException("Invalid foreign key target '" . $keyTarget . "'. Dot is missing.");
@@ -169,7 +169,7 @@ class Utils
             return null;
         }
 
-        return static::checkForbiddenWords(static::confirmName($name, [',', '.', ' ']));
+        return self::checkForbiddenWords(self::confirmName($name, [',', '.', ' ']));
     }
 
     /**
@@ -182,7 +182,7 @@ class Utils
      */
     public static function checkForbiddenWords(string $text): string
     {
-        foreach (static::$_Forbidden as $ForbiddenWord) {
+        foreach (self::$_Forbidden as $ForbiddenWord) {
             if (Strings::contains(
                 strtolower($text),
                 strtolower($ForbiddenWord)

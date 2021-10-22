@@ -23,7 +23,7 @@ class UtilsTest extends TestCase
     {
         $this->assertExceptionThrown(
             InvalidArgumentException::class,
-            function() {
+            function () {
                 Utils::checkForbiddenWords('CONSTRAINT');
             }
         );

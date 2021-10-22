@@ -5,11 +5,8 @@ namespace Zrnik\MkSQL\Repository\Saver;
 use JetBrains\PhpStorm\Pure;
 use PDO;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
-use Zrnik\MkSQL\Repository\Attributes\FetchArray;
-use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
-use Zrnik\MkSQL\Utilities\Reflection;
 use function array_key_exists;
 use function count;
 use function in_array;
@@ -47,8 +44,8 @@ class Saver
 
         $chunkByTables = self::chunkByTables($orderedInserts);
 
-        foreach($chunkByTables as $insertChunk) {
-            foreach(array_chunk($insertChunk, self::DEFAULT_INSERT_CHUNK_SIZE) as $chunk) {
+        foreach ($chunkByTables as $insertChunk) {
+            foreach (array_chunk($insertChunk, self::DEFAULT_INSERT_CHUNK_SIZE) as $chunk) {
                 $this->insert($chunk);
             }
         }
@@ -113,7 +110,7 @@ class Saver
     {
         $subEntities = [];
 
-        foreach(EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
+        foreach (EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
             $propertyName = $fetchArrayData->getPropertyName();
             foreach ($entity->$propertyName as $subEntity) {
                 $subEntities[] = $subEntity;
@@ -132,13 +129,13 @@ class Saver
     {
         $superiorEntities = [];
 
-        foreach(EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
+        foreach (EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
             $initialized = $foreignKeyData->getProperty()->isInitialized($entity);
             if (!$initialized) {
                 continue;
             }
             $propertyName = $foreignKeyData->getPropertyName();
-            // $superiorEntities[] = $entity->$propertyName;
+            $superiorEntities[] = $entity->$propertyName;
         }
         return $superiorEntities;
     }
@@ -187,7 +184,7 @@ class Saver
         }
 
         // We need at least one entity
-        if(count($entities) <= 0) {
+        if (count($entities) <= 0) {
             return;
         }
 
@@ -195,15 +192,15 @@ class Saver
 
         //region Remove primary key from data
         $primaryKeyName = $entities[0]::getPrimaryKeyName();
-        $primaryKeyKey = array_search($primaryKeyName,$dataKeys,true);
-        if($primaryKeyKey !== false) {
+        $primaryKeyKey = array_search($primaryKeyName, $dataKeys, true);
+        if ($primaryKeyKey !== false) {
             unset($dataKeys[$primaryKeyKey]);
         }
         //endregion
 
         $tableName = $entities[0]::getTableName();
 
-        $sql =  sprintf(
+        $sql = sprintf(
             'INSERT INTO %s (%s) VALUES %s;',
             $tableName,
             implode(',', $dataKeys),
@@ -213,7 +210,7 @@ class Saver
         $values = [];
         foreach ($entities as $entity) {
             $data = $entity->toArray();
-            foreach($dataKeys as $dataKey) {
+            foreach ($dataKeys as $dataKey) {
                 $values[] = $data[$dataKey];
             }
         }
@@ -224,12 +221,12 @@ class Saver
         $stmt->execute($values);
 
         //region Update `PRIMARY KEY`s
-        $lastPk = (int) $this->pdo->lastInsertId();
+        $lastPk = (int)$this->pdo->lastInsertId();
 
         //region Fix for MySQL/MariaDB
         /** @see https://www.php.net/manual/en/pdo.lastinsertid.php#122009 */
         $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-        if(strtolower($driver) === 'mysql') {
+        if (strtolower($driver) === 'mysql') {
             $lastPk += count($entities) - 1;
         }
         //endregion
@@ -257,8 +254,8 @@ class Saver
     {
         $result = '';
 
-        for($i = 0; $i < $count; $i++) {
-            $result .= sprintf('%s(%s)',$i === 0 ? ' ' : ', ', self::createPlaceholders($placeholderAmount));
+        for ($i = 0; $i < $count; $i++) {
+            $result .= sprintf('%s(%s)', $i === 0 ? ' ' : ', ', self::createPlaceholders($placeholderAmount));
         }
 
         return trim($result);
@@ -272,8 +269,8 @@ class Saver
     {
         $result = '';
 
-        for($i = 0; $i < $count; $i++) {
-            $result .= sprintf('%s?',$i === 0 ? ' ' : ', ');
+        for ($i = 0; $i < $count; $i++) {
+            $result .= sprintf('%s?', $i === 0 ? ' ' : ', ');
         }
 
         return trim($result);
@@ -287,8 +284,8 @@ class Saver
     {
         $orderByTable = [];
 
-        foreach($entities as $entity) {
-            if(!array_key_exists($entity::class, $orderByTable)) {
+        foreach ($entities as $entity) {
+            if (!array_key_exists($entity::class, $orderByTable)) {
                 $orderByTable[$entity::class] = [];
             }
             $orderByTable[$entity::class][] = $entity;

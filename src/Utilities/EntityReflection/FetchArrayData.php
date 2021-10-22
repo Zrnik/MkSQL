@@ -16,7 +16,7 @@ class FetchArrayData
      * @param ReflectionAttribute<FetchArray> $reflectionAttribute
      */
     public function __construct(
-        private ReflectionProperty $reflectionProperty,
+        private ReflectionProperty  $reflectionProperty,
         private ReflectionAttribute $reflectionAttribute
     )
     {

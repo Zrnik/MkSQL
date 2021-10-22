@@ -11,7 +11,6 @@ namespace Tests;
 use Brick\DateTime\LocalDateTime;
 use JsonException;
 use Nette\Neon\Neon;
-use Nette\Utils\Strings;
 use PDO;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +19,11 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntityFromSubEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\SubEntityFetchedEntity;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\SubEntityOne;
+use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\SubEntityTwo;
 use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
 use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\Person;
@@ -72,7 +75,7 @@ class IntegrationTest extends TestCase
         $MySQL_VersionStatement = $MySQL_PDO->query('select version();');
         $MySQL_Version = $MySQL_VersionStatement === false ? '?' : $MySQL_VersionStatement->fetch()[0];
 
-        $this->processTest($MySQL_PDO, $MySQL_Version);
+        $this->runIntegrationTest($MySQL_PDO, $MySQL_Version);
 
         // SQLite Integration:
         //$SQLite_PDO = new PDO("sqlite::memory:");
@@ -86,7 +89,8 @@ class IntegrationTest extends TestCase
         $SQLite_PDO = new PDO(sprintf('sqlite:%s', $SQLiteFile));
         $SQLite_VersionStatement = $SQLite_PDO->query('select sqlite_version();');
         $SQLite_Version = $SQLite_VersionStatement === false ? '?' : $SQLite_VersionStatement->fetch()[0];
-        $this->processTest($SQLite_PDO, $SQLite_Version);
+
+        $this->runIntegrationTest($SQLite_PDO, $SQLite_Version);
     }
 
     /**
@@ -167,6 +171,43 @@ class IntegrationTest extends TestCase
         echo ']' . PHP_EOL . 'Complete!';
 
 
+    }
+
+
+    private function runIntegrationTest(PDO $pdo, string $version): void
+    {
+        $this->cleanup($pdo);
+
+        //Yes, every test is run 2 times!
+        $this->processTest($pdo, $version);
+        $this->processTest($pdo, $version);
+
+        $this->cleanup($pdo);
+    }
+
+    private function cleanup(PDO $pdo): void
+    {
+        $clearDatabase = [
+            'last_action', 'sessions', 'accounts', 'hello',
+
+            AuctionItem::getTableName(),
+            Auction::getTableName(),
+
+            SubEntityFetchedEntity::getTableName(),
+            FetchedEntity::getTableName(),
+            FetchedEntityFromSubEntity::getTableName(),
+            MainEntity::getTableName(),
+            SubEntityOne::getTableName(),
+            SubEntityTwo::getTableName(),
+
+            Reward::getTableName(),
+            AccountEntry::getTableName(),
+            Person::getTableName(),
+        ];
+
+        foreach ($clearDatabase as $tableName) {
+            $pdo->exec(sprintf('DROP TABLE IF EXISTS %s', $tableName));
+        }
     }
 
     private function dropAll(PDO $pdo): void
@@ -503,17 +544,10 @@ class IntegrationTest extends TestCase
         static::assertCount(2, $auctionList1);
         $this->dot();
 
+        $auctionRepository->save($auction1);
+
         /** @var Auction $fetchedAuction1 */
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
-
-
-        /*dump("------------------------------");
-        dump(
-            $pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
-            false
-        );
-        dump($auction1);
-        dump($fetchedAuction1);*/
 
         static::assertEquals($auction1, $fetchedAuction1);
         static::assertNotSame($auction1, $fetchedAuction1);
@@ -564,13 +598,13 @@ class IntegrationTest extends TestCase
         static::assertEquals($auction1->auctionItems[0], $fetchedAuctionItem);
         static::assertNotSame($auction1->auctionItems[0], $fetchedAuctionItem);
 
+
         /** @var AuctionItem[] $allAuctionItems */
         $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
 
         static::assertNull(
             $allAuctionItems[0]->auction?->auctionItems[0]->whenSold
         );
-
 
         $allAuctionItems[0]->whenSold = LocalDateTime::of(
             2020, 9, 1, 12

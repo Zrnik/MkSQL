@@ -9,7 +9,7 @@ namespace Zrnik\MkSQL\Repository;
 
 use PDO;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
-use Zrnik\MkSQL\Repository\Fetcher\Fetcher;
+use Zrnik\MkSQL\Repository\Fetch\Dispenser;
 use Zrnik\MkSQL\Repository\Saver\Saver;
 use Zrnik\MkSQL\Utilities\Reflection;
 use function count;
@@ -56,26 +56,13 @@ abstract class BaseRepository
 
     /**
      * @param class-string<BaseEntity> $baseEntityClassString
-     * @param mixed $primaryKeyValue
-     * @return BaseEntity[]
-     */
-    public function getResultsByPrimaryKey(string $baseEntityClassString, mixed $primaryKeyValue): array
-    {
-        /** @var BaseEntity $baseEntity */
-        $baseEntity = $baseEntityClassString;
-        $primaryKey = $baseEntity::getPrimaryKeyName();
-        return $this->getResultsByKey($baseEntityClassString, $primaryKey, $primaryKeyValue);
-    }
-
-    /**
-     * @param class-string<BaseEntity> $baseEntityClassString
-     * @param string $key
+     * @param string $propertyName
      * @param mixed $value
      * @return ?BaseEntity
      */
-    public function getResultByKey(string $baseEntityClassString, string $key, mixed $value): ?BaseEntity
+    public function getResultByKey(string $baseEntityClassString, string $propertyName, mixed $value): ?BaseEntity
     {
-        $result = $this->getResultsByKeys($baseEntityClassString, $key, [$value]);
+        $result = $this->getResultsByKeys($baseEntityClassString, $propertyName, [$value]);
         if (count($result) > 0) {
             return $result[0];
         }
@@ -94,11 +81,11 @@ abstract class BaseRepository
 
     /**
      * @param class-string<BaseEntity> $baseEntityClassString
-     * @param string|null $key
+     * @param string|null $propertyName
      * @param mixed|null $value
      * @return BaseEntity[]
      */
-    public function getResultsByKey(string $baseEntityClassString, ?string $key = null, mixed $value = null): array
+    public function getResultsByKey(string $baseEntityClassString, ?string $propertyName = null, mixed $value = null): array
     {
         if (is_array($value)) {
             throw new InvalidArgumentException("For array value, please use 'getResultsByKeys' method!");
@@ -106,13 +93,13 @@ abstract class BaseRepository
 
 
         return $this->getResultsByKeys(
-            $baseEntityClassString, $key, $value === null ? [] : [$value]
+            $baseEntityClassString, $propertyName, $value === null ? [] : [$value]
         );
     }
 
     /**
      * @param class-string<BaseEntity> $baseEntityClassString
-     * @param string|null $key
+     * @param string|null $propertyName
      * @param array<mixed> $values
      * @return BaseEntity[]
      * @noinspection PhpFunctionCyclomaticComplexityInspection
@@ -120,12 +107,12 @@ abstract class BaseRepository
      */
     public function getResultsByKeys(
         string  $baseEntityClassString,
-        ?string $key = null,
+        ?string $propertyName = null,
         array   $values = [],
     ): array
     {
-        return (new Fetcher($this->getPdo()))
-            ->getResultsByKeys($baseEntityClassString, $key, $values);
+        return (new Dispenser($this->getPdo()))
+            ->getResultsByKeys($baseEntityClassString, $propertyName, $values);
     }
 
     /**

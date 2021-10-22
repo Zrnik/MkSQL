@@ -356,7 +356,7 @@ class QueryMakerMySQL implements IQueryMaker
                 $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
             }
 
-            foreach ($CreateQueries ?? [] as $query) {
+            foreach ($CreateQueries as $query) {
                 $Queries[] = $query;
             }
 

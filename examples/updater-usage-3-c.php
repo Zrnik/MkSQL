@@ -1,9 +1,10 @@
 <?php declare(strict_types=1);
+
 use Zrnik\MkSQL\Updater;
 
 include __DIR__ . '/../vendor/autoload.php';
 
-$pdo = new PDO('sqlite:' .  __FILE__ . '.sqlite');
+$pdo = new PDO('sqlite:' . __FILE__ . '.sqlite');
 $updater = new Updater($pdo);
 
 $multipleTableColumn = new \Zrnik\MkSQL\Column('createDate', 'int' /* 'int' is actually default value */);

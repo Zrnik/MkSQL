@@ -19,10 +19,10 @@ class EntityReflection
     {
         $reflection = BaseEntity::getReflectionClass($entity);
         $result = [];
-        foreach($reflection->getProperties() as $reflectionProperty) {
+        foreach ($reflection->getProperties() as $reflectionProperty) {
             /** @var ?ReflectionAttribute<ForeignKey> $reflectionAttribute */
             $reflectionAttribute = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
-            if($reflectionAttribute !== null) {
+            if ($reflectionAttribute !== null) {
                 $result[] = new ForeignKeyData(
                     $reflectionProperty,
                     $reflectionAttribute,
@@ -38,12 +38,12 @@ class EntityReflection
      */
     public static function getFetchArrayProperties(BaseEntity|string $entity): array
     {
-        $reflection = BaseEntity::getReflectionClass($entity); 
+        $reflection = BaseEntity::getReflectionClass($entity);
         $result = [];
-        foreach($reflection->getProperties() as $reflectionProperty) {
+        foreach ($reflection->getProperties() as $reflectionProperty) {
             /** @var ?ReflectionAttribute<FetchArray> $reflectionAttribute */
             $reflectionAttribute = Reflection::propertyGetAttribute($reflectionProperty, FetchArray::class);
-            if($reflectionAttribute !== null) {
+            if ($reflectionAttribute !== null) {
                 $result[] = new FetchArrayData(
                     $reflectionProperty,
                     $reflectionAttribute,

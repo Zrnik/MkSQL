@@ -1,23 +1,21 @@
 # ORM Usage
 
-This functionality is in MkSQL since v0.8. and I actually didn't know
-what ORM meant before, as I never used any and didn't know I would
-need it to stop writing a ton of `toArray` and `fromArray`/`fromRow` methods 
-in entities. If I knew what it is and how to use for example `Doctrine`
-I might actually never write this package. (But I have no idea if Doctrine 
-can automatically create tables, maybe I could just write adapter for creating
-tables for it?)
+This functionality is in MkSQL since v0.8. and I actually didn't know what ORM meant before, as I never used any and
+didn't know I would need it to stop writing a ton of `toArray` and `fromArray`/`fromRow` methods in entities. If I knew
+what it is and how to use for example `Doctrine`
+I might actually never write this package. (But I have no idea if Doctrine can automatically create tables, maybe I
+could just write adapter for creating tables for it?)
 
-Anyway I would not use Doctrine in PHP lower than 8, because I believe
-that comments (annotations) should not be part of the working code. That changed
-with introduction of `Attributes`, so I think Doctrine is the way now.
+Anyway I would not use Doctrine in PHP lower than 8, because I believe that comments (annotations) should not be part of
+the working code. That changed with introduction of `Attributes`, so I think Doctrine is the way now.
 
-So, let's look at the factory and entity from previous page introducing the 
-`Updater` class for us in 
+So, let's look at the factory and entity from previous page introducing the
+`Updater` class for us in
 [Factory Usage & Installable Class](usage-factory-installable.md)
 page. *You should probably read it, if you didn't yet.*
 
 *AccountFactory.php file:*
+
 ```php
 class AccountFactory extends Installable
 {
@@ -93,6 +91,7 @@ class AccountFactory extends Installable
 ```
 
 *Account.php file:*
+
 ```php
 class Account
 {
@@ -132,11 +131,9 @@ class Account
 }
 ```
 
-I promised you, that you can get rid of all those
-methods, and I deliver!
+I promised you, that you can get rid of all those methods, and I deliver!
 
-Extend your entity with `BaseEntity` class! You can then safely 
-remove `fromArray` and `toArray` methods! Look at this:
+Extend your entity with `BaseEntity` class! You can then safely remove `fromArray` and `toArray` methods! Look at this:
 
 ```php
 #[TableName('account')]
@@ -169,9 +166,9 @@ can you see that it has everything from this below?
         ->setNotNull()->setComment('sha256');
 ```
 
-That means, we don't need to write our updater anymore! 
-As mentioned before, in the [Factory Usage & Installable Class](usage-factory-installable.md),
-this allows us to change our `install` method to this:
+That means, we don't need to write our updater anymore!
+As mentioned before, in the [Factory Usage & Installable Class](usage-factory-installable.md), this allows us to change
+our `install` method to this:
 
 ```php
 protected function install(Updater $updater): void
@@ -180,8 +177,7 @@ protected function install(Updater $updater): void
 }
 ```
 
-Installable class is also extending `BaseRepository` class! More
-about it on [Base Repository Usage](usage-orm.md) page.
+Installable class is also extending `BaseRepository` class! More about it on [Base Repository Usage](usage-orm.md) page.
 
 To tease you a little and get ahead my self again, this is how the new
 `AccountFactory.php` file looks:
@@ -209,8 +205,7 @@ class AccountFactory extends Installable
 }
 ```
 
-We are getting closer to the end of it all,
-the last page awaiting your attention is
+We are getting closer to the end of it all, the last page awaiting your attention is
 [Base Repository Usage](usage-orm.md)!
 
 

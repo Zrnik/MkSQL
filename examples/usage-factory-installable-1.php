@@ -6,7 +6,7 @@
 
 include __DIR__ . '/../vendor/autoload.php';
 
-$pdo = new PDO('sqlite:' .  __FILE__ . '.sqlite');
+$pdo = new PDO('sqlite:' . __FILE__ . '.sqlite');
 
 $installableAccountFactory = new \Examples\Accounts\Installable\AccountFactory($pdo);
 

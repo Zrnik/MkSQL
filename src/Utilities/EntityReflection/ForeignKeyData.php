@@ -16,10 +16,11 @@ class ForeignKeyData
      * @param ReflectionAttribute<ForeignKey> $foreignKeyAttribute
      */
     public function __construct(
-        private ReflectionProperty $reflectionProperty,
+        private ReflectionProperty  $reflectionProperty,
         private ReflectionAttribute $foreignKeyAttribute,
     )
-    { }
+    {
+    }
 
     public function getProperty(): ReflectionProperty
     {
@@ -32,6 +33,9 @@ class ForeignKeyData
         return $this->getProperty()->getName();
     }
 
+    /**
+     * @return class-string<BaseEntity>
+     */
     public function getTargetClassName(): string
     {
         return Reflection::attributeGetArgument($this->foreignKeyAttribute);

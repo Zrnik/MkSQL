@@ -9,7 +9,6 @@ namespace Zrnik\MkSQL\Repository;
 
 use Attribute;
 use JetBrains\PhpStorm\Pure;
-use JsonException;
 use JsonSerializable;
 use ReflectionClass;
 use ReflectionException;
@@ -21,6 +20,7 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
+use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
@@ -63,14 +63,15 @@ abstract class BaseEntity implements JsonSerializable
     {
         /** @var class-string<BaseEntity> $objKey */
         $objKey = is_string($obj) ? $obj : get_debug_type($obj);
-        if (!array_key_exists($objKey, static::$reflectionClasses)) {
+        if (!array_key_exists($objKey, self::$reflectionClasses)) {
             try {
                 /**
                  * @var ReflectionClass<BaseEntity> $reflectionInstance
                  * @noinspection PhpRedundantVariableDocTypeInspection
+                 * @throws ReflectionException
                  */
                 $reflectionInstance = new ReflectionClass($objKey);
-                static::$reflectionClasses[$objKey] = $reflectionInstance;
+                self::$reflectionClasses[$objKey] = $reflectionInstance;
             } catch (ReflectionException $e) {
                 throw new ReflectionFailedException(
                     sprintf(
@@ -81,7 +82,7 @@ abstract class BaseEntity implements JsonSerializable
                 );
             }
         }
-        return static::$reflectionClasses[$objKey];
+        return self::$reflectionClasses[$objKey];
     }
 
     /**
@@ -172,7 +173,7 @@ abstract class BaseEntity implements JsonSerializable
             $result[$propertyName] = $propertyValue;
         }
 
-        foreach (static::getColumnNames() as $columnName) {
+        foreach (self::getColumnNames() as $columnName) {
             $this->rawData[$columnName] = $result[$columnName] ?? null;
         }
 
@@ -187,7 +188,7 @@ abstract class BaseEntity implements JsonSerializable
     public function updateRawData(): void
     {
         $data = $this->toArray();
-        foreach (static::getColumnNames() as $columnName) {
+        foreach (self::getColumnNames() as $columnName) {
             $this->rawData[$columnName] = $data[$columnName] ?? null;
         }
     }
@@ -201,7 +202,7 @@ abstract class BaseEntity implements JsonSerializable
         $entity = new static();
 
         // We MUST initialize `FetchArray` properties as array!
-        foreach(EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
+        foreach (EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
             $propertyName = $fetchArrayData->getPropertyName();
             $entity->$propertyName = [];
         }
@@ -246,7 +247,7 @@ abstract class BaseEntity implements JsonSerializable
 
         //$obj->rawData = $data;
 
-        foreach (static::getColumnNames() as $columnName) {
+        foreach (self::getColumnNames() as $columnName) {
             $obj->rawData[$columnName] = $data[$columnName] ?? null;
         }
 
@@ -450,6 +451,17 @@ abstract class BaseEntity implements JsonSerializable
     {
         return self::columnName(self::getPrimaryKeyReflectionProperty($reflection));
     }
+
+    /**
+     * @param ReflectionClass<BaseEntity>|null $reflection
+     * @return string
+     */
+    public static function getPrimaryKeyPropertyName(?ReflectionClass $reflection = null): string
+    {
+        return self::getPrimaryKeyReflectionProperty($reflection)->getName();
+    }
+
+
     //endregion
 
     //region Primary Key Type
@@ -738,6 +750,8 @@ abstract class BaseEntity implements JsonSerializable
         /** @var array<class-string<BaseEntity>> $fetchArrayEntities */
         $fetchArrayEntities = [];
 
+        $referencedForeignKeys = [];
+
         // Columns:
         foreach ($properties as $property) {
 
@@ -803,12 +817,19 @@ abstract class BaseEntity implements JsonSerializable
 
                 $referencedEntityName = Reflection::attributeGetArgument($foreignKeyAttribute);
 
+                if (array_key_exists($referencedEntityName, $referencedForeignKeys)) {
+                    throw new MultipleForeignKeysTargetingSameClassException(
+                        $reflection->getName(), $referencedEntityName, $referencedForeignKeys[$referencedEntityName]
+                    );
+                }
+
                 if (!$isFetchArray && in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)) {
                     throw new CircularReferenceDetectedException(
                         static::class, $property->getName()
                     );
                 }
 
+                $referencedForeignKeys[$referencedEntityName] = $property->getName();
                 $hydrateAfter[] = $referencedEntityName;
             }
 
@@ -867,9 +888,8 @@ abstract class BaseEntity implements JsonSerializable
      */
     public function getPrimaryKeyValue(): mixed
     {
-        $primaryKeyColumnName = static::getPrimaryKeyName();
-        $data = $this->toArray();
-        return $data[$primaryKeyColumnName];
+        $primaryKeyPropertyName = static::getPrimaryKeyPropertyName();
+        return $this->$primaryKeyPropertyName;
     }
 
     /**
@@ -886,12 +906,12 @@ abstract class BaseEntity implements JsonSerializable
         }
         $this->$primaryKeyPropertyName = $newPrimaryKeyValue;
 
-        foreach(EntityReflection::getFetchArrayProperties($this) as $fetchArrayData) {
-            foreach(EntityReflection::getForeignKeys($fetchArrayData->getTargetClassName()) as $targetForeignKeyPropertyData) {
-                if(static::class === $targetForeignKeyPropertyData->getTargetClassName()) {
+        foreach (EntityReflection::getFetchArrayProperties($this) as $fetchArrayData) {
+            foreach (EntityReflection::getForeignKeys($fetchArrayData->getTargetClassName()) as $targetForeignKeyPropertyData) {
+                if (static::class === $targetForeignKeyPropertyData->getTargetClassName()) {
                     $thisPropertyName = $fetchArrayData->getPropertyName();
                     $targetPropertyName = $targetForeignKeyPropertyData->getPropertyName();
-                    foreach($this->$thisPropertyName as $value) {
+                    foreach ($this->$thisPropertyName as $value) {
                         $value->$targetPropertyName = $this;
                     }
                 }
@@ -922,22 +942,22 @@ abstract class BaseEntity implements JsonSerializable
 
         // Add 'FetchArray' values:
         $reflection = self::getReflectionClass($this);
-        foreach($reflection->getProperties() as $property) {
+        foreach ($reflection->getProperties() as $property) {
 
             $fetchArrayAttribute = Reflection::propertyGetAttribute(
                 $property, FetchArray::class
             );
 
-            if($fetchArrayAttribute !== null) {
+            if ($fetchArrayAttribute !== null) {
                 $propertyName = $property->getName();
                 $result[$propertyName] = $this->$propertyName;
             } else {
                 $dataKey = $property->getName();
 
                 $reflectionProperty = self::propertyReflection($dataKey);
-                if($reflectionProperty !== null) {
+                if ($reflectionProperty !== null) {
                     $columnNameAttribute = Reflection::propertyGetAttribute($reflectionProperty, ColumnName::class);
-                    if($columnNameAttribute !== null) {
+                    if ($columnNameAttribute !== null) {
                         $dataKey = Reflection::attributeGetArgument($columnNameAttribute) ?? $dataKey;
                     }
                 }
@@ -952,13 +972,15 @@ abstract class BaseEntity implements JsonSerializable
 
     public function fixSubEntityForeignKeys(): void
     {
-        foreach(EntityReflection::getFetchArrayProperties($this) as $fetchArrayProperty) {
+        foreach (EntityReflection::getFetchArrayProperties($this) as $fetchArrayProperty) {
             $propertyName = $fetchArrayProperty->getPropertyName();
             /** @var BaseEntity $childEntity */
-            foreach($this->$propertyName as $childEntity) {
-                foreach(EntityReflection::getForeignKeys($childEntity) as $foreignKeyData) {
+            foreach ($this->$propertyName as $childEntity) {
+                foreach (EntityReflection::getForeignKeys($childEntity) as $foreignKeyData) {
                     $childEntityForeignKeyPropertyName = $foreignKeyData->getPropertyName();
-                    if($foreignKeyData->getTargetClassName() === self::class) {
+                    if (
+                        $foreignKeyData->getTargetClassName() === self::class
+                    ) {
                         $childEntity->$childEntityForeignKeyPropertyName = $this;
                     }
                 }

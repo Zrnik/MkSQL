@@ -4,7 +4,7 @@ use Zrnik\MkSQL\Updater;
 
 include __DIR__ . '/../vendor/autoload.php';
 
-$pdo = new PDO('sqlite:' .  __FILE__ . '.sqlite');
+$pdo = new PDO('sqlite:' . __FILE__ . '.sqlite');
 $updater = new Updater($pdo);
 
 $a = $updater->tableCreate('accounts');

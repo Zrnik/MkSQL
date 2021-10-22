@@ -188,11 +188,11 @@ class Column
     {
         $type = gettype($defaultValue);
 
-        if (!in_array($type, static::$_AllowedDefaultValues)) {
+        if (!in_array($type, self::$_AllowedDefaultValues)) {
             throw new InvalidArgumentException(
                 sprintf(
                     "Comment must be one of '%s'. Got '%s' instead!",
-                    implode(', ', static::$_AllowedDefaultValues),
+                    implode(', ', self::$_AllowedDefaultValues),
                     $type
                 )
             );
