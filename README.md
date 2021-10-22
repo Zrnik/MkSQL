@@ -46,7 +46,7 @@ Read more at [Installation and Configuration](docs/install-and-config.md) page.
 
 #### Supported Drivers:
 
-- [✅ MySQL](https://www.mysql.com) (Compatible with MariaDB)
+- [✅ MySQL](https://www.mysql.com)
 - [✅ SQLite 3](https://www.sqlite.org/index.html)
 
 #### This package contains a [Tracy](https://tracy.nette.org/en/) panel
