@@ -84,64 +84,49 @@ class Saver
 
         if (!array_key_exists($entity->hash(), $entityList[$entity::class])) {
 
-            foreach ($this->supEntitiesOf($entity) as $subEntity) {
-                $this->fillEntityListRecursively($subEntity, $entityList);
-            }
-
             $entityList[$entity::class][$entity->hash()] = $entity;
 
-            foreach ($this->subEntitiesOf($entity) as $subEntity) {
+            foreach ($entity->subEntities() as $subEntity) {
                 $this->fillEntityListRecursively($subEntity, $entityList);
             }
 
-            foreach ($this->supEntitiesOf($entity) as $subEntity) {
+            foreach ($entity->supEntities() as $subEntity) {
                 $this->fillEntityListRecursively($subEntity, $entityList);
             }
 
         }
-    }
-
-    /**
-     * Sub entities (fetch array)
-     * @param BaseEntity $entity
-     * @return BaseEntity[]
-     */
-    private function subEntitiesOf(BaseEntity $entity): array
-    {
-        $subEntities = [];
-
-        foreach (EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
-            $propertyName = $fetchArrayData->getPropertyName();
-            foreach ($entity->$propertyName as $subEntity) {
-                $subEntities[] = $subEntity;
-            }
-        }
-
-        return $subEntities;
-    }
-
-    /**
-     * Superior entities (foreign key)
-     * @param BaseEntity $entity
-     * @return BaseEntity[]
-     */
-    private function supEntitiesOf(BaseEntity $entity): array
-    {
-        $superiorEntities = [];
-
-        foreach (EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
-            $initialized = $foreignKeyData->getProperty()->isInitialized($entity);
-            if (!$initialized) {
-                continue;
-            }
-            $propertyName = $foreignKeyData->getPropertyName();
-            $superiorEntities[] = $entity->$propertyName;
-        }
-        return $superiorEntities;
     }
 
     private function update(BaseEntity $entity): void
     {
+        $originalData = $entity->getOriginalData();
+
+        // Original data are only retrieved when fetching,
+        // if null, it is created entity (so probably already
+        // handled by "insert") and not saved
+        //
+        // But, if I am testing in PHPUnit, and I want to destroy
+        // the original data, I don't want to die here...
+        if ($originalData === null) {
+            return;
+        }
+
+        $saveArray = $entity->toArray();
+
+        /** @var bool $anyChange */
+        $anyChange = false;
+
+        foreach ($saveArray as $key => $value) {
+            if (!array_key_exists($key, $originalData) || (string) $value !== (string) $originalData[$key]) {
+                $anyChange = true;
+                break;
+            }
+        }
+
+        if (!$anyChange) {
+            return;
+        }
+
         $data = $entity->toArray();
         $primaryKeyName = $entity::getPrimaryKeyName();
         $primaryKeyValue = $data[$primaryKeyName];
@@ -169,7 +154,10 @@ class Saver
 
         $statement->execute($data);
 
+        $this->executedQueries++;
+
         $entity->updateRawData();
+        $entity->indicateSave();
     }
 
 
@@ -177,7 +165,8 @@ class Saver
      * All $entities must be same type!
      * @param BaseEntity[] $entities
      */
-    private function insert(array $entities): void
+    private
+    function insert(array $entities): void
     {
         foreach ($entities as $entity) {
             $entity->fixSubEntityForeignKeys();
@@ -219,6 +208,7 @@ class Saver
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($values);
+        $this->executedQueries++;
 
         //region Update `PRIMARY KEY`s
         $lastPk = (int)$this->pdo->lastInsertId();
@@ -237,6 +227,7 @@ class Saver
         foreach ($entities as $entity) {
             $entity->setPrimaryKeyValue($firstPk);
             $entity->updateRawData();
+            $entity->indicateSave();
             $firstPk++;
         }
         //endregion
@@ -406,4 +397,13 @@ class Saver
 
         return $order;
     }
+
+    //region Executed Query Count
+    private int $executedQueries = 0;
+
+    public function getExecutedQueryCount(): int
+    {
+        return $this->executedQueries;
+    }
+    //endregion
 }

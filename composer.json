@@ -22,8 +22,8 @@
   ],
   "scripts": {
     "tests": [
-      "composer phpstan",
-      "composer phpunit"
+      "@phpstan",
+      "@phpunit"
     ],
     "phpstan": "phpstan analyse  --memory-limit 1G",
     "phpunit": "phpunit",

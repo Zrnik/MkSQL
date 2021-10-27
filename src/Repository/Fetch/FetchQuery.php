@@ -39,6 +39,7 @@ class FetchQuery
          * @var mixed[] $fetch
          */
         $fetch = $statement->fetchAll();
+        $this->executedQueries++;
 
         return $fetch;
     }
@@ -91,4 +92,11 @@ class FetchQuery
 
         return $fetchSql;
     }
+
+    //region Executed Query Count
+    private int $executedQueries = 0;
+    public function getExecutedQueryCount() : int {
+        return $this->executedQueries;
+    }
+    //endregion
 }

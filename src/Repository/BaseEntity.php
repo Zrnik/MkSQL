@@ -8,6 +8,7 @@
 namespace Zrnik\MkSQL\Repository;
 
 use Attribute;
+use Exception;
 use JetBrains\PhpStorm\Pure;
 use JsonSerializable;
 use ReflectionClass;
@@ -38,6 +39,7 @@ use Zrnik\MkSQL\Repository\Attributes\TableName;
 use Zrnik\MkSQL\Repository\Attributes\Unique;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
+use Zrnik\MkSQL\Utilities\Misc;
 use Zrnik\MkSQL\Utilities\Reflection;
 use function array_key_exists;
 use function count;
@@ -52,6 +54,11 @@ abstract class BaseEntity implements JsonSerializable
      * @var array<string, ReflectionClass<BaseEntity>>
      */
     private static array $reflectionClasses = [];
+
+    /**
+     * @var null|mixed[]
+     */
+    private ?array $originalData = null;
 
     /**
      * @param BaseEntity|class-string<BaseEntity> $obj
@@ -245,8 +252,6 @@ abstract class BaseEntity implements JsonSerializable
 
         $obj = static::create();
 
-        //$obj->rawData = $data;
-
         foreach (self::getColumnNames() as $columnName) {
             $obj->rawData[$columnName] = $data[$columnName] ?? null;
         }
@@ -322,6 +327,7 @@ abstract class BaseEntity implements JsonSerializable
             $obj->$reflectionPropertyName = $propertyValue;
         }
 
+        $obj->originalData = $obj->getRawData();
         return $obj;
     }
 
@@ -987,6 +993,75 @@ abstract class BaseEntity implements JsonSerializable
             }
         }
         $this->updateRawData();
+    }
+
+
+    /**
+     * Sub entities (fetch array)
+     * @return BaseEntity[]
+     */
+    public function subEntities(): array
+    {
+        $subEntities = [];
+
+        foreach (EntityReflection::getFetchArrayProperties($this) as $fetchArrayData) {
+            $propertyName = $fetchArrayData->getPropertyName();
+            foreach ($this->$propertyName as $subEntity) {
+                $subEntities[] = $subEntity;
+            }
+        }
+
+        return $subEntities;
+    }
+
+    /**
+     * Superior entities (foreign key)
+     * @return BaseEntity[]
+     */
+    public function supEntities(): array
+    {
+        $superiorEntities = [];
+
+        foreach (EntityReflection::getForeignKeys($this) as $foreignKeyData) {
+            $initialized = $foreignKeyData->getProperty()->isInitialized($this);
+            if (!$initialized) {
+                continue;
+            }
+            $propertyName = $foreignKeyData->getPropertyName();
+            $superiorEntities[] = $this->$propertyName;
+        }
+
+        return $superiorEntities;
+    }
+
+
+    /**
+     * @return mixed[]|null
+     */
+    public function getOriginalData(): ?array
+    {
+        return $this->originalData;
+    }
+
+    /**
+     * DO NOT USE THIS FUNCTION, IT WILL THROW
+     * ERROR OUTSIDE PHPUNIT TESTS!
+     * @param mixed[] $newOriginalData
+     * @throws Exception
+     * @internal
+     */
+    final public function setOriginalData(?array $newOriginalData): void
+    {
+        if(!Misc::isPhpUnitTest()) {
+            throw new Exception("Method 'setOriginalData' is internal, and exists only for testing purpose!");
+        }
+
+        $this->originalData = $newOriginalData;
+    }
+
+    public function indicateSave(): void
+    {
+        $this->originalData = $this->getRawData();
     }
 
 }

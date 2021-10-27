@@ -17,7 +17,6 @@ use function is_array;
 
 abstract class BaseRepository
 {
-
     public function __construct(protected PDO $pdo)
     {
     }
@@ -39,6 +38,7 @@ abstract class BaseRepository
 
         $saver = new Saver($this->pdo);
         $saver->saveEntities($entities);
+        $this->executedQueries += $saver->getExecutedQueryCount();
     }
 
     /**
@@ -75,7 +75,6 @@ abstract class BaseRepository
      */
     public function getAll(string $baseEntityClassString): array
     {
-        //TODO: This is a hack `WHERE 1 = 1`... Can this be done better way?
         return $this->getResultsByKey($baseEntityClassString);
     }
 
@@ -111,8 +110,10 @@ abstract class BaseRepository
         array   $values = [],
     ): array
     {
-        return (new Dispenser($this->getPdo()))
-            ->getResultsByKeys($baseEntityClassString, $propertyName, $values);
+        $dispenser = new Dispenser(($this->getPdo()));
+        $entities = $dispenser->getResultsByKeys($baseEntityClassString, $propertyName, $values);
+        $this->executedQueries += $dispenser->getExecutedQueryCount();
+        return $entities;
     }
 
     /**
@@ -143,6 +144,7 @@ abstract class BaseRepository
         );
 
         $pdoStatement = $this->pdo->query($sql);
+        $this->executedQueries++;
 
         if ($pdoStatement === false) {
             return []; // Dafuq? Guess we should handle this somehow...
@@ -164,4 +166,12 @@ abstract class BaseRepository
 
         return $result;
     }
+
+
+    //region Executed Query Count
+    private int $executedQueries = 0;
+    public function getExecutedQueryCount() : int {
+        return $this->executedQueries;
+    }
+    //endregion
 }

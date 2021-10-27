@@ -9,6 +9,7 @@
 namespace Tests;
 
 use Brick\DateTime\LocalDateTime;
+use Exception;
 use JsonException;
 use Nette\Neon\Neon;
 use PDO;
@@ -39,12 +40,15 @@ use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
+use Zrnik\MkSQL\Repository\BaseEntity;
+use Zrnik\MkSQL\Repository\BaseRepository;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Tracy\Panel;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
 use Zrnik\PHPUnit\Exceptions;
 use function count;
+use function in_array;
 
 class IntegrationTest extends TestCase
 {
@@ -96,6 +100,7 @@ class IntegrationTest extends TestCase
     /**
      * @param PDO $pdo
      * @param string $version
+     * @throws JsonException
      */
     private function processTest(PDO $pdo, string $version = ''): void
     {
@@ -156,17 +161,27 @@ class IntegrationTest extends TestCase
         $this->subTestCircularReference($pdo);
 
         // #####################################
+        // ### Json Tests: #####################
+        // #####################################
+
+        $this->subTestJsonSerialize($pdo);
+
+        // #####################################
+        // ### Update entities: ################
+        // #####################################
+
+        $this->subTestDoNotUpdateUpToDateEntities($pdo);
+
+        // #####################################
         // ### Bug Tests: ######################
         // #####################################
         $this->subTestDoubleRetrieve($pdo);
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
-        // #####################################
-        // ### Json Tests: #####################
-        // #####################################
 
-        $this->subTestJsonSerialize($pdo);
+
+
 
         echo ']' . PHP_EOL . 'Complete!';
 
@@ -549,12 +564,16 @@ class IntegrationTest extends TestCase
         /** @var Auction $fetchedAuction1 */
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
 
+        //region I am not testing this, it does not matter...
+
+
         static::assertEquals($auction1, $fetchedAuction1);
         static::assertNotSame($auction1, $fetchedAuction1);
         $this->dot();
 
         /** @var Auction $fetchedAuction2 */
         $fetchedAuction2 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction2->id);
+
 
         static::assertEquals($auction2, $fetchedAuction2);
         static::assertNotSame($auction2, $fetchedAuction2);
@@ -565,6 +584,7 @@ class IntegrationTest extends TestCase
             AuctionItem::class, 'auction', $fetchedAuction1->id
         );
 
+
         static::assertEquals($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
         static::assertNotSame($auction1->auctionItems[0], $auctionItemsOfAuction1[0]);
         $this->dot();
@@ -574,6 +594,7 @@ class IntegrationTest extends TestCase
             Auction::class, 'name', 'First Auction'
         );
 
+
         static::assertEquals($auction1, $fetchedAuctionByName1);
         static::assertNotSame($auction1, $fetchedAuctionByName1);
         $this->dot();
@@ -582,6 +603,7 @@ class IntegrationTest extends TestCase
         $fetchedAuctionByName2 = $auctionRepository->getResultByKey(
             Auction::class, 'name', 'Second Auction'
         );
+
 
         static::assertEquals($auction2, $fetchedAuctionByName2);
         static::assertNotSame($auction2, $fetchedAuctionByName2);
@@ -597,7 +619,6 @@ class IntegrationTest extends TestCase
 
         static::assertEquals($auction1->auctionItems[0], $fetchedAuctionItem);
         static::assertNotSame($auction1->auctionItems[0], $fetchedAuctionItem);
-
 
         /** @var AuctionItem[] $allAuctionItems */
         $allAuctionItems = $auctionRepository->getAll(AuctionItem::class);
@@ -942,5 +963,89 @@ class IntegrationTest extends TestCase
         static::assertEquals($expectedJson, $json);
     }
 
+    private function subTestDoNotUpdateUpToDateEntities(PDO $pdo): void
+    {
+        $auctionRepository = new AuctionRepository($pdo);
 
+        $requiredQueryCount = 0;
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $auction = Auction::create();
+        $auction->name = 'Not Saved Auction';
+
+        $auctionRepository->save($auction);
+
+        $requiredQueryCount++; //Only Insert
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $auctionRepository->save($auction);
+
+        // Should be skipped, as no change happened
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $auction->name = 'Saved Auction';
+        $auctionRepository->save($auction);
+        $requiredQueryCount++; // Update Query
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $ai1 = AuctionItem::create();
+        $ai1->name = 'Not Saved Item One';
+        $ai1->auction = $auction;
+
+        $ai2 = AuctionItem::create();
+        $ai2->name = 'Not Saved Item Two';
+        $ai2->auction = $auction;
+
+        $auction->auctionItems[] = $ai1;
+        $auction->auctionItems[] = $ai2;
+
+        $auctionRepository->save($auction);
+        $requiredQueryCount++; // 2 Inserts in One Query!
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $auction->name = 'Saved Auction With Sub Auctions';
+        $auctionRepository->save($ai1);
+        $auctionRepository->save($ai2);
+        $requiredQueryCount++; // Only one update (for Auction entity)
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $ai2->name = 'Saved Item Two';
+        $auctionRepository->save($ai1);
+        $requiredQueryCount++; // Should resolve all sub/sup entities and update item 2 when saving item 1
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $ai1->name = 'Auction Item 1';
+        $ai2->name = 'Auction Item 2';
+
+        $auctionRepository->save($auction);
+        $requiredQueryCount += 2; // 2 updates of item names
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+
+        $auction->name .= 'add';
+        $ai1->name .= 'add';
+        $ai2->name .= 'add';
+
+        $auctionRepository->save($auction);
+        $auctionRepository->save($auction);
+        $requiredQueryCount += 3; // 3 updates of names and skip
+
+        $auction->name .= 'add';
+        $ai1->name .= 'add';
+        $ai2->name .= 'add';
+
+        $auctionRepository->save($ai1);
+        $auctionRepository->save($ai1);
+        $requiredQueryCount += 3; // 3 updates of names and skip
+
+
+        $auction->name .= 'add';
+        $ai1->name .= 'add';
+        $ai2->name .= 'add';
+
+        $auctionRepository->save($ai2);
+        $auctionRepository->save($ai2);
+        $requiredQueryCount += 3; // 3 updates of names and skip
+
+        self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+    }
 }

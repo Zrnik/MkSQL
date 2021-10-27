@@ -28,12 +28,15 @@ class Dispenser
         $sql = FetchQuery::create($baseEntityClassString, $propertyName, $values);
         $resultCompiler->addRows($baseEntityClassString, $sql->fetchAll($this->pdo));
 
+        $this->executedQueries += $sql->getExecutedQueryCount();
+
         $killSwitch = 150;
         while (!$resultCompiler->complete()) {
             $completionData = $resultCompiler->completionData();
             foreach ($completionData as $completionQuery) {
                 $sql = FetchQuery::create($completionQuery->baseEntityClassName, $completionQuery->columnName, $completionQuery->values);
                 $resultCompiler->addRows($completionQuery->baseEntityClassName, $sql->fetchAll($this->pdo));
+                $this->executedQueries += $sql->getExecutedQueryCount();
             }
 
             if ($killSwitch <= 0) {
@@ -47,4 +50,11 @@ class Dispenser
 
         return $resultCompiler->getEntities($baseEntityClassString, $propertyName, $values);
     }
+
+    //region Executed Query Count
+    private int $executedQueries = 0;
+    public function getExecutedQueryCount() : int {
+        return $this->executedQueries;
+    }
+    //endregion
 }
