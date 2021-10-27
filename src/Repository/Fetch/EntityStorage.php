@@ -2,13 +2,19 @@
 
 namespace Zrnik\MkSQL\Repository\Fetch;
 
+use JetBrains\PhpStorm\Pure;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
+use function array_key_exists;
+use function count;
 
 class EntityStorage
 {
     /** @var BaseEntity[] */
     private array $entities = [];
+
+    /** @var array<string, int> <$className.$primaryKeyValue, $entities.index>  */
+    private array $entitiesIndexPointer = [];
 
     public function __construct()
     {
@@ -16,7 +22,11 @@ class EntityStorage
 
     public function addEntity(BaseEntity $entity): void
     {
+        $newIndex = count($this->entities);
         $this->entities[] = $entity;
+        $this->entitiesIndexPointer[
+            $this->cnpk($entity::class, $entity->getPrimaryKeyValue())
+        ] = $newIndex;
     }
 
     /**
@@ -47,9 +57,13 @@ class EntityStorage
      * @param mixed $primaryKeyValue
      * @return bool
      */
-    public function has(string $className, mixed $primaryKeyValue): bool
+    #[Pure] public function has(string $className, mixed $primaryKeyValue): bool
     {
-        return $this->getEntityByPrimaryKey($className, $primaryKeyValue) !== null;
+        return array_key_exists(
+            $this->cnpk($className, $primaryKeyValue),
+            $this->entitiesIndexPointer
+        );
+        //return $this->getEntityByPrimaryKey($className, $primaryKeyValue) !== null;
     }
 
     /**
@@ -57,17 +71,12 @@ class EntityStorage
      * @param mixed $primaryKeyValue
      * @return BaseEntity|null
      */
-    private function getEntityByPrimaryKey(
+    #[Pure] private function getEntityByPrimaryKey(
         string $className, mixed $primaryKeyValue
     ): ?BaseEntity
     {
-        foreach ($this->getEntitiesByClassName($className) as $entity) {
-            if ((string)$entity->getPrimaryKeyValue() === (string)$primaryKeyValue) {
-                return $entity;
-            }
-        }
-
-        return null;
+        $index = $this->entitiesIndexPointer[$this->cnpk($className, $primaryKeyValue)];
+        return $this->entities[$index] ?? null;
     }
 
     /**
@@ -129,6 +138,17 @@ class EntityStorage
                 }
             }
         }
+    }
+
+    /**
+     * @param string $className
+     * @param mixed $primaryKeyValue
+     * @return string
+     * @noinspection SpellCheckingInspection
+     */
+    private function cnpk(string $className, mixed $primaryKeyValue): string
+    {
+        return $className . '::' . ((string) $primaryKeyValue);
     }
 
 
