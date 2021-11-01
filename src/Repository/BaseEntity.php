@@ -702,7 +702,7 @@ abstract class BaseEntity implements JsonSerializable
         if ($customTypeAttribute !== null) {
             $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
             $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
-            $propertyValue = $converter->deserialize($propertyValue);
+            $propertyValue = $converter->deserializeKey($reflectionProperty->getName(), $propertyValue);
         }
 
         return $propertyValue;
@@ -726,7 +726,7 @@ abstract class BaseEntity implements JsonSerializable
         if ($customTypeAttribute !== null) {
             $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
             $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
-            $propertyValue = $converter->serialize($propertyValue);
+            $propertyValue = $converter->serializeKey($reflectionProperty->getName(), $propertyValue);
         }
 
         return $propertyValue;

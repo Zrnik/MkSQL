@@ -10,7 +10,9 @@ namespace Zrnik\MkSQL\Repository;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
+use Throwable;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Exceptions\TypeConversionFailedException;
 
 abstract class CustomTypeConverter
 {
@@ -38,10 +40,53 @@ abstract class CustomTypeConverter
         return $instance;
     }
 
+    /**
+     * @param string $name
+     * @param mixed $propertyValue
+     * @return mixed
+     * @throws TypeConversionFailedException
+     */
+    final public function serializeKey(string $name, mixed $propertyValue): mixed
+    {
+        try {
+            return $this->serialize($propertyValue);
+        } catch (Throwable $e) {
+            throw new TypeConversionFailedException($name,  __CLASS__, $e);
+        }
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $propertyValue
+     * @return mixed
+     * @throws TypeConversionFailedException
+     */
+    final public function deserializeKey(string $name, mixed $propertyValue): mixed
+    {
+        try {
+            return $this->deserialize($propertyValue);
+        } catch (Throwable $e) {
+            throw new TypeConversionFailedException($name, __CLASS__, $e);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @throws Throwable
+     */
     abstract public function serialize(mixed $value): mixed;
 
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @throws Throwable
+     */
     abstract public function deserialize(mixed $value): mixed;
 
+    /**
+     * @return string
+     */
     abstract public function getDatabaseType(): string;
 
     /**
@@ -68,6 +113,9 @@ abstract class CustomTypeConverter
         return $value;
     }
 
+    /**
+     * @return bool
+     */
     private function isNullable(): bool
     {
         if (BaseEntity::columnNotNull($this->property)) {
