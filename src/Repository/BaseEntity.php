@@ -21,8 +21,10 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
+use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
+use Zrnik\MkSQL\Exceptions\PrimaryKeyProvidedInDefaults;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
 use Zrnik\MkSQL\Exceptions\UnableToResolveTypeException;
@@ -204,6 +206,10 @@ abstract class BaseEntity implements JsonSerializable
     {
     }
 
+    /**
+     * @param array<string, mixed> $initValues
+     * @throws PrimaryKeyProvidedInDefaults
+     */
     public static function create(array $initValues = []): static
     {
         $entity = new static();
@@ -214,13 +220,25 @@ abstract class BaseEntity implements JsonSerializable
             $entity->$propertyName = [];
         }
 
+        $primaryKeyPropertyName = static::getPrimaryKeyPropertyName();
+
         // add 'getDefaultValues' to the created entity
         foreach($entity->getDefaults() as $key => $value) {
+
+            if($primaryKeyPropertyName === $key) {
+                throw new PrimaryKeyProvidedInDefaults();
+            }
+
             $entity->$key = $value;
         }
 
         // Overwrite "initialize" values
         foreach($initValues as $key => $value) {
+
+            if($primaryKeyPropertyName === $key) {
+                throw new PrimaryKeyProvidedInDefaults();
+            }
+
             $entity->$key = $value;
         }
 
