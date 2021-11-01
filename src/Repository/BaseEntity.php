@@ -108,7 +108,7 @@ abstract class BaseEntity implements JsonSerializable
     /**
      * Override this function, if you want to set default values,
      * that cannot be an expression in the property itself.
-     * @return array<string, mixed>
+     * @return array<string, mixed> <propertyName, propertyValue>
      */
     protected function getDefaults(): array
     {
@@ -214,6 +214,11 @@ abstract class BaseEntity implements JsonSerializable
             $entity->$propertyName = [];
         }
 
+        // add 'getDefaultValues' to the created entity
+        foreach($entity->getDefaults() as $key => $value) {
+            $entity->$key = $value;
+        }
+
         return $entity;
     }
 
@@ -257,7 +262,6 @@ abstract class BaseEntity implements JsonSerializable
         }
 
         $reflection = static::getReflectionClass($obj);
-        $defaults = $obj->getDefaults();
 
         foreach ($reflection->getProperties() as $reflectionProperty) {
 
@@ -292,11 +296,7 @@ abstract class BaseEntity implements JsonSerializable
                 $propertyValue = [];
             }
 
-            // 3. If we have defined new default value in 'getDefaults',
-            // we override intrinsic default.
-            if (array_key_exists($propertyName, $defaults)) {
-                $propertyValue = $defaults[$propertyName];
-            }
+            // 3. - getDefaults are handled in "create"
 
             // 4. If we have value in "data", we will use it!
             if (array_key_exists($propertyName, $data)) {
