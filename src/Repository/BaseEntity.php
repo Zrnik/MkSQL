@@ -204,7 +204,7 @@ abstract class BaseEntity implements JsonSerializable
     {
     }
 
-    public static function create(): static
+    public static function create(array $initValues = []): static
     {
         $entity = new static();
 
@@ -216,6 +216,11 @@ abstract class BaseEntity implements JsonSerializable
 
         // add 'getDefaultValues' to the created entity
         foreach($entity->getDefaults() as $key => $value) {
+            $entity->$key = $value;
+        }
+
+        // Overwrite "initialize" values
+        foreach($initValues as $key => $value) {
             $entity->$key = $value;
         }
 
