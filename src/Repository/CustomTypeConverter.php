@@ -10,7 +10,9 @@ namespace Zrnik\MkSQL\Repository;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
+use Throwable;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
+use Zrnik\MkSQL\Exceptions\TypeConversionFailedException;
 
 abstract class CustomTypeConverter
 {
@@ -38,10 +40,55 @@ abstract class CustomTypeConverter
         return $instance;
     }
 
+    /**
+     * @param string $entityName
+     * @param string $propertyName
+     * @param mixed $propertyValue
+     * @return mixed
+     * @throws TypeConversionFailedException
+     */
+    final public function serializeKey(string $entityName, string $propertyName, mixed $propertyValue): mixed
+    {
+        try {
+            return $this->serialize($propertyValue);
+        } catch (Throwable $e) {
+            throw new TypeConversionFailedException($entityName, $propertyName, 'serialize', static::class, $e);
+        }
+    }
+
+    /**
+     * @param string $entityName
+     * @param string $propertyName
+     * @param mixed $propertyValue
+     * @return mixed
+     * @throws TypeConversionFailedException
+     */
+    final public function deserializeKey(string $entityName, string $propertyName, mixed $propertyValue): mixed
+    {
+        try {
+            return $this->deserialize($propertyValue);
+        } catch (Throwable $e) {
+            throw new TypeConversionFailedException($entityName, $propertyName, 'deserialize', static::class, $e);
+        }
+    }
+
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @throws Throwable
+     */
     abstract public function serialize(mixed $value): mixed;
 
+    /**
+     * @param mixed $value
+     * @return mixed
+     * @throws Throwable
+     */
     abstract public function deserialize(mixed $value): mixed;
 
+    /**
+     * @return string
+     */
     abstract public function getDatabaseType(): string;
 
     /**
@@ -68,6 +115,9 @@ abstract class CustomTypeConverter
         return $value;
     }
 
+    /**
+     * @return bool
+     */
     private function isNullable(): bool
     {
         if (BaseEntity::columnNotNull($this->property)) {
