@@ -4,7 +4,9 @@ namespace Zrnik\MkSQL\Repository\Saver;
 
 use JetBrains\PhpStorm\Pure;
 use PDO;
+use PDOException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
+use Zrnik\MkSQL\Exceptions\SaveFailedException;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\EntityReflection\EntityReflection;
 use function array_key_exists;
@@ -148,7 +150,14 @@ class Saver
             ':' . $primaryKeyName
         );
 
-        $statement = $this->pdo->prepare($sql);
+        try{
+            $statement = $this->pdo->prepare($sql);
+        } catch (PDOException $ex) {
+            // Maybe syntax error?
+            throw new SaveFailedException(
+                $sql, SaveMethod::UPDATE, $ex
+            );
+        }
 
         $data[$primaryKeyName] = $primaryKeyValue;
 
@@ -206,8 +215,17 @@ class Saver
 
         $this->pdo->beginTransaction();
 
-        $stmt = $this->pdo->prepare($sql);
+        try{
+            $stmt = $this->pdo->prepare($sql);
+        } catch (PDOException $ex) {
+            // Maybe syntax error?
+            throw new SaveFailedException(
+                $sql, SaveMethod::INSERT, $ex
+            );
+        }
+
         $stmt->execute($values);
+
         $this->executedQueries++;
 
         //region Update `PRIMARY KEY`s

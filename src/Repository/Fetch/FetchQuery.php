@@ -3,8 +3,12 @@
 namespace Zrnik\MkSQL\Repository\Fetch;
 
 use PDO;
+use PDOException;
+use Zrnik\MkSQL\Exceptions\FetchFailedException;
+use Zrnik\MkSQL\Exceptions\SaveFailedException;
 use Zrnik\MkSQL\Repository\Attributes\ColumnName;
 use Zrnik\MkSQL\Repository\BaseEntity;
+use Zrnik\MkSQL\Repository\Saver\SaveMethod;
 use Zrnik\MkSQL\Utilities\Reflection;
 use function count;
 
@@ -27,7 +31,13 @@ class FetchQuery
     {
         $values = array_values($this->values);
 
-        $statement = $pdo->prepare($this->query);
+        try{
+            $statement = $pdo->prepare($this->query);
+        } catch (PDOException $ex) {
+            throw new FetchFailedException(
+                $this->query, $ex
+            );
+        }
 
         $statement->execute($values);
 
