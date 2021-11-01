@@ -593,7 +593,8 @@ class QueryMakerSQLite implements IQueryMaker
 
     private static function fixPrimaryKeyType(string $keyType): string
     {
-        if ($keyType === 'int') {
+        if(str_starts_with($keyType,'int'))
+        {
             return 'integer';
         }
 
