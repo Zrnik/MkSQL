@@ -10,6 +10,7 @@ namespace Tests\Repository;
 use Brick\DateTime\LocalDateTime;
 use PHPUnit\Framework\TestCase;
 use ReflectionNamedType;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\CanPointToSelf;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingPrimaryKeyEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingTableNameEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MultiplePrimaryKeysDefined;
@@ -144,6 +145,12 @@ class BaseEntityTest extends TestCase
             MultipleForeignKeysTargetingSameClassException::class,
             function () use ($updater) {
                 $updater->use(ReferencingSameMultipleTimeNotOK::class);
+            }
+        );
+
+        $this->assertNoExceptionThrown(
+            static function () use ($updater) {
+                $updater->use(CanPointToSelf::class);
             }
         );
     }

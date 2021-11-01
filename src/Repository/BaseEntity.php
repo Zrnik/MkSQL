@@ -21,7 +21,6 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
-use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyProvidedInDefaults;
@@ -852,7 +851,17 @@ abstract class BaseEntity implements JsonSerializable
                     );
                 }
 
-                if (!$isFetchArray && in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)) {
+                if (
+                    !$isFetchArray
+                    && in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)
+                ) {
+
+                    //dump($referencedEntityName, static::class);
+
+                    if($referencedEntityName === static::class) {
+                        continue;
+                    }
+
                     throw new CircularReferenceDetectedException(
                         static::class, $property->getName()
                     );
