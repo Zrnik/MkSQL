@@ -93,8 +93,14 @@ class TableOrder
             throw new MkSQLException('Stack Overflow');
         }
 
+
         if (array_key_exists($tableName, $dependencyTable)) {
             foreach ($dependencyTable[$tableName] as $requiredSubTable) {
+
+                if($tableName === $requiredSubTable) {
+                    continue;
+                }
+
                 $order = self::addTableToOrder($order, $requiredSubTable, $dependencyTable, $stack + 1);
             }
         }
@@ -102,6 +108,7 @@ class TableOrder
         if (!in_array($tableName, $order, true)) {
             $order[] = $tableName;
         }
+
 
         return $order;
     }

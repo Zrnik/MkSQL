@@ -74,9 +74,9 @@ abstract class BaseEntity implements JsonSerializable
         if (!array_key_exists($objKey, self::$reflectionClasses)) {
             try {
                 /**
+                 * @throws ReflectionException
                  * @var ReflectionClass<BaseEntity> $reflectionInstance
                  * @noinspection PhpRedundantVariableDocTypeInspection
-                 * @throws ReflectionException
                  */
                 $reflectionInstance = new ReflectionClass($objKey);
                 self::$reflectionClasses[$objKey] = $reflectionInstance;
@@ -159,12 +159,12 @@ abstract class BaseEntity implements JsonSerializable
             $foreignAttributeType = Reflection::propertyGetAttribute($reflectionProperty, ForeignKey::class);
             if ($foreignAttributeType !== null) {
 
-                // That means '$propertyValue' is an object extending 'BaseEntity'
-                if ($propertyValue instanceof self) {
+                // That means '$propertyValue' is an object extending 'BaseEntity' or null
+                if ($propertyValue instanceof self || $propertyValue === null) {
                     /** @var BaseEntity $foreignEntityClassName */
                     $foreignEntityClassName = Reflection::attributeGetArgument($foreignAttributeType);
                     $primaryKeyName = $foreignEntityClassName::getPrimaryKeyName();
-                    $propertyValue = $propertyValue->toArray()[$primaryKeyName];
+                    $propertyValue = $propertyValue?->toArray()[$primaryKeyName];
 
                     // Also, we need to update the `$rawData` property!
 
@@ -222,9 +222,9 @@ abstract class BaseEntity implements JsonSerializable
         $primaryKeyPropertyName = static::getPrimaryKeyPropertyName();
 
         // add 'getDefaultValues' to the created entity
-        foreach($entity->getDefaults() as $key => $value) {
+        foreach ($entity->getDefaults() as $key => $value) {
 
-            if($primaryKeyPropertyName === $key) {
+            if ($primaryKeyPropertyName === $key) {
                 throw new PrimaryKeyProvidedInDefaults();
             }
 
@@ -232,9 +232,9 @@ abstract class BaseEntity implements JsonSerializable
         }
 
         // Overwrite "initialize" values
-        foreach($initValues as $key => $value) {
+        foreach ($initValues as $key => $value) {
 
-            if($primaryKeyPropertyName === $key) {
+            if ($primaryKeyPropertyName === $key) {
                 throw new PrimaryKeyProvidedInDefaults();
             }
 
@@ -851,24 +851,30 @@ abstract class BaseEntity implements JsonSerializable
                     );
                 }
 
+                $addToForeignKeyReference = true;
+
                 if (
                     !$isFetchArray
                     && in_array($referencedEntityName, $baseEntitiesWeHaveAlreadySeen, true)
                 ) {
 
-                    //dump($referencedEntityName, static::class);
-
-                    if($referencedEntityName === static::class) {
-                        continue;
+                    if ($referencedEntityName !== static::class) {
+                        throw new CircularReferenceDetectedException(
+                            static::class, $property->getName()
+                        );
                     }
 
-                    throw new CircularReferenceDetectedException(
-                        static::class, $property->getName()
-                    );
+
+                    $addToForeignKeyReference = false;
+
                 }
 
                 $referencedForeignKeys[$referencedEntityName] = $property->getName();
-                $hydrateAfter[] = $referencedEntityName;
+
+
+                if ($addToForeignKeyReference) {
+                    $hydrateAfter[] = $referencedEntityName;
+                }
             }
 
             //endregion
@@ -1030,7 +1036,7 @@ abstract class BaseEntity implements JsonSerializable
 
     /**
      * Sub entities (fetch array)
-     * @return BaseEntity[]
+     * @return array<?BaseEntity>
      */
     public function subEntities(): array
     {
@@ -1048,7 +1054,7 @@ abstract class BaseEntity implements JsonSerializable
 
     /**
      * Superior entities (foreign key)
-     * @return BaseEntity[]
+     * @return array<?BaseEntity>
      */
     public function supEntities(): array
     {
@@ -1084,16 +1090,16 @@ abstract class BaseEntity implements JsonSerializable
      */
     final public function setOriginalData(?array $newOriginalData): void
     {
-        if(!Misc::isPhpUnitTest()) {
+        if (!Misc::isPhpUnitTest()) {
             throw new Exception("Method 'setOriginalData' is internal, and exists only for testing purpose!");
         }
 
         $this->originalData = $newOriginalData;
     }
 
-    public function indicateSave(): void
+    public function indicateSave(bool $saved = true): void
     {
-        $this->originalData = $this->getRawData();
+        $this->originalData = $saved ? $this->getRawData() : [];
     }
 
 }

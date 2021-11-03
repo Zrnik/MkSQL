@@ -13,6 +13,7 @@ use Throwable;
 use Zrnik\MkSQL\Enum\DriverType;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
+use Zrnik\MkSQL\Exceptions\TableCreationFailedException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
 use Zrnik\MkSQL\Queries\Makers\IQueryMaker;
@@ -150,12 +151,11 @@ class Updater
     //endregion
 
     /**
-     * @return bool
      * @throws InvalidArgumentException
      * @throws InvalidDriverException
      * @throws UnexpectedCall
      */
-    public function install(): bool
+    public function install(): void
     {
         if ($this->installable !== null) {
             throw new UnexpectedCall(
@@ -166,8 +166,6 @@ class Updater
                 )
             );
         }
-
-        $Success = true;
 
         $timer_total = microtime(true);
 
@@ -210,6 +208,8 @@ class Updater
         $sortedTables = TableOrder::doOrder($this->tables);
 
         foreach ($sortedTables as $table) {
+
+
             if ($this->isAlreadyProcessed($table)) {
                 continue;
             }
@@ -249,7 +249,6 @@ class Updater
 
         //region Query[] Executing
 
-        $stopped = false;
         if (count($QueryCommands) > 0) {
 
             /**
@@ -260,20 +259,23 @@ class Updater
 
                 $queryExecuteSpeed = microtime(true);
 
-                if ($stopped) {
-                    $QueryCommand->executed = false;
-                } else {
+
                     $QueryCommand->executed = true;
                     try {
                         $QueryCommand->execute($this->pdo, $this);
                     } catch (PDOException $pdoEx) {
 
-                        $stopped = true;
-                        $Success = false;
                         $QueryCommand->setError($pdoEx);
                         $this->lastError = $pdoEx;
+
+                        throw new TableCreationFailedException(
+                            $QueryCommand->getTable()->getName(),
+                            $QueryCommand->getColumn()?->getName(),
+                            $QueryCommand->getQuery(),
+                            $pdoEx
+                        );
                     }
-                }
+
 
 
                 $queryExecuteSpeed =
@@ -293,8 +295,6 @@ class Updater
         }
 
         Measure::reportTotalSpeed(microtime(true) - $timer_total);
-
-        return $Success;
     }
 
     public function clear(): void

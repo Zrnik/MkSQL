@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8d7506a9cc57acd7cc11f02ddd2da64a",
+    "content-hash": "3850d267f6fb010b7666d45e86fae63c",
     "packages": [
         {
             "name": "jetbrains/phpstorm-attributes",
@@ -942,23 +942,23 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "9.2.7",
+            "version": "9.2.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "d4c798ed8d51506800b441f7a13ecb0f76f12218"
+                "reference": "cf04e88a2e3c56fc1a65488afd493325b4c1bc3e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/d4c798ed8d51506800b441f7a13ecb0f76f12218",
-                "reference": "d4c798ed8d51506800b441f7a13ecb0f76f12218",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/cf04e88a2e3c56fc1a65488afd493325b4c1bc3e",
+                "reference": "cf04e88a2e3c56fc1a65488afd493325b4c1bc3e",
                 "shasum": ""
             },
             "require": {
                 "ext-dom": "*",
                 "ext-libxml": "*",
                 "ext-xmlwriter": "*",
-                "nikic/php-parser": "^4.12.0",
+                "nikic/php-parser": "^4.13.0",
                 "php": ">=7.3",
                 "phpunit/php-file-iterator": "^3.0.3",
                 "phpunit/php-text-template": "^2.0.2",
@@ -1007,7 +1007,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/9.2.7"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/9.2.8"
             },
             "funding": [
                 {
@@ -1015,7 +1015,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-09-17T05:39:03+00:00"
+            "time": "2021-10-30T08:01:38+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -2588,16 +2588,16 @@
         },
         {
             "name": "zrnik/phpunit-exceptions",
-            "version": "v0.0.3",
+            "version": "v0.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Zrnik/PHPUnit-Exceptions.git",
-                "reference": "9549d2b473c75ce345b581bc0aff37b34d22f08f"
+                "reference": "068853d903896248ad0cb981b83edc4cec32a763"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/9549d2b473c75ce345b581bc0aff37b34d22f08f",
-                "reference": "9549d2b473c75ce345b581bc0aff37b34d22f08f",
+                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/068853d903896248ad0cb981b83edc4cec32a763",
+                "reference": "068853d903896248ad0cb981b83edc4cec32a763",
                 "shasum": ""
             },
             "require": {
@@ -2627,9 +2627,9 @@
             "description": "Trait for easier exception testing in PHPUnit.",
             "support": {
                 "issues": "https://github.com/Zrnik/PHPUnit-Exceptions/issues",
-                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.3"
+                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.4"
             },
-            "time": "2021-10-13T10:42:23+00:00"
+            "time": "2021-11-03T08:21:13+00:00"
         }
     ],
     "aliases": [],

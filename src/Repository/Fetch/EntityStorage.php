@@ -75,7 +75,12 @@ class EntityStorage
         string $className, mixed $primaryKeyValue
     ): ?BaseEntity
     {
-        $index = $this->entitiesIndexPointer[$this->cnpk($className, $primaryKeyValue)];
+        $index =
+            $this->entitiesIndexPointer
+            [$this->cnpk($className, $primaryKeyValue)]
+            ?? 'null'
+        ;
+
         return $this->entities[$index] ?? null;
     }
 

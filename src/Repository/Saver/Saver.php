@@ -5,6 +5,7 @@ namespace Zrnik\MkSQL\Repository\Saver;
 use JetBrains\PhpStorm\Pure;
 use PDO;
 use PDOException;
+use Tests\Mock\Bugs\TreeSave\RepeatingNode;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\SaveFailedException;
 use Zrnik\MkSQL\Repository\BaseEntity;
@@ -22,7 +23,7 @@ class Saver
     }
 
     /**
-     * @param BaseEntity[] $entities
+     * @param array<?BaseEntity> $entities
      */
     public function saveEntities(array $entities): void
     {
@@ -33,6 +34,10 @@ class Saver
 
         foreach ($entityList as $classEntityList) {
             foreach ($classEntityList as $entity) {
+                if($entity === null) {
+                    continue;
+                }
+
                 if ($entity->getPrimaryKeyValue() === null) {
                     $insertEntities[] = $entity;
                 } else {
@@ -49,6 +54,25 @@ class Saver
         foreach ($chunkByTables as $insertChunk) {
             foreach (array_chunk($insertChunk, self::DEFAULT_INSERT_CHUNK_SIZE) as $chunk) {
                 $this->insert($chunk);
+
+                /** @var BaseEntity $entity */
+                foreach ($chunk as $entity) {
+
+                    $hasSelfPointingForeignKeyThatIsNotNull = false;
+                    foreach(EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
+                        if($foreignKeyData->getTargetClassName() === $entity::class) {
+                            $propertyName = $foreignKeyData->getPropertyName();
+                            if($entity->$propertyName !== null) {
+                                $hasSelfPointingForeignKeyThatIsNotNull = true;
+                            }
+                        }
+                    }
+
+                    if($hasSelfPointingForeignKeyThatIsNotNull) {
+                        $entity->indicateSave(false);
+                        $updateEntities[] = $entity;
+                    }
+                }
             }
         }
 
@@ -60,8 +84,8 @@ class Saver
     }
 
     /**
-     * @param BaseEntity[] $entities
-     * @return array<class-string<BaseEntity>, array<int|string, BaseEntity>>
+     * @param array<?BaseEntity> $entities
+     * @return array<class-string<BaseEntity>, array<int|string, ?BaseEntity>>
      */
     private function listAllEntities(array $entities): array
     {
@@ -75,25 +99,32 @@ class Saver
     }
 
     /**
-     * @param BaseEntity $entity
-     * @param array<class-string<BaseEntity>, array<int|string, BaseEntity>> $entityList
+     * @param ?BaseEntity $entity
+     * @param array<class-string<BaseEntity>, array<int|string, ?BaseEntity>> $entityList
      */
-    private function fillEntityListRecursively(BaseEntity $entity, array &$entityList): void
+    private function fillEntityListRecursively(?BaseEntity $entity, array &$entityList): void
     {
-        if (!array_key_exists($entity::class, $entityList)) {
-            $entityList[$entity::class] = [];
+        $entityClass = $entity === null ? 'null' : $entity::class;
+
+        if (!array_key_exists($entityClass, $entityList)) {
+            $entityList[$entityClass] = [];
         }
 
-        if (!array_key_exists($entity->hash(), $entityList[$entity::class])) {
+        $hash = $entity === null ? 'null' : $entity->hash();
 
-            $entityList[$entity::class][$entity->hash()] = $entity;
 
-            foreach ($entity->subEntities() as $subEntity) {
-                $this->fillEntityListRecursively($subEntity, $entityList);
-            }
+        if (!array_key_exists($hash, $entityList[$entityClass])) {
 
-            foreach ($entity->supEntities() as $subEntity) {
-                $this->fillEntityListRecursively($subEntity, $entityList);
+            $entityList[$entityClass][$hash] = $entity;
+
+            if($entity !== null) {
+                foreach ($entity->subEntities() as $subEntity) {
+                    $this->fillEntityListRecursively($subEntity, $entityList);
+                }
+
+                foreach ($entity->supEntities() as $subEntity) {
+                    $this->fillEntityListRecursively($subEntity, $entityList);
+                }
             }
 
         }
@@ -106,9 +137,6 @@ class Saver
         // Original data are only retrieved when fetching,
         // if null, it is created entity (so probably already
         // handled by "insert") and not saved
-        //
-        // But, if I am testing in PHPUnit, and I want to destroy
-        // the original data, I don't want to die here...
         if ($originalData === null) {
             return;
         }
@@ -405,6 +433,10 @@ class Saver
 
         if (array_key_exists($entityClassName, $dependencyTable)) {
             foreach ($dependencyTable[$entityClassName] as $requiredSubTable) {
+                if($entityClassName === $requiredSubTable) {
+                    continue;
+                }
+
                 $order = self::addEntityToOrder($order, $requiredSubTable, $dependencyTable, $stack + 1);
             }
         }

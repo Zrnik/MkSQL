@@ -111,7 +111,9 @@ abstract class BaseRepository
     ): array
     {
         $dispenser = new Dispenser(($this->getPdo()));
-        $entities = $dispenser->getResultsByKeys($baseEntityClassString, $propertyName, $values);
+        $entities = $dispenser->getResultsByKeys(
+            $baseEntityClassString, $propertyName, $values
+        );
         $this->executedQueries += $dispenser->getExecutedQueryCount();
         return $entities;
     }

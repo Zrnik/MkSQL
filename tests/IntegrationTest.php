@@ -19,6 +19,10 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\NullableForeignKeyNoErrorRepository;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\SelfRepeating;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\SubClass;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\SuperClass;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\FetchedEntityFromSubEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities\MainEntity;
@@ -29,6 +33,8 @@ use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
 use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\Person;
 use Tests\Mock\Bugs\DoubleRetrieve\Reward;
+use Tests\Mock\Bugs\TreeSave\RepeatingNode;
+use Tests\Mock\Bugs\TreeSave\TreeSaveRepository;
 use Tracy\Debugger;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
@@ -38,17 +44,15 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\InvalidDriverException;
 use Zrnik\MkSQL\Exceptions\MkSQLException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyAutomaticException;
+use Zrnik\MkSQL\Exceptions\TableCreationFailedException;
 use Zrnik\MkSQL\Exceptions\TableDefinitionExists;
 use Zrnik\MkSQL\Exceptions\UnexpectedCall;
-use Zrnik\MkSQL\Repository\BaseEntity;
-use Zrnik\MkSQL\Repository\BaseRepository;
 use Zrnik\MkSQL\Tracy\Measure;
 use Zrnik\MkSQL\Tracy\Panel;
 use Zrnik\MkSQL\Updater;
 use Zrnik\MkSQL\Utilities\Installable;
 use Zrnik\PHPUnit\Exceptions;
 use function count;
-use function in_array;
 
 class IntegrationTest extends TestCase
 {
@@ -115,7 +119,13 @@ class IntegrationTest extends TestCase
         //echo "Processing Test with: " .  . PHP_EOL;
 
         $this->dropAll($pdo);
-        static::assertTrue($this->installDefault($Updater));
+
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $this->installDefault($Updater);
+            }
+        );
+
         $this->dot();
 
         // #####################################
@@ -179,8 +189,9 @@ class IntegrationTest extends TestCase
 
         $this->subTestSingleInstallForMultipleDefinedTables($pdo);
 
+        $this->nullableForeignKeyNoError($pdo);
 
-
+        $this->treeSavingFailed($pdo);
 
 
         echo ']' . PHP_EOL . 'Complete!';
@@ -252,10 +263,9 @@ class IntegrationTest extends TestCase
 
     /**
      * @param Updater $Updater
-     * @return bool
      * @throws MkSQLException
      */
-    private function installDefault(Updater $Updater): bool
+    private function installDefault(Updater $Updater): void
     {
         //Table Accounts only with Login:
         $Accounts = $Updater->tableCreate('accounts')->setPrimaryKeyName('account_id');
@@ -289,7 +299,7 @@ class IntegrationTest extends TestCase
         $Sessions->columnAdd(clone $TokenColumn);
         $LastAction->columnAdd(clone $TokenColumn);
 
-        return $Updater->install();
+        $Updater->install();
     }
 
     /**
@@ -302,11 +312,19 @@ class IntegrationTest extends TestCase
         static::assertNotNull($tableAccounts);
 
         $tableAccounts->setPrimaryKeyName('new_id');
-        static::assertTrue($Updater->install());
+
+        $this->assertNoExceptionThrown(function () use ($Updater) {
+            $Updater->install();
+        });
+
         $this->dot();
 
         $tableAccounts->setPrimaryKeyName('id');
-        static::assertTrue($Updater->install());
+
+        $this->assertNoExceptionThrown(function () use ($Updater) {
+            $Updater->install();
+        });
+
         $this->dot();
     }
 
@@ -323,15 +341,27 @@ class IntegrationTest extends TestCase
         static::assertNotNull($columnActionTime);
 
         $columnActionTime->setType('varchar(10)');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnActionTime->setType('char(15)');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnActionTime->setType('int');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
     }
@@ -351,11 +381,19 @@ class IntegrationTest extends TestCase
         static::assertNotNull($columnLogin);
 
         $columnLogin->setNotNull(false);
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnLogin->setNotNull();
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
     }
 
@@ -372,11 +410,19 @@ class IntegrationTest extends TestCase
         static::assertNotNull($columnActionTime);
 
         $columnActionTime->setDefault(time());
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnActionTime->setDefault(strtotime('-3 days'));
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
     }
 
@@ -393,15 +439,27 @@ class IntegrationTest extends TestCase
         static::assertNotNull($columnActionTime);
 
         $columnActionTime->setComment('A tested column');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnActionTime->setComment(); // null
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $columnActionTime->setComment('Integration Tested Column');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
     }
 
@@ -418,11 +476,19 @@ class IntegrationTest extends TestCase
         static::assertNotNull($tableSessionsColumnToken);
 
         $tableSessionsColumnToken->addForeignKey('accounts.login');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
         $tableSessionsColumnToken->dropForeignKey('accounts.login');
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
     }
@@ -440,13 +506,25 @@ class IntegrationTest extends TestCase
         static::assertNotNull($columnActionTime);
 
         $columnActionTime->setUnique();
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
         $columnActionTime->setUnique(false);
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
         $columnActionTime->setUnique();
-        static::assertTrue($Updater->install());
+        $this->assertNoExceptionThrown(
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
     }
 
@@ -455,15 +533,21 @@ class IntegrationTest extends TestCase
     {
         $tables = $Updater->tableList();
 
-        // Create error item (column name cannot be 'date')
+        // Create error item (column name cannot be 'unique' because its a keyword)
         $tables[array_keys($tables)[0]]->columnCreate(
             'unique', 'int(11)'
         );
 
-        $Updater->install();
+        $this->assertExceptionThrown(
+            TableCreationFailedException::class,
+            function () use ($Updater) {
+                $Updater->install();
+            }
+        );
         $this->dot();
 
-        static::assertCount(1, Measure::getErrors());
+        // We do not look for errors, we are getting exception!
+        // static::assertCount(1, Measure::getErrors());
 
         // Remove the error from cache, so we can continue...
         foreach (Measure::getQueryModification() as $qm) {
@@ -1047,5 +1131,58 @@ class IntegrationTest extends TestCase
         $requiredQueryCount += 3; // 3 updates of names and skip
 
         self::assertEquals($requiredQueryCount, $auctionRepository->getExecutedQueryCount());
+    }
+
+    private function nullableForeignKeyNoError(PDO $pdo): void
+    {
+        $repository = new NullableForeignKeyNoErrorRepository($pdo);
+
+        $this->assertNoExceptionThrown(static function () use ($repository) {
+            $selfRepeating1 = SelfRepeating::create();
+            $selfRepeating2 = SelfRepeating::create();
+            $selfRepeating2->referrer = $selfRepeating1;
+            $repository->save([$selfRepeating1, $selfRepeating2]);
+        });
+
+        $this->assertNoExceptionThrown(static function () use ($repository) {
+            $superClass1 = SuperClass::create();
+            $superClass2 = SuperClass::create();
+            $subClass1 = SubClass::create();
+            $superClass1->subClass = $subClass1;
+            $repository->save([$superClass1, $superClass2]);
+        });
+
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function treeSavingFailed(PDO $pdo): void
+    {
+        $repository = new TreeSaveRepository($pdo);
+        $repository->dropAll();
+
+        $headNode = RepeatingNode::create(['name' => 'Head Node']);
+        $subNode1 = RepeatingNode::create(['name' => 'sub level 1', 'parent' => $headNode]);
+        $subNode2 = RepeatingNode::create(['name' => 'sub level 3', 'parent' => $subNode1]);
+        $subNode3 = RepeatingNode::create(['name' => 'sub level 4', 'parent' => $subNode2]);
+
+        $nodeList = [$headNode, $subNode1, $subNode2, $subNode3];
+
+        $repository->save($nodeList);
+
+        $statement = $pdo->query('SELECT * FROM ' . RepeatingNode::getTableName());
+
+        if ($statement === false) {
+            throw new Exception('No result form database!');
+        }
+
+        /** @var mixed[] $saved */
+        $saved = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+        static::assertNull($saved[0]['parent']);
+        static::assertSame($headNode->id, (int)$saved[1]['parent']);
+        static::assertSame($subNode1->id, (int)$saved[2]['parent']);
+        static::assertSame($subNode2->id, (int)$saved[3]['parent']);
     }
 }
