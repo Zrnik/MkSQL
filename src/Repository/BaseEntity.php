@@ -1118,4 +1118,29 @@ abstract class BaseEntity implements JsonSerializable
         $this->originalData = $saved ? $this->getRawData() : [];
     }
 
+
+    //region Hooks
+
+    // TODO: Write tests for the hooks!
+
+    /**
+     * This hook is ran before 'toArray' method
+     * converts everything to actual database data...
+     */
+    public function beforeSave() : void {}
+
+    /**
+     * This hook is ran after query being committed to
+     * the database. Raw data and save indication already happened.
+     */
+    public function afterSave() : void {}
+
+    /**
+     * This method is called after it's retrieved from the database
+     * by Dispenser class... All foreign keys/fetch arrays
+     * are already handled.
+     */
+    public function afterRetrieve() : void {}
+    //endregion
+
 }

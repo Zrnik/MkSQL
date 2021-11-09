@@ -157,6 +157,7 @@ class Saver
             return;
         }
 
+        $entity->beforeSave();
         $data = $entity->toArray();
         $primaryKeyName = $entity::getPrimaryKeyName();
         $primaryKeyValue = $data[$primaryKeyName];
@@ -195,6 +196,7 @@ class Saver
 
         $entity->updateRawData();
         $entity->indicateSave();
+        $entity->afterSave();
     }
 
 
@@ -235,6 +237,7 @@ class Saver
 
         $values = [];
         foreach ($entities as $entity) {
+            $entity->beforeSave();
             $data = $entity->toArray();
             foreach ($dataKeys as $dataKey) {
                 $values[] = $data[$dataKey];
@@ -274,11 +277,17 @@ class Saver
             $entity->setPrimaryKeyValue($firstPk);
             $entity->updateRawData();
             $entity->indicateSave();
+            $entity->afterSave();
             $firstPk++;
         }
         //endregion
 
         $this->pdo->commit();
+
+        foreach ($entities as $entity) {
+            $entity->afterSave();
+        }
+
     }
 
     /**
