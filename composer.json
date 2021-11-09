@@ -45,7 +45,7 @@
     "phpstan/phpstan-phpunit": "^0.12",
     "nette/neon": "^3",
     "brick/date-time": "^0.3",
-    "zrnik/phpunit-exceptions": "^0.0.4"
+    "zrnik/phpunit-exceptions": "^0.0.5"
   },
   "autoload": {
     "psr-4": {

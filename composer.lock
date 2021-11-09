@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3850d267f6fb010b7666d45e86fae63c",
+    "content-hash": "50fc0cbca98297108982330808b4cb2c",
     "packages": [
         {
             "name": "jetbrains/phpstorm-attributes",
@@ -365,16 +365,16 @@
         },
         {
             "name": "nette/neon",
-            "version": "v3.3.0",
+            "version": "v3.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/neon.git",
-                "reference": "33d262a0c4fb6c6371385f6dc8532f4e32c20ebc"
+                "reference": "1f4e5f6a30bf45b6c2c932be7396ea70692ee607"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/neon/zipball/33d262a0c4fb6c6371385f6dc8532f4e32c20ebc",
-                "reference": "33d262a0c4fb6c6371385f6dc8532f4e32c20ebc",
+                "url": "https://api.github.com/repos/nette/neon/zipball/1f4e5f6a30bf45b6c2c932be7396ea70692ee607",
+                "reference": "1f4e5f6a30bf45b6c2c932be7396ea70692ee607",
                 "shasum": ""
             },
             "require": {
@@ -384,8 +384,11 @@
             "require-dev": {
                 "nette/tester": "^2.0",
                 "phpstan/phpstan": "^0.12",
-                "tracy/tracy": "^2.3"
+                "tracy/tracy": "^2.8.8"
             },
+            "bin": [
+                "bin/neon-lint"
+            ],
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -424,22 +427,22 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/neon/issues",
-                "source": "https://github.com/nette/neon/tree/v3.3.0"
+                "source": "https://github.com/nette/neon/tree/v3.3.1"
             },
-            "time": "2021-10-19T22:11:22+00:00"
+            "time": "2021-11-09T01:00:15+00:00"
         },
         {
             "name": "nikic/php-parser",
-            "version": "v4.13.0",
+            "version": "v4.13.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "50953a2691a922aa1769461637869a0a2faa3f53"
+                "reference": "63a79e8daa781cac14e5195e63ed8ae231dd10fd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/50953a2691a922aa1769461637869a0a2faa3f53",
-                "reference": "50953a2691a922aa1769461637869a0a2faa3f53",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/63a79e8daa781cac14e5195e63ed8ae231dd10fd",
+                "reference": "63a79e8daa781cac14e5195e63ed8ae231dd10fd",
                 "shasum": ""
             },
             "require": {
@@ -480,9 +483,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v4.13.0"
+                "source": "https://github.com/nikic/PHP-Parser/tree/v4.13.1"
             },
-            "time": "2021-09-20T12:20:58+00:00"
+            "time": "2021-11-03T20:52:16+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -2456,16 +2459,16 @@
         },
         {
             "name": "tracy/tracy",
-            "version": "v2.8.7",
+            "version": "v2.8.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nette/tracy.git",
-                "reference": "8e708de7c611f626c8792d43f1c78812ea24e6f6"
+                "reference": "1a18df64f6b745962e9a0bdf87eccfc62309e593"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nette/tracy/zipball/8e708de7c611f626c8792d43f1c78812ea24e6f6",
-                "reference": "8e708de7c611f626c8792d43f1c78812ea24e6f6",
+                "url": "https://api.github.com/repos/nette/tracy/zipball/1a18df64f6b745962e9a0bdf87eccfc62309e593",
+                "reference": "1a18df64f6b745962e9a0bdf87eccfc62309e593",
                 "shasum": ""
             },
             "require": {
@@ -2483,7 +2486,7 @@
                 "nette/tester": "^2.2",
                 "nette/utils": "^3.0",
                 "phpstan/phpstan": "^0.12",
-                "psr/log": "^1.0"
+                "psr/log": "^1.0 || ^2.0 || ^3.0"
             },
             "type": "library",
             "extra": {
@@ -2524,9 +2527,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/tracy/issues",
-                "source": "https://github.com/nette/tracy/tree/v2.8.7"
+                "source": "https://github.com/nette/tracy/tree/v2.8.8"
             },
-            "time": "2021-08-24T16:26:27+00:00"
+            "time": "2021-11-08T23:40:20+00:00"
         },
         {
             "name": "webmozart/assert",
@@ -2588,16 +2591,16 @@
         },
         {
             "name": "zrnik/phpunit-exceptions",
-            "version": "v0.0.4",
+            "version": "v0.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Zrnik/PHPUnit-Exceptions.git",
-                "reference": "068853d903896248ad0cb981b83edc4cec32a763"
+                "reference": "e27a4348a2ad524581600b7ee650a537c777da92"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/068853d903896248ad0cb981b83edc4cec32a763",
-                "reference": "068853d903896248ad0cb981b83edc4cec32a763",
+                "url": "https://api.github.com/repos/Zrnik/PHPUnit-Exceptions/zipball/e27a4348a2ad524581600b7ee650a537c777da92",
+                "reference": "e27a4348a2ad524581600b7ee650a537c777da92",
                 "shasum": ""
             },
             "require": {
@@ -2627,9 +2630,9 @@
             "description": "Trait for easier exception testing in PHPUnit.",
             "support": {
                 "issues": "https://github.com/Zrnik/PHPUnit-Exceptions/issues",
-                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.4"
+                "source": "https://github.com/Zrnik/PHPUnit-Exceptions/tree/v0.0.5"
             },
-            "time": "2021-11-03T08:21:13+00:00"
+            "time": "2021-11-09T10:44:50+00:00"
         }
     ],
     "aliases": [],

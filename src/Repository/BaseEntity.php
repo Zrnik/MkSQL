@@ -131,6 +131,14 @@ abstract class BaseEntity implements JsonSerializable
 
         foreach ($reflection->getProperties() as $reflectionProperty) {
 
+            if ($reflectionProperty->isPrivate()) {
+                continue;
+            }
+
+            if (str_starts_with($reflectionProperty->getName(), '_')) {
+                continue;
+            }
+
             if (!$reflectionProperty->isInitialized($this)) {
                 continue;
             }
@@ -286,6 +294,14 @@ abstract class BaseEntity implements JsonSerializable
         $reflection = static::getReflectionClass($obj);
 
         foreach ($reflection->getProperties() as $reflectionProperty) {
+
+            if (str_starts_with($reflectionProperty->getName(), '_')) {
+                continue;
+            }
+
+            if ($reflectionProperty->isPrivate()) {
+                continue;
+            }
 
             $propertyName = $reflectionProperty->getName();
             $reflectionPropertyName = $reflectionProperty->getName();

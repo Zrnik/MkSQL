@@ -19,6 +19,8 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\AuctionRepository;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Auction;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AuctionItem;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\AutoHydrateAndCircularReference\ReferencingEntityOne;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\EntityWithPrivateProperty\EntityWithPrivateProperty;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\EntityWithPrivateProperty\PrivatePropertyRepository;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\NullableForeignKeyNoErrorRepository;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\SelfRepeating;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\NullableForeignKeyNoError\SubClass;
@@ -105,6 +107,7 @@ class IntegrationTest extends TestCase
      * @param PDO $pdo
      * @param string $version
      * @throws JsonException
+     * @throws Exception
      */
     private function processTest(PDO $pdo, string $version = ''): void
     {
@@ -192,6 +195,8 @@ class IntegrationTest extends TestCase
         $this->nullableForeignKeyNoError($pdo);
 
         $this->treeSavingFailed($pdo);
+
+        $this->subTestAllowPrivatePropertiesInEntities($pdo);
 
 
         echo ']' . PHP_EOL . 'Complete!';
@@ -1184,5 +1189,22 @@ class IntegrationTest extends TestCase
         static::assertSame($headNode->id, (int)$saved[1]['parent']);
         static::assertSame($subNode1->id, (int)$saved[2]['parent']);
         static::assertSame($subNode2->id, (int)$saved[3]['parent']);
+    }
+
+    private function subTestAllowPrivatePropertiesInEntities(PDO $pdo): void
+    {
+        $repo = new PrivatePropertyRepository($pdo);
+
+        /** @var EntityWithPrivateProperty $entity */
+        $entity = EntityWithPrivateProperty::create();
+        $entity->name = 'Hello World';
+
+        $repo->save($entity);
+
+        /** @var EntityWithPrivateProperty[] $entities */
+        $entities = $repo->getAll(EntityWithPrivateProperty::class);
+
+        static::assertSame($entities[count($entities) - 1]->id, $entity->id);
+
     }
 }
