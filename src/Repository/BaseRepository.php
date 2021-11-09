@@ -12,6 +12,7 @@ use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Repository\Fetch\Dispenser;
 use Zrnik\MkSQL\Repository\Saver\Saver;
 use Zrnik\MkSQL\Utilities\Reflection;
+use Zrnik\MkSQL\Utilities\Sorting\Sorting;
 use function count;
 use function is_array;
 
@@ -172,8 +173,25 @@ abstract class BaseRepository
 
     //region Executed Query Count
     private int $executedQueries = 0;
-    public function getExecutedQueryCount() : int {
+
+    public function getExecutedQueryCount(): int
+    {
         return $this->executedQueries;
     }
     //endregion
+
+    /**
+     * @param BaseEntity[] $entities
+     * @param string $propertyName
+     * @return BaseEntity[]
+     */
+    public function sortBy(array $entities, string $propertyName): array
+    {
+        /**
+         * @var BaseEntity[] $sorted
+         * @noinspection PhpUnnecessaryLocalVariableInspection
+         */
+        $sorted = Sorting::sortObjectsByProperty($entities, $propertyName);
+        return $sorted;
+    }
 }
