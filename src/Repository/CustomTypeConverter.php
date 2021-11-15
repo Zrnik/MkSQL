@@ -36,12 +36,14 @@ abstract class CustomTypeConverter
      * @param callable $onCreate
      * @return string
      */
-    public function addOnCreate(callable $onCreate): string
+    public static function addOnCreate(callable $onCreate): string
     {
         $hookKey = null;
-        while (!array_key_exists((string)$hookKey, self::$onCreate) || $hookKey === null) {
+        while (array_key_exists((string)$hookKey, self::$onCreate) || $hookKey === null) {
             $hookKey = Random::generate(12);
         }
+
+        self::$onCreate[$hookKey] = $onCreate;
 
         return $hookKey;
     }
@@ -53,7 +55,7 @@ abstract class CustomTypeConverter
      * @param string $hookKey
      * @return bool
      */
-    public function removeOnCreate(string $hookKey): bool
+    public static function removeOnCreate(string $hookKey): bool
     {
         if (array_key_exists($hookKey, self::$onCreate)) {
             unset(self::$onCreate[$hookKey]);
