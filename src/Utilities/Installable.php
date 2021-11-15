@@ -72,9 +72,7 @@ abstract class Installable extends BaseRepository
 
         // Process Updated
         $this->updater->installable = null;
-        $this->beforeInstallation();
         $this->updater->install();
-        $this->afterInstallation();
     }
 
     public static function uninstallAll(PDO $pdo): void
@@ -104,11 +102,5 @@ abstract class Installable extends BaseRepository
     {
         return $this->updater->tableList();
     }
-
-    /** Hook fired before the 'install' function of the updater */
-    protected function beforeInstallation(): void { }
-
-    /** Hook fired after the 'install' function of the updater */
-    protected function afterInstallation(): void { }
 
 }
