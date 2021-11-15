@@ -8,7 +8,10 @@
 namespace Tests\Repository;
 
 use Brick\DateTime\LocalDateTime;
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\CanPointToSelf;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\MissingPrimaryKeyEntity;
@@ -22,6 +25,9 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPoin
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\MainEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Receiver;
+use Tests\Mock\EntitiesWithDefaultValues\EntityWithDefaultInGetDefaultMethod;
+use Tests\Mock\EntitiesWithDefaultValues\EntityWithDefaultInProperty;
+use Tests\Mock\EntitiesWithDefaultValues\EntityWithNoDefaults;
 use Tests\Mock\PDO;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
@@ -153,6 +159,48 @@ class BaseEntityTest extends TestCase
                 $updater->use(CanPointToSelf::class);
             }
         );
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testDefaultValues(): void {
+
+        $defaultInProperty = EntityWithDefaultInProperty::create();
+        static::assertSame('Hello World', $defaultInProperty->defaultString);
+
+        $defaultInGetDefaults = EntityWithDefaultInGetDefaultMethod::create();
+        static::assertSame('Hello World', $defaultInGetDefaults->defaultInGetDefault);
+
+        $noDefault = EntityWithNoDefaults::create();
+        $this->assertPropertyNotInitialized(
+            $noDefault, 'noDefaultString'
+        );
+
+        $defaultFromConstructor = EntityWithNoDefaults::create([
+            'noDefaultString' => 'Hello World'
+        ]);
+
+        static::assertSame('Hello World', $defaultFromConstructor->noDefaultString);
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function assertPropertyNotInitialized(object $entity, string $propertyName): void
+    {
+        $reflectionClass = new ReflectionClass($entity);
+        $reflectionProperty = $reflectionClass->getProperty($propertyName);
+
+        if($reflectionProperty->isInitialized($entity)) {
+            throw new AssertionFailedError(
+                sprintf(
+                    "Object '%s' expects to have property '%s' uninitialized, but it is.",
+                    $entity::class, $propertyName
+                )
+            );
+        }
+
     }
 
 }
