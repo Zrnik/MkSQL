@@ -143,6 +143,12 @@ class EntityStorage
                 }
             }
         }
+
+        // Here, we have all entities linked, we can call afterRetrieve hook
+        foreach ($this->entities as $entity) {
+            $entity->afterRetrieve();
+        }
+
     }
 
     /**

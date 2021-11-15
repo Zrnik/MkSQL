@@ -37,6 +37,12 @@ use Tests\Mock\Bugs\DoubleRetrieve\Person;
 use Tests\Mock\Bugs\DoubleRetrieve\Reward;
 use Tests\Mock\Bugs\TreeSave\RepeatingNode;
 use Tests\Mock\Bugs\TreeSave\TreeSaveRepository;
+use Tests\Mock\EntitiesWithHooks\AfterRetrieveHookEntity;
+use Tests\Mock\EntitiesWithHooks\AfterSaveHookEntity;
+use Tests\Mock\EntitiesWithHooks\BeforeSaveHookEntity;
+use Tests\Mock\EntitiesWithHooks\EntityHookExceptionType;
+use Tests\Mock\EntitiesWithHooks\EntityHookRepository;
+use Tests\Mock\EntitiesWithHooks\EntityWithHookException;
 use Tracy\Debugger;
 use Zrnik\MkSQL\Column;
 use Zrnik\MkSQL\Enum\DriverType;
@@ -198,9 +204,9 @@ class IntegrationTest extends TestCase
 
         $this->subTestAllowPrivatePropertiesInEntities($pdo);
 
+        $this->subTestBaseEntityHooks($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
-
 
     }
 
@@ -1207,4 +1213,65 @@ class IntegrationTest extends TestCase
         static::assertSame($entities[count($entities) - 1]->id, $entity->id);
 
     }
+
+    private function subTestBaseEntityHooks(PDO $pdo): void
+    {
+        $entityHookRepository = new EntityHookRepository($pdo);
+
+        ###############################################
+        ###############################################
+        ###############################################
+
+        /** @var EntityWithHookException $ex */
+        $ex = $this->assertExceptionThrown(
+            EntityWithHookException::class,
+            function() use ($entityHookRepository) {
+                $entityHookRepository->save(BeforeSaveHookEntity::create());
+            }
+        );
+
+        static::assertSame(
+            EntityHookExceptionType::BEFORE_SAVE,
+            $ex->hookExceptionType
+        );
+
+        ###############################################
+        ###############################################
+        ###############################################
+
+        /** @var EntityWithHookException $ex */
+        $ex = $this->assertExceptionThrown(
+            EntityWithHookException::class,
+            function() use ($entityHookRepository) {
+                $entityHookRepository->save(AfterSaveHookEntity::create());
+            }
+        );
+
+        static::assertSame(
+            EntityHookExceptionType::AFTER_SAVE,
+            $ex->hookExceptionType
+        );
+
+        ###############################################
+        ###############################################
+        ###############################################
+
+        /** @var EntityWithHookException $ex */
+        $ex = $this->assertExceptionThrown(
+            EntityWithHookException::class,
+            function() use ($entityHookRepository) {
+                $entityHookRepository->save(AfterRetrieveHookEntity::create());
+                $entityHookRepository->getAll(
+                    AfterRetrieveHookEntity::class
+                );
+            }
+        );
+
+        static::assertSame(
+            EntityHookExceptionType::AFTER_RETRIEVE,
+            $ex->hookExceptionType
+        );
+
+    }
+
 }

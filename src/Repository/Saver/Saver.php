@@ -277,12 +277,12 @@ class Saver
             $entity->setPrimaryKeyValue($firstPk);
             $entity->updateRawData();
             $entity->indicateSave();
-            $entity->afterSave();
             $firstPk++;
         }
         //endregion
 
         $this->pdo->commit();
+
 
         foreach ($entities as $entity) {
             $entity->afterSave();

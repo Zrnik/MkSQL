@@ -124,11 +124,6 @@ class ResultService
             }
         }
 
-        foreach ($result as $entity) {
-            $entity->afterRetrieve();
-        }
-
-
         return $result;
     }
 
