@@ -7,16 +7,62 @@
 
 namespace Zrnik\MkSQL\Repository;
 
+use Nette\Utils\Random;
 use ReflectionNamedType;
 use ReflectionProperty;
 use ReflectionUnionType;
 use Throwable;
 use Zrnik\MkSQL\Exceptions\InvalidArgumentException;
 use Zrnik\MkSQL\Exceptions\TypeConversionFailedException;
+use function array_key_exists;
 
 abstract class CustomTypeConverter
 {
-    public function __construct(private ReflectionProperty $property)
+    /**
+     * A hook, called after a converter is created.
+     * First argument is new CustomTypeConverter instance.
+     *
+     * Expects no return (void)
+     *
+     * @var array<string, callable>
+     */
+    private static array $onCreate = [];
+
+    /**
+     * Adds 'hook' to the CustomTypeConverter after the converter
+     * is created. Returns key of the hook you can use to remove the
+     * hook if, if you wish to.
+     *
+     * @param callable $onCreate
+     * @return string
+     */
+    public function addOnCreate(callable $onCreate): string
+    {
+        $hookKey = null;
+        while (!array_key_exists((string)$hookKey, self::$onCreate) || $hookKey === null) {
+            $hookKey = Random::generate(12);
+        }
+
+        return $hookKey;
+    }
+
+    /**
+     * Removes the hook by key. Return true if hook removed,
+     * false if not found.
+     *
+     * @param string $hookKey
+     * @return bool
+     */
+    public function removeOnCreate(string $hookKey): bool
+    {
+        if (array_key_exists($hookKey, self::$onCreate)) {
+            unset(self::$onCreate[$hookKey]);
+            return true;
+        }
+        return false;
+    }
+
+    final private function __construct(private ReflectionProperty $property)
     {
     }
 
@@ -35,6 +81,10 @@ abstract class CustomTypeConverter
                     $className, __CLASS__
                 )
             );
+        }
+
+        foreach (self::$onCreate as $onCreateHook) {
+            $onCreateHook($instance);
         }
 
         return $instance;
