@@ -5,9 +5,13 @@
 ![Packagist Downloads](https://img.shields.io/packagist/dm/zrnik/mksql)
 ![Packagist Version](https://img.shields.io/packagist/v/zrnik/mksql)
 
+# Do not use this!
+
+Use doctrine instead!
+
 ### What is it?
 
-*So, I just found out that the thing I created is usually called an ORM.*
+*So, I just found out that the thing I created is usually called an ORM and DBAL.*
 
 **MkSQL** is a tool for keeping your tables up to date with PHP code. It aims for a simple use cases, so it cannot
 handle very complex stuff. Explore the docs to see what is possible.
