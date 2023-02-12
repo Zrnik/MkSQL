@@ -35,6 +35,10 @@ use Tests\Mock\Bugs\DoubleRetrieve\AccountEntry;
 use Tests\Mock\Bugs\DoubleRetrieve\DoubleRetrieveRepository;
 use Tests\Mock\Bugs\DoubleRetrieve\Person;
 use Tests\Mock\Bugs\DoubleRetrieve\Reward;
+use Tests\Mock\Bugs\NotMyForeignKeysLoaded\Poll;
+use Tests\Mock\Bugs\NotMyForeignKeysLoaded\PollRepository;
+use Tests\Mock\Bugs\NotMyForeignKeysLoaded\PollVote;
+use Tests\Mock\Bugs\NotMyForeignKeysLoaded\Voter;
 use Tests\Mock\Bugs\TreeSave\RepeatingNode;
 use Tests\Mock\Bugs\TreeSave\TreeSaveRepository;
 use Tests\Mock\EntitiesWithHooks\AfterRetrieveHookEntity;
@@ -205,6 +209,8 @@ class IntegrationTest extends TestCase
         $this->subTestAllowPrivatePropertiesInEntities($pdo);
 
         $this->subTestBaseEntityHooks($pdo);
+
+        $this->subTestForeignKeyOfDifferentEntityLoaded($pdo);
 
         echo ']' . PHP_EOL . 'Complete!';
 
@@ -660,7 +666,6 @@ class IntegrationTest extends TestCase
         $fetchedAuction1 = $auctionRepository->getResultByPrimaryKey(Auction::class, $auction1->id);
 
         //region I am not testing this, it does not matter...
-
 
         static::assertEquals($auction1, $fetchedAuction1);
         static::assertNotSame($auction1, $fetchedAuction1);
@@ -1225,7 +1230,7 @@ class IntegrationTest extends TestCase
         /** @var EntityWithHookException $ex */
         $ex = $this->assertExceptionThrown(
             EntityWithHookException::class,
-            function() use ($entityHookRepository) {
+            function () use ($entityHookRepository) {
                 $entityHookRepository->save(BeforeSaveHookEntity::create());
             }
         );
@@ -1242,7 +1247,7 @@ class IntegrationTest extends TestCase
         /** @var EntityWithHookException $ex */
         $ex = $this->assertExceptionThrown(
             EntityWithHookException::class,
-            function() use ($entityHookRepository) {
+            function () use ($entityHookRepository) {
                 $entityHookRepository->save(AfterSaveHookEntity::create());
             }
         );
@@ -1259,7 +1264,7 @@ class IntegrationTest extends TestCase
         /** @var EntityWithHookException $ex */
         $ex = $this->assertExceptionThrown(
             EntityWithHookException::class,
-            function() use ($entityHookRepository) {
+            function () use ($entityHookRepository) {
                 $entityHookRepository->save(AfterRetrieveHookEntity::create());
                 $entityHookRepository->getAll(
                     AfterRetrieveHookEntity::class
@@ -1274,4 +1279,42 @@ class IntegrationTest extends TestCase
 
     }
 
+    private function subTestForeignKeyOfDifferentEntityLoaded(PDO $pdo)
+    {
+        $pollRepository = new PollRepository($pdo);
+
+        $voter_1 = Voter::create();
+        $voter_2 = Voter::create();
+
+        $poll1 = Poll::create();
+        $poll1->question = '1';
+
+        $poll2 = Poll::create();
+        $poll2->question = '2';
+
+        $pollRepository->save([$poll1, $poll2, $voter_1, $voter_2]);
+
+        $vote_poll1_1 = PollVote::create();
+        $vote_poll1_1->poll = $poll1;
+        $vote_poll1_1->voter = $voter_1;
+        $vote_poll1_1->isPositive = true;
+        $pollRepository->save($vote_poll1_1);
+
+        $vote_poll1_2 = PollVote::create();
+        $vote_poll1_2->poll = $poll1;
+        $vote_poll1_2->isPositive = false;
+        $vote_poll1_2->voter = $voter_2;
+        $pollRepository->save($vote_poll1_2);
+
+        $vote_poll2_1 = PollVote::create();
+        $vote_poll2_1->poll = $poll2;
+        $vote_poll2_1->voter = $voter_1;
+        $vote_poll2_1->isPositive = true;
+        $pollRepository->save($vote_poll2_1);
+
+        /** @var Poll $testPoll */
+        $testPoll = $pollRepository->getResultByPrimaryKey(Poll::class, $poll1->id);
+
+        self::assertCount(2, $testPoll->votes);
+    }
 }

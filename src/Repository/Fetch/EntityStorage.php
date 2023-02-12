@@ -13,7 +13,7 @@ class EntityStorage
     /** @var BaseEntity[] */
     private array $entities = [];
 
-    /** @var array<string, int> <$className.$primaryKeyValue, $entities.index>  */
+    /** @var array<string, int> <$className.$primaryKeyValue, $entities.index> */
     private array $entitiesIndexPointer = [];
 
     public function __construct()
@@ -24,9 +24,7 @@ class EntityStorage
     {
         $newIndex = count($this->entities);
         $this->entities[] = $entity;
-        $this->entitiesIndexPointer[
-            $this->cnpk($entity::class, $entity->getPrimaryKeyValue())
-        ] = $newIndex;
+        $this->entitiesIndexPointer[$this->cnpk($entity::class, $entity->getPrimaryKeyValue())] = $newIndex;
     }
 
     /**
@@ -54,32 +52,30 @@ class EntityStorage
 
     /**
      * @param class-string<BaseEntity> $className
-     * @param mixed $primaryKeyValue
+     * @param bool|float|int|string|null $primaryKeyValue
      * @return bool
      */
-    #[Pure] public function has(string $className, mixed $primaryKeyValue): bool
+    #[Pure] public function has(string $className, bool|float|int|string|null $primaryKeyValue): bool
     {
         return array_key_exists(
             $this->cnpk($className, $primaryKeyValue),
             $this->entitiesIndexPointer
         );
-        //return $this->getEntityByPrimaryKey($className, $primaryKeyValue) !== null;
     }
 
     /**
      * @param class-string<BaseEntity> $className
-     * @param mixed $primaryKeyValue
+     * @param bool|float|int|string|null $primaryKeyValue
      * @return BaseEntity|null
      */
     #[Pure] private function getEntityByPrimaryKey(
-        string $className, mixed $primaryKeyValue
+        string $className, bool|float|int|string|null $primaryKeyValue
     ): ?BaseEntity
     {
         $index =
             $this->entitiesIndexPointer
             [$this->cnpk($className, $primaryKeyValue)]
-            ?? 'null'
-        ;
+            ?? 'null';
 
         return $this->entities[$index] ?? null;
     }
@@ -87,14 +83,17 @@ class EntityStorage
     /**
      * @param class-string<BaseEntity> $className
      * @param string $columnName
-     * @param mixed $columnValue
+     * @param bool|float|int|string|null $columnValue
      * @return BaseEntity[]
      */
-    private function getEntitiesByColumn(string $className, string $columnName, mixed $columnValue): array
+    #[Pure]
+    private function getEntitiesByColumn(string $className, string $columnName, bool|float|int|string|null $columnValue): array
     {
         $result = [];
         foreach ($this->getEntitiesByClassName($className) as $entity) {
-            if ((string)$entity->getRawData()[$columnName] === (string)$columnValue) {
+            /** @var bool|float|int|string|null $rawData */
+            $rawData = $entity->getRawData()[$columnName];
+            if ((string)$rawData === (string)$columnValue) {
                 $result[] = $entity;
             }
         }
@@ -107,7 +106,7 @@ class EntityStorage
         foreach ($this->entities as $entity) {
 
             foreach (EntityReflection::getForeignKeys($entity) as $foreignKeyData) {
-
+                /** @var bool|float|int|string|null $requiredPrimaryKey */
                 $requiredPrimaryKey = $entity->getRawData()[$foreignKeyData->foreignKeyColumnName()];
 
                 $foreignEntity = $this->getEntityByPrimaryKey(
@@ -121,12 +120,20 @@ class EntityStorage
 
             foreach (EntityReflection::getFetchArrayProperties($entity) as $fetchArrayData) {
 
+                $entityClassName = $entity::class;
 
                 $neededClass = $fetchArrayData->getTargetClassName();
 
                 $propertyName = $fetchArrayData->getPropertyName();
 
+
                 foreach (EntityReflection::getForeignKeys($neededClass) as $aimingBackForeignKeyData) {
+                    if (
+                        $entityClassName !== (string)$aimingBackForeignKeyData->getProperty()->getType()
+                        && '?' . $entityClassName !== (string)$aimingBackForeignKeyData->getProperty()->getType()
+                    ) {
+                        continue;
+                    }
 
                     $fetchEntities = $this->getEntitiesByColumn(
                         $neededClass,
@@ -139,6 +146,7 @@ class EntityStorage
                     foreach ($fetchEntities as $fetchEntity) {
                         $data[] = $fetchEntity;
                     }
+
                     $entity->$propertyName = $data;
                 }
             }
@@ -153,13 +161,13 @@ class EntityStorage
 
     /**
      * @param string $className
-     * @param mixed $primaryKeyValue
+     * @param bool|float|int|string|null $primaryKeyValue
      * @return string
      * @noinspection SpellCheckingInspection
      */
-    private function cnpk(string $className, mixed $primaryKeyValue): string
+    private function cnpk(string $className, bool|float|int|string|null $primaryKeyValue): string
     {
-        return $className . '::' . ((string) $primaryKeyValue);
+        return $className . '::' . ((string)$primaryKeyValue);
     }
 
 

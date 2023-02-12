@@ -5,6 +5,7 @@ namespace Zrnik\MkSQL\Utilities\EntityReflection;
 use JetBrains\PhpStorm\Pure;
 use ReflectionAttribute;
 use ReflectionProperty;
+use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\Reflection;
@@ -38,10 +39,19 @@ class ForeignKeyData
      */
     public function getTargetClassName(): string
     {
-        return Reflection::attributeGetArgument($this->foreignKeyAttribute);
+        $targetClassName = Reflection::attributeGetArgument($this->foreignKeyAttribute);
+
+        if ($targetClassName === null) {
+            throw new MissingAttributeArgumentException(
+                $this->foreignKeyAttribute, 0
+            );
+        }
+
+        /** @var class-string<BaseEntity> */
+        return $targetClassName;
     }
 
-    #[Pure] private function getEntityClassName(): string
+    #[Pure] public function getEntityClassName(): string
     {
         return $this->getProperty()->getDeclaringClass()->getName();
     }
@@ -52,6 +62,4 @@ class ForeignKeyData
         $classNameForStaticUsage = $this->getEntityClassName();
         return $classNameForStaticUsage::columnName($this->getProperty());
     }
-
-
 }

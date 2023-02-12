@@ -21,6 +21,7 @@ use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NonNullablePrima
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\NullableButWithoutNullAsDefaultPrimaryKeyEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\OnlyOneForeignKeyTargetingSameClass\ReferencingBothIsOk;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\OnlyOneForeignKeyTargetingSameClass\ReferencingSameMultipleTimeNotOK;
+use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\OnlyPrimaryKeyEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\EntityNotPointingBack;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\BadEntities\SubEntityNotPointingBack\MainEntity;
 use Tests\Mock\BaseRepositoryAndBaseEntity\Entities\Invoice;
@@ -31,6 +32,7 @@ use Tests\Mock\EntitiesWithDefaultValues\EntityWithNoDefaults;
 use Tests\Mock\PDO;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
+use Zrnik\MkSQL\Exceptions\OnlyPrimaryKeyNotAllowedException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\RequiredClassAttributeMissingException;
 use Zrnik\MkSQL\Updater;
@@ -157,6 +159,20 @@ class BaseEntityTest extends TestCase
         $this->assertNoExceptionThrown(
             static function () use ($updater) {
                 $updater->use(CanPointToSelf::class);
+            }
+        );
+
+        $this->assertNoExceptionThrown(
+            static function () use ($updater) {
+                $updater->use(CanPointToSelf::class);
+            }
+        );
+
+
+        $this->assertExceptionThrown(
+            OnlyPrimaryKeyNotAllowedException::class,
+            function () use ($updater) {
+                $updater->use(OnlyPrimaryKeyEntity::class);
             }
         );
     }

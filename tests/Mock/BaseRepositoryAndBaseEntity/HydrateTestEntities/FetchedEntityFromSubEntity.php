@@ -2,6 +2,7 @@
 
 namespace Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities;
 
+use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\ForeignKey;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
@@ -15,5 +16,4 @@ class FetchedEntityFromSubEntity extends BaseEntity
 
     #[ForeignKey(SubEntityOne::class)]
     public SubEntityOne $fetchedEntity;
-
 }

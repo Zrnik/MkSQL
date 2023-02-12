@@ -2,6 +2,7 @@
 
 namespace Tests\Mock\BaseRepositoryAndBaseEntity\HydrateTestEntities;
 
+use Zrnik\MkSQL\Repository\Attributes\ColumnType;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\Attributes\PrimaryKey;
 use Zrnik\MkSQL\Repository\Attributes\TableName;
@@ -18,4 +19,10 @@ class SubEntityOne extends BaseEntity
      */
     #[FetchArray(FetchedEntityFromSubEntity::class)]
     public array $fetchedEntities = [];
+
+    /**
+     * @see Zrnik\MkSQL\Exceptions\OnlyPrimaryKeyNotAllowedException
+     */
+    #[ColumnType('int(11)')]
+    public int $dontMindMe = 0;
 }

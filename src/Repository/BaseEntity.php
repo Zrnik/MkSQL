@@ -22,6 +22,7 @@ use Zrnik\MkSQL\Exceptions\InvalidPropertyTypeException;
 use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Exceptions\MissingForeignKeyDefinitionInEntityException;
 use Zrnik\MkSQL\Exceptions\MultipleForeignKeysTargetingSameClassException;
+use Zrnik\MkSQL\Exceptions\OnlyPrimaryKeyNotAllowedException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyDefinitionException;
 use Zrnik\MkSQL\Exceptions\PrimaryKeyProvidedInDefaults;
 use Zrnik\MkSQL\Exceptions\ReflectionFailedException;
@@ -119,13 +120,14 @@ abstract class BaseEntity implements JsonSerializable
 
     //region Array
     /**
-     * @return array<mixed>
+     * @return array<bool|float|int|string|null>
      * @throws InvalidArgumentException
      * @throws PrimaryKeyDefinitionException
      * @throws ReflectionFailedException
      */
     public function toArray(): array
     {
+        /** @var array<bool|float|int|string|null> $result */
         $result = [];
         $reflection = static::getReflectionClass($this);
 
@@ -253,12 +255,12 @@ abstract class BaseEntity implements JsonSerializable
     }
 
     /**
-     * @var array<mixed>
+     * @var array<bool|float|int|string|null>
      */
     private array $rawData = [];
 
     /**
-     * @return mixed[]
+     * @return array<bool|float|int|string|null>
      */
     public function getRawData(): array
     {
@@ -275,11 +277,11 @@ abstract class BaseEntity implements JsonSerializable
     {
 
         if (is_array($iterable)) {
-            /** @var array<mixed> $data */
+            /** @var array<bool|float|int|string|null> $data */
             $data = $iterable;
         } else {
             /**
-             * @var array<mixed> $data
+             * @var array<bool|float|int|string|null> $data
              * @noinspection PhpParamsInspection
              */
             $data = iterator_to_array($iterable);
@@ -317,7 +319,7 @@ abstract class BaseEntity implements JsonSerializable
             // 0. If there is a `#[ColumnName]` attribute, we use its name instead.
             $columnNameAttr = Reflection::propertyGetAttribute($reflectionProperty, ColumnName::class);
             if ($columnNameAttr !== null) {
-                $propertyName = Reflection::attributeGetArgument($columnNameAttr);
+                $propertyName = (string)Reflection::attributeGetArgument($columnNameAttr);
             }
 
             // 1. If it has intrinsic default value, let it be.
@@ -397,7 +399,7 @@ abstract class BaseEntity implements JsonSerializable
             if ($ColumnNamePropertyAttribute !== null) {
                 $columnName = Reflection::attributeGetArgument($ColumnNamePropertyAttribute);
             }
-            $columnNames[$property->getName()] = $columnName;
+            $columnNames[$property->getName()] = (string)$columnName;
         }
 
         return $columnNames;
@@ -437,7 +439,7 @@ abstract class BaseEntity implements JsonSerializable
             );
         }
 
-        return $tableName;
+        return (string)$tableName;
     }
     //endregion
 
@@ -630,7 +632,7 @@ abstract class BaseEntity implements JsonSerializable
 
         if ($attributeCustomType !== null) {
             $typeConverter = CustomTypeConverter::initialize(
-                Reflection::attributeGetArgument($attributeCustomType), $reflectionProperty
+                (string)Reflection::attributeGetArgument($attributeCustomType), $reflectionProperty
             );
 
             return $typeConverter->getDatabaseType();
@@ -642,7 +644,7 @@ abstract class BaseEntity implements JsonSerializable
 
         if ($attributeType !== null) {
             // Attribute has priority
-            return Reflection::attributeGetArgument($attributeType);
+            return (string)Reflection::attributeGetArgument($attributeType);
         }
 
         $intrinsicType = $reflectionProperty->getType();
@@ -677,22 +679,30 @@ abstract class BaseEntity implements JsonSerializable
     //endregion
 
     //region Column `DEFAULT`
-    public static function columnDefaultValue(ReflectionProperty $property): mixed
+    public static function columnDefaultValue(ReflectionProperty $property): string|null
     {
         $defaultValueAttr = Reflection::propertyGetAttribute($property, DefaultValue::class);
         if ($defaultValueAttr !== null) {
-            return Reflection::attributeGetArgument($defaultValueAttr);
+            $value = Reflection::attributeGetArgument($defaultValueAttr);
+
+            if ($value !== null) {
+                return (string)$value;
+            }
         }
         return null;
     }
     //endregion
 
     //region Column `COMMENT`
-    public static function columnComment(ReflectionProperty $property): mixed
+    public static function columnComment(ReflectionProperty $property): string|null
     {
-        $defaultValueAttr = Reflection::propertyGetAttribute($property, Comment::class);
-        if ($defaultValueAttr !== null) {
-            return Reflection::attributeGetArgument($defaultValueAttr);
+        $commentAttr = Reflection::propertyGetAttribute($property, Comment::class);
+        if ($commentAttr !== null) {
+            $comment = Reflection::attributeGetArgument($commentAttr);
+
+            if ($comment !== null) {
+                return (string)$comment;
+            }
         }
         return null;
     }
@@ -738,7 +748,7 @@ abstract class BaseEntity implements JsonSerializable
         );
 
         if ($customTypeAttribute !== null) {
-            $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
+            $converterClassName = (string)Reflection::attributeGetArgument($customTypeAttribute);
             $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
             $propertyValue = $converter->deserializeKey(static::class, $reflectionProperty->getName(), $propertyValue);
         }
@@ -762,7 +772,7 @@ abstract class BaseEntity implements JsonSerializable
         );
 
         if ($customTypeAttribute !== null) {
-            $converterClassName = Reflection::attributeGetArgument($customTypeAttribute);
+            $converterClassName = (string)Reflection::attributeGetArgument($customTypeAttribute);
             $converter = CustomTypeConverter::initialize($converterClassName, $reflectionProperty);
             $propertyValue = $converter->serializeKey(static::class, $reflectionProperty->getName(), $propertyValue);
         }
@@ -796,11 +806,14 @@ abstract class BaseEntity implements JsonSerializable
 
         $referencedForeignKeys = [];
 
+        $actualProperties = count($properties);
+
         // Columns:
         foreach ($properties as $property) {
 
             //region Primary key is handled, if its primary key, skip it
             if (Reflection::propertyHasAttribute($property, PrimaryKey::class)) {
+                $actualProperties--;
                 continue;
             }
             //endregion
@@ -812,16 +825,19 @@ abstract class BaseEntity implements JsonSerializable
              */
             $fetchArrayAttribute = Reflection::propertyGetAttribute($property, FetchArray::class);
             if ($fetchArrayAttribute !== null) {
+                $actualProperties--;
 
                 // Check, if the fetched array is pointing to us!
                 $pointerFound = false;
-                $subClassName = Reflection::attributeGetArgument($fetchArrayAttribute);
 
-                $reflection = self::getReflectionClass($subClassName);
-                foreach ($reflection->getProperties() as $foreignProperty) {
+                /** @var class-string<BaseEntity> $subClassName */
+                $subClassName = (string)Reflection::attributeGetArgument($fetchArrayAttribute);
+
+                $subReflection = self::getReflectionClass($subClassName);
+                foreach ($subReflection->getProperties() as $foreignProperty) {
                     $foreignPropertyForeignKeyAttribute = Reflection::propertyGetAttribute($foreignProperty, ForeignKey::class);
                     if ($foreignPropertyForeignKeyAttribute !== null) {
-                        $foreignPropertyForeignKeyAttributeValue = Reflection::attributeGetArgument($foreignPropertyForeignKeyAttribute);
+                        $foreignPropertyForeignKeyAttributeValue = (string)Reflection::attributeGetArgument($foreignPropertyForeignKeyAttribute);
                         if ($foreignPropertyForeignKeyAttributeValue === static::class) {
                             $pointerFound = true;
                         }
@@ -830,7 +846,7 @@ abstract class BaseEntity implements JsonSerializable
                         if (($type instanceof ReflectionNamedType) && $type->getName() !== $foreignPropertyForeignKeyAttributeValue) {
                             throw new InvalidPropertyTypeException(
                                 $foreignPropertyForeignKeyAttributeValue, $type->getName(),
-                                $reflection->getName(), $property->getName(),
+                                $subReflection->getName(), $property->getName(),
                             );
                         }
                     }
@@ -843,7 +859,6 @@ abstract class BaseEntity implements JsonSerializable
                 }
 
                 $fetchArrayEntities[] = $subClassName;
-
                 continue;
             }
             //endregion
@@ -859,7 +874,8 @@ abstract class BaseEntity implements JsonSerializable
 
             if ($foreignKeyAttribute !== null) {
 
-                $referencedEntityName = Reflection::attributeGetArgument($foreignKeyAttribute);
+                /** @var class-string<BaseEntity> $referencedEntityName */
+                $referencedEntityName = (string)Reflection::attributeGetArgument($foreignKeyAttribute);
 
                 if (array_key_exists($referencedEntityName, $referencedForeignKeys)) {
                     throw new MultipleForeignKeysTargetingSameClassException(
@@ -879,7 +895,6 @@ abstract class BaseEntity implements JsonSerializable
                             static::class, $property->getName()
                         );
                     }
-
 
                     $addToForeignKeyReference = false;
 
@@ -924,9 +939,10 @@ abstract class BaseEntity implements JsonSerializable
                 $updater, $baseEntitiesWeHaveAlreadySeen
             );
 
-            $baseEntitiesWeHaveAlreadySeen[] = $hydrateEntityClassName;
+            if ($hydrateEntityClassName !== null) {
+                $baseEntitiesWeHaveAlreadySeen[] = (string)$hydrateEntityClassName;
+            }
         }
-
 
         foreach ($fetchArrayEntities as $fetchArrayEntityClassName) {
 
@@ -938,15 +954,18 @@ abstract class BaseEntity implements JsonSerializable
             );
         }
 
-
+        if ($actualProperties === 0) {
+            throw new OnlyPrimaryKeyNotAllowedException($reflection->getName());
+        }
+        return;
     }
 
     /**
-     * @return mixed
+     * @return bool|float|int|string|null
      * @throws PrimaryKeyDefinitionException
      * @throws ReflectionFailedException
      */
-    public function getPrimaryKeyValue(): mixed
+    public function getPrimaryKeyValue(): bool|float|int|string|null
     {
         $primaryKeyPropertyName = static::getPrimaryKeyPropertyName();
         return $this->$primaryKeyPropertyName;
@@ -1121,26 +1140,30 @@ abstract class BaseEntity implements JsonSerializable
 
     //region Hooks
 
-    // TODO: Write tests for the hooks!
-
     /**
      * This hook is ran before 'toArray' method
      * converts everything to actual database data...
      */
-    public function beforeSave() : void {}
+    public function beforeSave(): void
+    {
+    }
 
     /**
      * This hook is ran after query being committed to
      * the database. Raw data and save indication already happened.
      */
-    public function afterSave() : void {}
+    public function afterSave(): void
+    {
+    }
 
     /**
      * This method is called after it's retrieved from the database
      * by Dispenser class... All foreign keys/fetch arrays
      * are already handled.
      */
-    public function afterRetrieve() : void {}
+    public function afterRetrieve(): void
+    {
+    }
     //endregion
 
 }
