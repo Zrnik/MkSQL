@@ -5,6 +5,7 @@ namespace Zrnik\MkSQL\Utilities\EntityReflection;
 use JetBrains\PhpStorm\Pure;
 use ReflectionAttribute;
 use ReflectionProperty;
+use Zrnik\MkSQL\Exceptions\MissingAttributeArgumentException;
 use Zrnik\MkSQL\Repository\Attributes\FetchArray;
 use Zrnik\MkSQL\Repository\BaseEntity;
 use Zrnik\MkSQL\Utilities\Reflection;
@@ -33,6 +34,15 @@ class FetchArrayData
      */
     public function getTargetClassName(): string
     {
-        return Reflection::attributeGetArgument($this->reflectionAttribute);
+        $targetClassName = Reflection::attributeGetArgument($this->reflectionAttribute);
+
+        if ($targetClassName === null) {
+            throw new MissingAttributeArgumentException(
+                $this->reflectionAttribute, 0
+            );
+        }
+
+        /** @var class-string<BaseEntity> */
+        return $targetClassName;
     }
 }

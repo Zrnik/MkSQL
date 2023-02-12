@@ -153,6 +153,7 @@ abstract class BaseRepository
             return []; // Dafuq? Guess we should handle this somehow...
         }
 
+        /** @var array<array<bool|float|int|string|null>>|false $data */
         $data = $pdoStatement->fetchAll(PDO::FETCH_ASSOC);
 
         if ($data === false) {

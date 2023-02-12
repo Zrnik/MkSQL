@@ -159,35 +159,37 @@ class Utils
      *
      * Can be NULL!
      *
-     * @param string|null $name
-     * @return string|null
+     * @param float|bool|int|string|null $name
+     * @return float|bool|int|string|null
      * @throws InvalidArgumentException
      */
-    public static function confirmComment(?string $name): ?string
+    public static function confirmComment(float|bool|int|string|null $name): float|bool|int|string|null
     {
         if ($name === null) {
             return null;
         }
 
-        return self::checkForbiddenWords(self::confirmName($name, [',', '.', ' ']));
+        return self::checkForbiddenWords(self::confirmName((string)$name, [',', '.', ' ']));
     }
 
     /**
      * Fall through checking for banned words in string.
      * Case Insensitive
      *
-     * @param string $text
-     * @return string
+     * @param float|bool|int|string|null $text
+     * @return float|bool|int|string|null
      * @throws InvalidArgumentException
      */
-    public static function checkForbiddenWords(string $text): string
+    public static function checkForbiddenWords(float|bool|int|string|null $text): float|bool|int|string|null
     {
-        foreach (self::$_Forbidden as $ForbiddenWord) {
-            if (Strings::contains(
-                strtolower($text),
-                strtolower($ForbiddenWord)
-            )) {
-                throw new InvalidArgumentException("Forbidden word '" . strtolower($ForbiddenWord) . "' encountered!");
+        if ($text !== null) {
+            foreach (self::$_Forbidden as $ForbiddenWord) {
+                if (Strings::contains(
+                    strtolower((string)$text),
+                    strtolower($ForbiddenWord)
+                )) {
+                    throw new InvalidArgumentException("Forbidden word '" . strtolower($ForbiddenWord) . "' encountered!");
+                }
             }
         }
 

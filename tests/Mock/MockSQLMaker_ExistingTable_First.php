@@ -141,7 +141,10 @@ class MockSQLMaker_ExistingTable_First implements IQueryMaker
     /**
      * @inheritDoc
      */
-    public static function compareComment(?string $comment1, ?string $comment2): bool
+    public static function compareComment(
+        float|bool|int|string|null $comment1,
+        float|bool|int|string|null $comment2
+    ): bool
     {
         return true;
     }

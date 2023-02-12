@@ -163,9 +163,9 @@ class Column
 
     //region Default Value
     /**
-     * @var mixed|null
+     * @var float|bool|int|string|null
      */
-    private mixed $default = null;
+    private float|bool|int|string|null $default = null;
 
     /**
      * Allowed types of default values.
@@ -180,11 +180,11 @@ class Column
 
     /**
      * Set or unset (with null) default value of column.
-     * @param mixed|null $defaultValue
+     * @param float|bool|int|string|null $defaultValue
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function setDefault(mixed $defaultValue = null): Column
+    public function setDefault(float|bool|int|string $defaultValue = null): Column
     {
         $type = gettype($defaultValue);
 
@@ -209,9 +209,9 @@ class Column
     /**
      * Gets a default value.
      *
-     * @return mixed
+     * @return scalar|null
      */
-    public function getDefault(): mixed
+    public function getDefault(): float|bool|int|string|null
     {
         return $this->default ?? null;
     }
@@ -219,15 +219,15 @@ class Column
 
     //region Column Comment
     /**
-     * @var string|null
+     * @var float|bool|int|string|null
      */
-    private ?string $comment = null;
+    private float|bool|int|string|null $comment = null;
 
     /**
      * Returns string that was set as a comment.
-     * @return string|null
+     * @return float|bool|int|string|null
      */
-    public function getComment(): ?string
+    public function getComment(): float|bool|int|string|null
     {
         return $this->comment;
     }

@@ -203,12 +203,12 @@ class Measure
     //region Structure
 
     /**
-     * @var array<array<mixed>>
+     * @var array<string, array{calls: int, objects: Table[]}>
      */
     private static array $_Tables = [];
 
     /**
-     * @var array<array<mixed>>
+     * @var array<string, array<string, Column>>
      */
     private static array $_Columns = [];
 
@@ -223,7 +223,7 @@ class Measure
 
     /**
      * @param string $tableName
-     * @return array<array<mixed>>
+     * @return array<string, Column>
      */
     public static function structureColumnList(string $tableName): array
     {
@@ -256,14 +256,9 @@ class Measure
             self::$_Columns[$table->getName()] = [];
         }
 
-        if (!isset(self::$_Columns[$table->getName()][$column->getName()])) {
-            self::$_Columns[$table->getName()][$column->getName()] = [];
-        }
-
         self::$_Columns[$table->getName()][$column->getName()] = $column;
     }
 
-    #[Pure]
     public static function structureTableCount(): int
     {
         return count(self::$_Tables);

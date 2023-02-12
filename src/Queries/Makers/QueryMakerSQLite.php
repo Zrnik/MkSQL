@@ -66,6 +66,7 @@ class QueryMakerSQLite implements IQueryMaker
             $QueryInfo->isExecuted = true;
             $Statement->execute();
 
+            /** @var array<array<bool|float|int|string|null>>|false $SQLiteTableData */
             $SQLiteTableData = $Statement->fetchAll(PDO::FETCH_ASSOC);
             $QueryInfo->isSuccess = true;
 
@@ -94,7 +95,7 @@ class QueryMakerSQLite implements IQueryMaker
                     $sql = str_replace(
                         ["\r", "\n", 'CREATE TABLE "' . $table->getName() . '"'],
                         [' ', ' ', 'CREATE TABLE ' . $table->getName()],
-                        $PartRow['sql']
+                        (string)$PartRow['sql']
                     );
 
                     while (Strings::contains($sql, '  ')) {
@@ -321,10 +322,12 @@ class QueryMakerSQLite implements IQueryMaker
 
         $keyInBothArrays = [$table->getPrimaryKeyName()];
         foreach ($MoveColumns as $columnName) {
-            foreach ($oldTableDescription?->columns as $subColumnDescription) {
-                if ($subColumnDescription->column->getName() === $columnName) {
-                    $keyInBothArrays[] = $columnName;
-                    break;
+            if($oldTableDescription !== null) {
+                foreach ($oldTableDescription->columns as $subColumnDescription) {
+                    if ($subColumnDescription->column->getName() === $columnName) {
+                        $keyInBothArrays[] = $columnName;
+                        break;
+                    }
                 }
             }
         }
@@ -581,13 +584,16 @@ class QueryMakerSQLite implements IQueryMaker
     }
 
     /**
-     * @param string|null $comment1
-     * @param string|null $comment2
+     * @param float|bool|int|string|null $comment1
+     * @param float|bool|int|string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $comment1, ?string $comment2): bool
+    public static function compareComment(
+        float|bool|int|string|null $comment1,
+        float|bool|int|string|null $comment2,
+    ): bool
     {
-        //Comments not supported by SQLite, just report that its correct anyhow
+        //Comments not supported by SQLite, just report that its correct
         return true;
     }
 

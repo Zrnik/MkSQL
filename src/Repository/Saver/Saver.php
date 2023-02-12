@@ -48,7 +48,6 @@ class Saver
 
         $orderedInserts = $this->sortInsertTableEntities($insertEntities);
 
-
         $chunkByTables = self::chunkByTables($orderedInserts);
 
         foreach ($chunkByTables as $insertChunk) {
@@ -147,7 +146,8 @@ class Saver
         $anyChange = false;
 
         foreach ($saveArray as $key => $value) {
-            if (!array_key_exists($key, $originalData) || (string) $value !== (string) $originalData[$key]) {
+            // != intended
+            if (!array_key_exists($key, $originalData) || $value != $originalData[$key]) {
                 $anyChange = true;
                 break;
             }
@@ -263,7 +263,10 @@ class Saver
         $lastPk = (int)$this->pdo->lastInsertId();
 
         //region Fix for MySQL/MariaDB
-        /** @see https://www.php.net/manual/en/pdo.lastinsertid.php#122009 */
+        /**
+         * @see https://www.php.net/manual/en/pdo.lastinsertid.php#122009
+         * @var string $driver
+         */
         $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
         if (strtolower($driver) === 'mysql') {
             $lastPk += count($entities) - 1;

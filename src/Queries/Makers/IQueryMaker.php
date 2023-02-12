@@ -120,11 +120,14 @@ interface IQueryMaker
     public static function compareType(string $type1, string $type2): bool;
 
     /**
-     * @param string|null $comment1
-     * @param string|null $comment2
+     * @param float|bool|int|string|null $comment1
+     * @param float|bool|int|string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $comment1, ?string $comment2): bool;
+    public static function compareComment(
+        float|bool|int|string|null $comment1,
+        float|bool|int|string|null $comment2
+    ): bool;
 
     //endregion
 }

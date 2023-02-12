@@ -35,9 +35,9 @@ class ColumnDescription
     public bool $notNull = false;
 
     /**
-     * @var string|null
+     * @var float|bool|int|string|null
      */
-    public ?string $comment = null;
+    public float|bool|int|string|null $comment = null;
 
     /**
      * @var string|null

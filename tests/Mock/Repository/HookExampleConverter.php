@@ -19,7 +19,6 @@ class HookExampleConverter extends CustomTypeConverter
             throw new ConfigurationNotFoundException('Configuration not found!');
         }
 
-
         if($encoded === false) {
             throw new Exception('Should not be false!');
         }
@@ -29,6 +28,10 @@ class HookExampleConverter extends CustomTypeConverter
 
     public function deserialize(mixed $value): mixed
     {
+        if(!is_string($value)) {
+            throw new ConfigurationNotFoundException('Must be string!');
+        }
+
         /** @noinspection JsonEncodingApiUsageInspection */
         $decoded = json_decode($value, true);
 

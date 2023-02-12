@@ -25,7 +25,7 @@ class FetchQuery
 
     /**
      * @param PDO $pdo
-     * @return mixed[]
+     * @return array<array<bool|float|int|string|null>>
      */
     public function fetchAll(PDO $pdo): array
     {
@@ -46,7 +46,7 @@ class FetchQuery
          * @see https://www.php.net/manual/en/pdostatement.fetchall.php#refsect1-pdostatement.fetchall-changelog
          * @noinspection PhpUnnecessaryLocalVariableInspection
          *
-         * @var mixed[] $fetch
+         * @var array<array<bool|float|int|string|null>> $fetch
          */
         $fetch = $statement->fetchAll();
         $this->executedQueries++;

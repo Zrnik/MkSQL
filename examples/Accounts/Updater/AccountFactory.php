@@ -44,10 +44,13 @@ class AccountFactory
     {
         $statement = $this->pdo->prepare('SELECT * FROM account WHERE id = :id');
         $statement->execute(['id' => $id]);
+
         $result = $statement->fetch(PDO::FETCH_ASSOC);
+
         if ($result === false) {
             return null;
         }
+
         return Account::fromArray(iterator_to_array($result));
     }
 

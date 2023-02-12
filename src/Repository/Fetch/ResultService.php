@@ -81,7 +81,7 @@ class ResultService
 
     /**
      * @param class-string<BaseEntity> $baseEntityClassString
-     * @param array<mixed[]> $rows
+     * @param array<array<bool|float|int|string|null>> $rows
      */
     public function addRows(string $baseEntityClassString, array $rows): void
     {

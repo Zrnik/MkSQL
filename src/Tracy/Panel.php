@@ -38,7 +38,7 @@ class Panel implements IBarPanel
 
     /**
      * @param int $style
-     * @return array<mixed>
+     * @return array{0: string, 1: string}
      * @throws Exception
      */
     private function getIconStyle(int $style): array
@@ -85,6 +85,7 @@ class Panel implements IBarPanel
     private function loadSvg(string $svgName): string
     {
         if (isset(self::$_svgCache[$svgName])) {
+            /** @var string */
             return self::$_svgCache[$svgName];
         }
 
@@ -317,7 +318,9 @@ class Panel implements IBarPanel
                     )
 
             );
-
+        /**
+         * @var array{calls: int, objects: Table[]} $_tableDefinition
+         */
         foreach (Measure::structureTableList() as $_tableDefinition) {
             /**
              * @var Table $tableObject
@@ -332,16 +335,14 @@ class Panel implements IBarPanel
                     Html::el('td')
                         ->setHtml(
                         //Security: Replace the tag for already escaped html element!
-                            $this->confirmString(
-                                str_replace(
-                                    '_',
-                                    '&ZeroWidthSpace;_',
-                                    Html::el()
-                                        ->setText(
-                                            $tableObject->getName()
-                                        )
-                                        ->render()
-                                )
+                            str_replace(
+                                '_',
+                                '&ZeroWidthSpace;_',
+                                Html::el()
+                                    ->setText(
+                                        $tableObject->getName()
+                                    )
+                                    ->render()
                             )
                         )
                 )
@@ -542,7 +543,12 @@ class Panel implements IBarPanel
                                                 ->addHtml(
                                                     Html::el('td')
                                                         ->addHtml(
-                                                            (($columnObject->getDefault() === null) ? 'Unset' : Html::el('b')->addText('"')->addText($columnObject->getDefault())->addText('"'))
+                                                            (($columnObject->getDefault() === null) ?
+                                                                'Unset' :
+                                                                Html::el('b')->addText('"')
+                                                                    ->addText(
+                                                                        (string) $columnObject->getDefault()
+                                                                    )->addText('"'))
                                                         )
                                                 )
 
@@ -556,7 +562,9 @@ class Panel implements IBarPanel
                                                 ->addHtml(
                                                     Html::el('td')
                                                         ->addHtml(
-                                                            (($columnObject->getComment() === null) ? 'Unset' : Html::el('b')->addText('"')->addText($columnObject->getComment())->addText('"'))
+                                                            (($columnObject->getComment() === null) ?
+                                                                'Unset' : Html::el('b')->addText('"')
+                                                                    ->addText((string)$columnObject->getComment())->addText('"'))
                                                         )
                                                 )
 
@@ -570,7 +578,12 @@ class Panel implements IBarPanel
                                                 ->addHtml(
                                                     Html::el('td')
                                                         ->addHtml(
-                                                            (count($columnObject->getForeignKeys()) === 0 ? 'None' : Debugger::dump($columnObject->getForeignKeys(), true))
+                                                            (count($columnObject->getForeignKeys()) === 0
+                                                                ? 'None'
+                                                                // @phpstan-ignore-next-line - yes, I can cast it to string...
+                                                                : (string) Debugger::dump(
+                                                                    $columnObject->getForeignKeys(), true)
+                                                                )
                                                         )
                                                 )
 
@@ -1132,11 +1145,4 @@ class Panel implements IBarPanel
         $element->setText($text);
         return $element;
     }
-
-    private function confirmString(mixed $possibleString): string
-    {
-        return (string)$possibleString;
-    }
-
-
 }

@@ -45,6 +45,10 @@ class QueryMakerMySQL implements IQueryMaker
             $QueryInfo->isExecuted = true;
             $Statement->execute();
 
+            /**
+             * @var string $result
+             * @phpstan-ignore-next-line => there is 'Create Table', trust me :)
+             */
             $result = $Statement->fetch(PDO::FETCH_ASSOC)['Create Table'];
             $QueryInfo->isSuccess = true;
 
@@ -325,7 +329,7 @@ class QueryMakerMySQL implements IQueryMaker
      * @param string $uniqueIndex
      * @param TableDescription|null $oldTableDescription
      * @param ColumnDescription|null $columnDescription
-     * @return array<mixed>|null
+     * @return array<Query>|null
      * @throws InvalidArgumentException
      */
     public static function removeUniqueIndexQuery(Table $table, Column $column, string $uniqueIndex, ?TableDescription $oldTableDescription, ?ColumnDescription $columnDescription): ?array
@@ -333,14 +337,16 @@ class QueryMakerMySQL implements IQueryMaker
         //Remove Foreign Keys and then add them back after the index was removed!
         $Queries = [];
 
-        foreach ($columnDescription?->foreignKeys as $foreignKeyName) {
-            $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
-            foreach ($DropQueries as $DropQuery) {
-                $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
-            }
+        if($columnDescription !== null) {
+            foreach ($columnDescription->foreignKeys as $foreignKeyName) {
+                $DropQueries = static::removeForeignKey($table, $column, $foreignKeyName, $oldTableDescription, $columnDescription);
+                foreach ($DropQueries as $DropQuery) {
+                    $DropQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $DropQuery->getReason());
+                }
 
-            foreach ($DropQueries as $dropQuery) {
-                $Queries[] = $dropQuery;
+                foreach ($DropQueries as $dropQuery) {
+                    $Queries[] = $dropQuery;
+                }
             }
         }
 
@@ -349,17 +355,19 @@ class QueryMakerMySQL implements IQueryMaker
             ->setReason("There is unexpected unique index '" . $uniqueIndex . "' on '"
                 . $table->getName() . '.' . $column->getName() . "'.");
 
-        foreach ($columnDescription?->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
-            $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
+        if($columnDescription !== null) {
+            foreach ($columnDescription->foreignKeys as $foreignKeyTarget => $foreignKeyName) {
+                $CreateQueries = static::createForeignKey($table, $column, $foreignKeyTarget, $oldTableDescription, $columnDescription);
 
-            foreach ($CreateQueries as $CreateQuery) {
-                $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
+                foreach ($CreateQueries as $CreateQuery) {
+                    $CreateQuery->setReason("Invoked by 'removeUniqueIndexQuery[" . $uniqueIndex . "]'" . PHP_EOL . $CreateQuery->getReason());
+                }
+
+                foreach ($CreateQueries as $query) {
+                    $Queries[] = $query;
+                }
+
             }
-
-            foreach ($CreateQueries as $query) {
-                $Queries[] = $query;
-            }
-
         }
 
         return $Queries;
@@ -435,12 +443,16 @@ class QueryMakerMySQL implements IQueryMaker
     }
 
     /**
-     * @param string|null $comment1
-     * @param string|null $comment2
+     * @param float|bool|int|string|null $comment1
+     * @param float|bool|int|string|null $comment2
      * @return bool
      */
-    public static function compareComment(?string $comment1, ?string $comment2): bool
+    public static function compareComment(
+        float|bool|int|string|null $comment1,
+        float|bool|int|string|null $comment2
+    ): bool
     {
-        return $comment1 === $comment2;
+        // '==' intended
+        return $comment1 == $comment2;
     }
 }

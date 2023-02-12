@@ -170,13 +170,6 @@ class Updater
         $timer_total = microtime(true);
 
         //region DriverCheck
-        /**
-         * We need a correct driver and
-         * IQueryMaker class for it!
-         */
-        if ($this->getDriverType() === null) {
-            throw new InvalidDriverException("Driver type is 'NULL'!"); // @codeCoverageIgnore
-        }
 
         $driverName = DriverType::getName($this->getDriverType());
 
@@ -304,10 +297,11 @@ class Updater
     }
 
     /**
-     * @return mixed
+     * @return int
      */
-    public function getDriverType(): mixed
+    public function getDriverType(): int
     {
+        /** @var int $driver */
         $driver = DriverType::getValue(
             $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
             false

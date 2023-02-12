@@ -66,12 +66,12 @@ class Reflection
     /**
      * @param ReflectionAttribute<object> $reflectionAttribute
      * @param int $index
-     * @return mixed
-     * @noinspection UnknownInspectionInspection
-     * @noinspection PhpUnused
+     * @return float|bool|int|string|null
      */
-    public static function attributeGetArgument(ReflectionAttribute $reflectionAttribute, int $index = 0): mixed
+    #[Pure]
+    public static function attributeGetArgument(ReflectionAttribute $reflectionAttribute, int $index = 0): float|bool|int|string|null
     {
+        /** @var array<int, float|bool|int|string|null> $args */
         $args = $reflectionAttribute->getArguments();
         return $args[$index] ?? null;
     }
