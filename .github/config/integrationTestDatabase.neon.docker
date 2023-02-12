@@ -1,0 +1,3 @@
+dsn: "mysql:dbname=mk_sql_test;host=database"
+user: "root"
+pass: "root"

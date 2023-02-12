@@ -10,6 +10,6 @@ instance with `PDO` as a parameter. Annotating entities (`ORM`) is on [ORM Usage
 
 Continue: [Updater Usage](usage-updater.md)
 
-# Coming <s>soon</s> later:
+# Coming <s>soon</s> <s>later</s> never:
 
 Adapters for `symfony/dependency-injection` and `nette/di` packages!
